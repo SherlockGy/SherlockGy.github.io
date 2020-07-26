@@ -1204,7 +1204,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/07/Python知识学习21——bytes、bytearray和编码/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/07/Python知识学习20——随机数的使用/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="SherlockGy">
@@ -1223,8 +1223,8 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/04/07/Python知识学习21——bytes、bytearray和编码/" itemprop="url">
-                  Python知识学习21——bytes、bytearray和编码
+                <a class="post-title-link" href="/2019/04/07/Python知识学习20——随机数的使用/" itemprop="url">
+                  Python知识学习20——随机数的使用
                 </a>
               
             
@@ -1250,24 +1250,12 @@
                 
               
 
-              <time title="创建时间：2019-04-07 02:58:25" itemprop="dateCreated datePublished" datetime="2019-04-07T02:58:25+08:00">2019-04-07</time>
+              <time title="创建时间：2019-04-07 02:58:25 / 修改时间：03:11:10" itemprop="dateCreated datePublished" datetime="2019-04-07T02:58:25+08:00">2019-04-07</time>
             
 
             
               
 
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-04-14 14:07:15" itemprop="dateModified" datetime="2019-04-14T14:07:15+08:00">2019-04-14</time>
               
             
           </span>
@@ -1326,7 +1314,7 @@
                 
                   <span class="post-meta-item-text">本文字数：</span>
                 
-                <span title="本文字数">351</span>
+                <span title="本文字数">419</span>
               
 
               
@@ -1361,15 +1349,13 @@
 
       
         
-          <h2 id="一）bytes和bytearray的对比"><a href="#一）bytes和bytearray的对比" class="headerlink" title="(一）bytes和bytearray的对比"></a>(一）bytes和bytearray的对比</h2><blockquote>
-<p><code>bytes</code>是不可变的，而<code>bytearray</code>则是可变类型</p>
-</blockquote>
-<h2 id="（二）bytes类型"><a href="#（二）bytes类型" class="headerlink" title="（二）bytes类型"></a>（二）bytes类型</h2><p>定义一个<code>bytes</code>类型：</p>
-<p><code>bytes</code>接收的是一个可迭代类型</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ bytes()</span><br><span class="line"><span class="string">b''</span></span><br><span class="line"></span><br><span class="line">$ bytes([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>])</span><br><span class="line"><span class="string">b'\x01\x02\x03'</span></span><br><span class="line"></span><br><span class="line">$ bytes([<span class="number">97</span>, <span class="number">98</span>, <span class="number">99</span>])</span><br><span class="line"><span class="string">b'abc'</span></span><br><span class="line"></span><br><span class="line">$ bytes(range(<span class="number">5</span>))</span><br><span class="line"><span class="string">b'\x00\x01\x02\x03\x04'</span></span><br></pre></td></tr></table></figure>
+          <h2 id="（一）获得-a-b-之间的随机整数"><a href="#（一）获得-a-b-之间的随机整数" class="headerlink" title="（一）获得[a, b]之间的随机整数"></a>（一）获得[a, b]之间的随机整数</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"></span><br><span class="line">print(random.randint(<span class="number">1</span>, <span class="number">10</span>))</span><br></pre></td></tr></table></figure>
+<h2 id="（二）从一个非空序列中随机挑选一个元素"><a href="#（二）从一个非空序列中随机挑选一个元素" class="headerlink" title="（二）从一个非空序列中随机挑选一个元素"></a>（二）从一个非空序列中随机挑选一个元素</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"></span><br><span class="line">print(random.choice([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]))</span><br></pre></td></tr></table></figure>
+<p>或</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"></span><br><span class="line"><span class="comment"># 从0～9中随机取一整数</span></span><br><span class="line">print(random.choice(range(<span class="number">10</span>)))</span><br></pre></td></tr></table></figure>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2019/04/07/Python知识学习21——bytes、bytearray和编码/#more" rel="contents">
+            <a class="btn" href="/2019/04/07/Python知识学习20——随机数的使用/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
