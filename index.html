@@ -389,7 +389,7 @@
                 
               
 
-              <time title="创建时间：2020-07-27 00:04:26 / 修改时间：00:27:02" itemprop="dateCreated datePublished" datetime="2020-07-27T00:04:26+08:00">2020-07-27</time>
+              <time title="创建时间：2020-07-27 00:04:26 / 修改时间：03:12:41" itemprop="dateCreated datePublished" datetime="2020-07-27T00:04:26+08:00">2020-07-27</time>
             
 
             
@@ -491,7 +491,7 @@
           
             <h1 id="Java多线程学习笔记"><a href="#Java多线程学习笔记" class="headerlink" title="Java多线程学习笔记"></a>Java多线程学习笔记</h1><p>CAS</p>
 <p>compare and swap，比较并且交换，同compare and exchange</p>
-<p> <img src="../work/笔记/imgs/image-20200726215411185.png" alt="image-20200726215411185" style="zoom:50%;"></p>
+<p> <img src="https://SherlockGy.github.io/img/image-20200726215411185.png" alt="image-20200726215411185" style="zoom:50%;"></p>
 <p>CAS可以在没有加锁的情况下，保值多线程的一致性。</p>
 <p>如何解决ABA问题：</p>
 <ol>
@@ -511,9 +511,9 @@
 <p>使用Open JDK的工具JOL（Java Object Layout），Maven导入</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Object o = <span class="keyword">new</span> Object();</span><br><span class="line">System.out.println(ClassLayout.parseInstance(o).toPrintable());</span><br></pre></td></tr></table></figure>
 <p>  输出：</p>
-<p><img src="../work/笔记/imgs/image-20200726222016355.png" alt="image-20200726222016355" style="zoom:50%;"></p>
+<p><img src="https://SherlockGy.github.io/img/image-20200726222016355.png" alt="image-20200726222016355" style="zoom:50%;"></p>
 <p>对象在内存中的布局：</p>
-<p><img src="../work/笔记/imgs/image-20200726222735685.png" alt="image-20200726222735685" style="zoom:50%;"></p>
+<p><img src="https://SherlockGy.github.io/img/image-20200726222735685.png" alt="image-20200726222735685" style="zoom:50%;"></p>
 <p>普通对象说明：</p>
 <ul>
 <li>markword + 指针类型，加起来是对象头</li>
@@ -523,7 +523,7 @@
 <li>对齐是保证对象内存大小可以被8整除，使得总线读取更快</li>
 </ul>
 <p>查看Java命令行参数：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> java -XX:+PrintCommandLineFlags -version</span></span><br><span class="line"></span><br><span class="line">-XX:G1ConcRefinementThreads=4 -XX:GCDrainStackTargetSize=64 -XX:InitialHeapSize=134217728 -XX:MaxHeapSize=2147483648 -XX:MinHeapSize=6815736 -XX:+PrintCommandLineFlags -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseG1GC</span><br><span class="line">java version "14" 2020-03-17</span><br><span class="line">Java(TM) SE Runtime Environment (build 14+36-1461)</span><br><span class="line">Java HotSpot(TM) 64-Bit Server VM (build 14+36-1461, mixed mode)</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> java -XX:+PrintCommandLineFlags -version</span><br><span class="line"></span><br><span class="line">-XX:G1ConcRefinementThreads=4 -XX:GCDrainStackTargetSize=64 -XX:InitialHeapSize=134217728 -XX:MaxHeapSize=2147483648 -XX:MinHeapSize=6815736 -XX:+PrintCommandLineFlags -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseG1GC</span><br><span class="line">java version "14" 2020-03-17</span><br><span class="line">Java(TM) SE Runtime Environment (build 14+36-1461)</span><br><span class="line">Java HotSpot(TM) 64-Bit Server VM (build 14+36-1461, mixed mode)</span><br></pre></td></tr></table></figure>
 <p>对<code>new Object()</code>内存布局的解释：</p>
 <ul>
 <li>前两行：合计是markword，共8字节</li>
@@ -538,12 +538,12 @@
 <p>分析这段代码的内存布局，和之前的<code>new Object()</code>作个对比：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">synchronized</span>(o) &#123;</span><br><span class="line">    System.out.println(ClassLayout.parseInstance(o).toPrintable());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>输出：</p>
-<p><img src="../work/笔记/imgs/image-20200726225404529.png" alt="image-20200726225404529" style="zoom:50%;"></p>
+<p><img src="https://SherlockGy.github.io/img/image-20200726225404529.png" alt="image-20200726225404529" style="zoom:50%;"></p>
 <p>注意第一行value的区别，说明锁信息是保存在对象的markword内的。</p>
 <hr>
 <p>锁升级：</p>
 <p>new - 偏向锁 - 轻量级锁（无锁 == 自旋锁、自适应自旋）- 重量级锁</p>
-<p><img src="../work/笔记/imgs/image-20200726233046984.png" alt="image-20200726233046984" style="zoom:50%;"></p>
+<p><img src="https://SherlockGy.github.io/img/image-20200726233046984.png" alt="image-20200726233046984" style="zoom:50%;"></p>
 <p>由上图可知，<code>锁状态</code>、<code>GC标记</code>、<code>分代年龄</code>都是存在对象的markword的8字节内的</p>
 <p>分代年龄：</p>
 <p>每次GC，如果对象没有被回收，则分代年龄+1，达到一定值（PS+PO GC默认15; CMS GC默认6），则对象从年轻代到老年代</p>
