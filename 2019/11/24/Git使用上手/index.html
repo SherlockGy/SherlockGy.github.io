@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Git使用上手一、起步1.1 安装Windows、Linux请自行前往官网,按照说明完成 这里说一下Mac版本,分两种情况:  使用Apple提供的git发行版:这种情况使用的是Xcode内的Command Line Tools 使用homebrew安装,强烈建议.因为Xcode内的git工具不太完整,缺少gitk、HTML格式的文档等  1.2 最小化配置配置user.name和user.ema">
+<meta name="keywords" content="版本控制,Git">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Git使用上手">
+<meta property="og:url" content="http://yoursite.com/2019/11/24/Git使用上手/index.html">
+<meta property="og:site_name" content="SherlockGy&#39;s Blog">
+<meta property="og:description" content="Git使用上手一、起步1.1 安装Windows、Linux请自行前往官网,按照说明完成 这里说一下Mac版本,分两种情况:  使用Apple提供的git发行版:这种情况使用的是Xcode内的Command Line Tools 使用homebrew安装,强烈建议.因为Xcode内的git工具不太完整,缺少gitk、HTML格式的文档等  1.2 最小化配置配置user.name和user.ema">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-11-24T14:07:40.158Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Git使用上手">
+<meta name="twitter:description" content="Git使用上手一、起步1.1 安装Windows、Linux请自行前往官网,按照说明完成 这里说一下Mac版本,分两种情况:  使用Apple提供的git发行版:这种情况使用的是Xcode内的Command Line Tools 使用homebrew安装,强烈建议.因为Xcode内的git工具不太完整,缺少gitk、HTML格式的文档等  1.2 最小化配置配置user.name和user.ema">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="SherlockGy's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/11/24/Git使用上手/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Git使用上手 | SherlockGy's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <a href="https://github.com/SherlockGy" class="github-corner" aria-label="View source on Github">
+      <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; left: 0; transform: scale(-1, 1);" aria-hidden="true">
+      <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    </a>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SherlockGy's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/11/24/Git使用上手/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="SherlockGy">
+      <meta itemprop="description" content="Keep thinking different...">
+      <meta itemprop="image" content="https://SherlockGy.github.io/img/siri.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SherlockGy's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Git使用上手
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-11-24 21:59:30 / 修改时间：22:07:40" itemprop="dateCreated datePublished" datetime="2019-11-24T21:59:30+08:00">2019-11-24</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/版本控制/" itemprop="url" rel="index"><span itemprop="name">版本控制</span></a></span>
+
+                
+                
+                  >
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/版本控制/Git/" itemprop="url" rel="index"><span itemprop="name">Git</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">7.1k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">6 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Git使用上手"><a href="#Git使用上手" class="headerlink" title="Git使用上手"></a>Git使用上手</h1><h2 id="一、起步"><a href="#一、起步" class="headerlink" title="一、起步"></a>一、起步</h2><h3 id="1-1-安装"><a href="#1-1-安装" class="headerlink" title="1.1 安装"></a>1.1 安装</h3><p>Windows、Linux请自行前往<a href="https://git-scm.com/" target="_blank" rel="noopener">官网</a>,按照说明完成</p>
+<p>这里说一下Mac版本,分两种情况:</p>
+<ol>
+<li>使用Apple提供的git发行版:这种情况使用的是Xcode内的<code>Command Line Tools</code></li>
+<li>使用homebrew安装,强烈建议.因为Xcode内的git工具不太完整,缺少<code>gitk</code>、HTML格式的文档等</li>
+</ol>
+<h3 id="1-2-最小化配置"><a href="#1-2-最小化配置" class="headerlink" title="1.2 最小化配置"></a>1.2 最小化配置</h3><p>配置user.name和user.email</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global user.name 'your_name'</span><br><span class="line">git config --global user.email 'your_email@domain.com'</span><br></pre></td></tr></table></figure>
+<h4 id="1-2-1-config的三个作用域"><a href="#1-2-1-config的三个作用域" class="headerlink" title="1.2.1 config的三个作用域"></a>1.2.1 config的三个作用域</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git config --local  # 只针对某仓库</span><br><span class="line">git config --global # 对当前用户的所有仓库有效</span><br><span class="line">git config --system # 对该系统所有登陆的用户有效</span><br></pre></td></tr></table></figure>
+<p>显示config的配置,加<code>--list</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git config --list --local</span><br><span class="line">git config --list --global</span><br><span class="line">git config --list --system</span><br></pre></td></tr></table></figure>
+<h3 id="1-3-使用本地HTML文档"><a href="#1-3-使用本地HTML文档" class="headerlink" title="1.3 使用本地HTML文档"></a>1.3 使用本地HTML文档</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 例如查看git <span class="built_in">log</span>命令的使用文档</span></span><br><span class="line">git help log --web</span><br></pre></td></tr></table></figure>
+<h2 id="二、建一个Git仓库"><a href="#二、建一个Git仓库" class="headerlink" title="二、建一个Git仓库"></a>二、建一个Git仓库</h2><h3 id="2-1-初始化"><a href="#2-1-初始化" class="headerlink" title="2.1 初始化"></a>2.1 初始化</h3><p>此时存在两种场景:</p>
+<ol>
+<li>项目代码已经存在,要把项目加入Git版本控制</li>
+<li>新建一个项目并使用Git来管理</li>
+</ol>
+<p>针对第一种情况,我们使用如下命令:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd 项目代码所在的文件夹</span><br><span class="line">git init</span><br></pre></td></tr></table></figure>
+<p>针对第二种情况,则是使用如下命令:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd 某个文件夹</span><br><span class="line">git init your_project # git会在当前目录下创建和项目名称同名的文件夹</span><br><span class="line">cd your_project</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<h3 id="2-2-将文件加入Git版本控制"><a href="#2-2-将文件加入Git版本控制" class="headerlink" title="2.2 将文件加入Git版本控制"></a>2.2 将文件加入Git版本控制</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git add 文件名 # 如果不将文件纳入版本控制,后续操作则会报错</span><br></pre></td></tr></table></figure>
+<p>然后查看一下当前的状态:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git status # 可查看当前git项目的状态,如哪些文件被修改,而哪些文件未被版本管理</span><br></pre></td></tr></table></figure>
+<p>此时的文件,是存在于临时的缓存(<strong>暂存区</strong>)当中,要真正提交还需要执行以下命令:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git commit -m "变更说明"</span><br></pre></td></tr></table></figure>
+<p>这样我们就真正的将一个文件提交进版本了,我们还可以看一下当前的日志:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">git log</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> git <span class="built_in">log</span>还有几种使用方法,例如</span></span><br><span class="line">git log 分支名     # 查看指定分支的历史;默认显示当前分支</span><br><span class="line">git log --all     # 显示所有分支的版本历史;默认显示当前分支</span><br><span class="line">git log --oneline # 简洁显示变更历史,每次变更只显示一行</span><br><span class="line">git log -n2       # 显示最近的两次变更</span><br><span class="line">git log --all --graph # 在上面的基础上,添加图形化的版本演进</span><br></pre></td></tr></table></figure>
+<h4 id="2-2-1-新建和切换分支"><a href="#2-2-1-新建和切换分支" class="headerlink" title="2.2.1 新建和切换分支"></a>2.2.1 新建和切换分支</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">git checkout -b 分支名</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 这个命令其实相当于创建分支和切换分支两条命令(因为-b参数)</span></span><br><span class="line">git branch 分支名   # 创建分支</span><br><span class="line">git checkout 分支名 # 切换分支</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看当前工作分支</span></span><br><span class="line">git branch -av</span><br></pre></td></tr></table></figure>
+<h3 id="2-3-回退修改"><a href="#2-3-回退修改" class="headerlink" title="2.3 回退修改"></a>2.3 回退修改</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git reset --hard # 彻底回退,暂存区和所有未提交的变更记录都会被清理</span><br></pre></td></tr></table></figure>
+<h3 id="2-4-文件重命名"><a href="#2-4-文件重命名" class="headerlink" title="2.4 文件重命名"></a>2.4 文件重命名</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git mv 文件原名 文件现名</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-比较版本的差异"><a href="#2-5-比较版本的差异" class="headerlink" title="2.5 比较版本的差异"></a>2.5 比较版本的差异</h3><p>我们可以先查看一下历史:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git <span class="built_in">log</span> --oneline</span></span><br><span class="line"></span><br><span class="line">af289f0 (HEAD -&gt; master) add OnlyMaster.rs</span><br><span class="line">1f39a38 add Hello.c</span><br><span class="line">1d294ca (test) hello.py renamed to Hello.py</span><br><span class="line">5f06285 add hello.py</span><br><span class="line">7499e49 add ReadMe</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git diff 7499e49 5f06285</span></span><br><span class="line"></span><br><span class="line">diff --git a/hello.py b/hello.py</span><br><span class="line">new file mode 100644</span><br><span class="line">index 0000000..ce47b77</span><br><span class="line">--- /dev/null</span><br><span class="line">+++ b/hello.py</span><br><span class="line">@@ -0,0 +1 @@</span><br><span class="line">+print("hello")</span><br><span class="line">\ No newline at end of file</span><br></pre></td></tr></table></figure>
+<p>如果是使用当前版本进行比较,我们可以使用HEAD来指代:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git diff 5f06285 HEAD</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 和当前版本的上一个版本比较</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> git diff HEAD~1 HEAD <span class="comment"># 其中数字可以替换,也可以使用~~来代表~2</span></span></span><br></pre></td></tr></table></figure>
+<h3 id="2-6-删除分支"><a href="#2-6-删除分支" class="headerlink" title="2.6 删除分支"></a>2.6 删除分支</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git branch -d &lt;BranchName&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 有时候-d会删除不了,如果确认没有风险,可以使用-D</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> git branch -D &lt;BranchName&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="三、工作区与暂存区的认识"><a href="#三、工作区与暂存区的认识" class="headerlink" title="三、工作区与暂存区的认识"></a>三、工作区与暂存区的认识</h2><p>在<code>Git</code>当中,如果仅对文件作了<code>add</code>,但没有执行<code>commit</code>的话,文件会被存储进<strong>暂存区</strong>,而我们对文件进行创作修改的区域被称为<strong>工作区</strong></p>
+<p>当我们将文件提交进<strong>暂存区</strong>后,依然可以在<strong>工作区</strong>继续修改我们的文件,而此时暂存区内的文件是<strong>独立于工作区</strong>的</p>
+<p>这也就意味着,我们随时可以用<strong>暂存区</strong>内的版本<strong>覆盖工作区</strong>(如对工作区的修改不满意),而又不需要提交到版本控制,这在实践当中非常实用</p>
+<p>补充:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git add -u # 将项目中所有工作区的文件一起提交到暂存区,而不需要一个个写文件名</span><br></pre></td></tr></table></figure>
+<h2 id="四、图形化工具的介绍"><a href="#四、图形化工具的介绍" class="headerlink" title="四、图形化工具的介绍"></a>四、图形化工具的介绍</h2><p>直接在命令行输入<code>gitk</code>即可.</p>
+<p>在MacOS上,如果使用的是Xcode提供的git是没有<code>gitk</code>工具的,需要使用brew安装一下</p>
+<p>同时如果使用的是MacOS的暗主题,<code>gitk</code>的菜单栏上的文字会因为和底色相同的原因看不见,需要将鼠标移上去</p>
+<h2 id="五、了解-git目录"><a href="#五、了解-git目录" class="headerlink" title="五、了解.git目录"></a>五、了解.git目录</h2><h3 id="5-1-HEAD文件"><a href="#5-1-HEAD文件" class="headerlink" title="5.1 HEAD文件"></a>5.1 HEAD文件</h3><p>首先,我们进入<code>.git</code>目录,尝试查看一下<code>HEAD</code>文件的内容:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> cat HEAD</span></span><br><span class="line">ref: refs/heads/master</span><br></pre></td></tr></table></figure>
+<p>我们会发现<code>HEAD</code>文件其实是一个引用,而且指向的位置和当前工作的分支有关,如当前工作分支为<code>master</code></p>
+<p>而假设我们当前切换分支到了<code>test</code>,那么此时HEAD文件就会指向<code>test</code>分支</p>
+<h3 id="5-2-config文件"><a href="#5-2-config文件" class="headerlink" title="5.2 config文件"></a>5.2 config文件</h3><p>该文件下除了保存了该仓库下的核心配置之外,如果设置了仓库级别的用户配置,也会写入该文件</p>
+<p>例如:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git config --local user.username "test" # 修改当前仓库的用户名</span><br></pre></td></tr></table></figure>
+<p>该文件内的内容则会变为:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[core]</span><br><span class="line">	repositoryformatversion = 0</span><br><span class="line">	filemode = true</span><br><span class="line">	bare = false</span><br><span class="line">	logallrefupdates = true</span><br><span class="line">	ignorecase = true</span><br><span class="line">	precomposeunicode = true</span><br><span class="line">[user]</span><br><span class="line">	username = test</span><br></pre></td></tr></table></figure>
+<h3 id="5-3-refs目录"><a href="#5-3-refs目录" class="headerlink" title="5.3 refs目录"></a>5.3 refs目录</h3><p>在refs目录中,存在两个子目录:</p>
+<ol>
+<li>heads:里面有各个分支的子文件</li>
+<li>tags:里面有各个标签(可看作是里程碑)的子文件</li>
+</ol>
+<p>先看heads目录,我们先查看一下master文件的内容:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> cat master</span></span><br><span class="line">1d294ca4f3dd9a0d2adef1528f18afd8ef3ca3d3</span><br></pre></td></tr></table></figure>
+<p>我们还可以查看该文件是什么类型的:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git cat-file -t master <span class="comment"># -t参数可以查看类型</span></span></span><br><span class="line">commit</span><br></pre></td></tr></table></figure>
+<p>同样的,在tag目录下的文件里面存放的也是hash值,文件类型属于<code>tag</code></p>
+<p>通过以下命令可以查看该<code>tag</code>是存放的哪一个<code>commit</code>对象:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git cat-file -p tag名或tag的hash # -p参数可以查看内容</span><br></pre></td></tr></table></figure>
+<h3 id="5-4-objects目录"><a href="#5-4-objects目录" class="headerlink" title="5.4 objects目录"></a>5.4 objects目录</h3><p>我们进入objects目录后,会看到很多两个字符组成的文件夹,以及pack(打包目录)</p>
+<p>例如:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ls -la</span></span><br><span class="line">.</span><br><span class="line">..</span><br><span class="line">06</span><br><span class="line">1d</span><br><span class="line">3d</span><br><span class="line">3e</span><br><span class="line">info</span><br><span class="line">pack</span><br></pre></td></tr></table></figure>
+<p>我们随便挑选一个两个字符的目录进去,会发现内部文件是这样的:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> <span class="built_in">cd</span> 06</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> ls -la</span></span><br><span class="line">.</span><br><span class="line">..</span><br><span class="line">0fede4878a49e95fc444e9a243fa77edc710f4</span><br></pre></td></tr></table></figure>
+<p>此时我们可以使用命令查看一下该对象的<strong>类型</strong>:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 注意:此处的<span class="built_in">hash</span>为[两位长度的目录名 + 目录内文件名]</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> git cat-file -t 060fede4878a49e95fc444e9a243fa77edc710f4</span></span><br><span class="line">tree</span><br></pre></td></tr></table></figure>
+<p><code>tree</code>即目录类型</p>
+<p>然后,我们可以查看该对象的<strong>内容</strong>,使用以下命令(参数: -p):</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git cat-file -p 060fede4878a49e95fc444e9a243fa77edc710f4</span></span><br><span class="line">100644 blob 827ae020300b109c1e0e7ee58891e592d85df66c	README.md</span><br><span class="line">100644 blob ce47b771f4fdb0c612745ca4b7c36695f3853f7c	hello.py</span><br></pre></td></tr></table></figure>
+<p><code>blob</code>即是文件对象类型</p>
+<p>我们可以进一步查看该<code>blob</code>类型:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git cat-file -t 827ae020300b109c1e0e7ee58891e592d85df66c <span class="comment"># 查看类型</span></span></span><br><span class="line">blob</span><br><span class="line"></span><br><span class="line"><span class="meta">$</span><span class="bash"> git cat-file -p 827ae020300b109c1e0e7ee58891e592d85df66c <span class="comment"># 查看内容</span></span></span><br><span class="line">版本1:</span><br><span class="line">1+1=2</span><br></pre></td></tr></table></figure>
+<p>至此,我们已经接触了git的如下几种类型:</p>
+<ol>
+<li>commit</li>
+<li>tag</li>
+<li>tree</li>
+<li>blob</li>
+</ol>
+<p><strong>提示:</strong> 在<code>git</code>中,只要两个文件内容相同,那么对于git就是唯一的一个<code>blob</code></p>
+<h4 id="5-4-1-commit、tree、blob三者的关系"><a href="#5-4-1-commit、tree、blob三者的关系" class="headerlink" title="5.4.1 commit、tree、blob三者的关系"></a>5.4.1 commit、tree、blob三者的关系</h4><p>我们可以通过<code>git log</code>命令查询到每一次的commit的hash,如果我们查询某次commit的内容:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git cat-file -p 7499e499b62642764e31475f <span class="comment"># hash不需要输入完整,只要能让git唯一找到目标就可以</span></span></span><br><span class="line">tree 3d5799c550fa4b815545f0255ad83d16debce7f0</span><br><span class="line">author SherlockGy &lt;sherlockgy@live.com&gt; 1574435790 +0800</span><br><span class="line">committer SherlockGy &lt;sherlockgy@live.com&gt; 1574435790 +0800</span><br><span class="line"></span><br><span class="line">add ReadMe</span><br></pre></td></tr></table></figure>
+<p>我们会发现,commit对象中永远存储了一个tree,该tree代表截止该的commit为止,此git项目的所有内容,我们可以继续查看该tree的内容:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git cat-file -p 3d5799c550fa4b815545f02</span></span><br><span class="line">100644 blob 827ae020300b109c1e0e7ee58891e592d85df66c	README.md</span><br></pre></td></tr></table></figure>
+<p>也就是说,此commit提交后,我们的git项目中仅有一个文件,因此显示为一个<code>blob</code>对象;如果此时还有子目录的话,会显示为一个<code>tree</code>对象</p>
+<p>这就是三种对象的关系</p>
+<h2 id="六、使用分离头指针"><a href="#六、使用分离头指针" class="headerlink" title="六、使用分离头指针"></a>六、使用分离头指针</h2><p>现在假设有这样一个场景,我们要基于master的倒数第二个commit来创建一个分支,由于我们并不是基于最新的commit,所以要先<strong>把分支切换到commit上</strong>,而不是branch上,这就是<code>分离头指针</code></p>
+<p>不过千万要谨慎操作,因为分离后的branch是没有名字的,如果不赋予名字,后面会导致修改丢失.</p>
+<p>示例如下:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 切换到一个commit上,而不是branch,从而实现分离头指针</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> git checkout 1d294ca4f3dd9a0d2adef1528f18afd8ef3ca3d3</span></span><br><span class="line"></span><br><span class="line">注意：正在切换到 '1d294ca4f3dd9a0d2adef1528f18afd8ef3ca3d3'。</span><br><span class="line"></span><br><span class="line">您正处于分离头指针状态。您可以查看、做试验性的修改及提交，并且您可以在切换</span><br><span class="line">回一个分支时，丢弃在此状态下所做的提交而不对分支造成影响。</span><br><span class="line"></span><br><span class="line">如果您想要通过创建分支来保留在此状态下所做的提交，您可以通过在 switch 命令</span><br><span class="line">中添加参数 -c 来实现（现在或稍后）。例如：</span><br><span class="line"></span><br><span class="line">  git switch -c &lt;新分支名&gt;</span><br><span class="line"></span><br><span class="line">或者撤销此操作：</span><br><span class="line"></span><br><span class="line">  git switch -</span><br><span class="line"></span><br><span class="line">通过将配置变量 advice.detachedHead 设置为 false 来关闭此建议</span><br><span class="line"></span><br><span class="line">HEAD 目前位于 1d294ca hello.py renamed to Hello.py</span><br></pre></td></tr></table></figure>
+<p>然后我们查看一下当前branch的情况:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git branch</span></span><br><span class="line"></span><br><span class="line">* (头指针分离于 1d294ca)</span><br><span class="line">  master</span><br><span class="line">  test</span><br><span class="line">  test2</span><br></pre></td></tr></table></figure>
+<p>现在让我们来创建一个分离后的文件吧:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"我是分离头指针版本独有的文件内容"</span> &gt; 分离头指针.txt</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> git add 分离头指针.txt</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> git commit -m <span class="string">"add 分离头指针.txt"</span></span></span><br></pre></td></tr></table></figure>
+<p>此时我们的新分支是没有名字的,如果我们切换到其他分支,有可能会导致该分支上的修改失效</p>
+<p>这里我们尝试切换到master分支:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git checkout master</span></span><br><span class="line"></span><br><span class="line">警告：您正丢下 1 个提交，未和任何分支关联：</span><br><span class="line"></span><br><span class="line">  718daed add 分离头指针.txt</span><br><span class="line"></span><br><span class="line">如果您想要通过创建新分支保存它，这可能是一个好时候。</span><br><span class="line">如下操作：</span><br><span class="line"></span><br><span class="line"> git branch &lt;新分支名&gt; 718daed</span><br><span class="line"></span><br><span class="line">切换到分支 'master'</span><br></pre></td></tr></table></figure>
+<p>所以这里我们按照提示,给没有名字的新分支一个名字:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git branch 实验分离头指针分支 718daed</span></span><br><span class="line"></span><br><span class="line"><span class="meta">$</span><span class="bash"> git branch</span></span><br><span class="line"></span><br><span class="line">* master</span><br><span class="line">  test</span><br><span class="line">  test2</span><br><span class="line">  实验分离头指针分支</span><br></pre></td></tr></table></figure>
+<p>然后我们来一起看一下当前的log:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git <span class="built_in">log</span> --all --graph</span></span><br><span class="line"></span><br><span class="line">* commit 718daedc590da60e771debf95657de8639d4e1db (实验分离头指针分支)</span><br><span class="line">| Author: SherlockGy &lt;sherlockgy@live.com&gt;</span><br><span class="line">| Date:   Sun Nov 24 15:58:00 2019 +0800</span><br><span class="line">|</span><br><span class="line">|     add 分离头指针.txt</span><br><span class="line">|</span><br><span class="line">| * commit af289f05ffcba29d35eaaa30e6105244ed67b0ed (HEAD -&gt; master)</span><br><span class="line">| | Author: SherlockGy &lt;sherlockgy@live.com&gt;</span><br><span class="line">| | Date:   Sun Nov 24 15:51:37 2019 +0800</span><br><span class="line">| |</span><br><span class="line">| |     add OnlyMaster.rs</span><br><span class="line">| |</span><br><span class="line">| | * commit 5467beb8fdc754ddb14e31dfcd58790dfd9337fb (test2)</span><br><span class="line">| |/  Author: SherlockGy &lt;sherlockgy@live.com&gt;</span><br><span class="line">| |   Date:   Sun Nov 24 15:48:25 2019 +0800</span><br><span class="line">| |</span><br><span class="line">| |       add HelloAgain.go</span><br><span class="line">| |</span><br><span class="line">| * commit 1f39a383ff3c1140affc1e128b0de17b1c909238</span><br><span class="line">|/  Author: SherlockGy &lt;sherlockgy@live.com&gt;</span><br><span class="line">|   Date:   Sun Nov 24 15:22:02 2019 +0800</span><br><span class="line">|</span><br><span class="line">|       add Hello.c</span><br><span class="line">|</span><br><span class="line">* commit 1d294ca4f3dd9a0d2adef1528f18afd8ef3ca3d3 (test)</span><br><span class="line">| Author: SherlockGy &lt;sherlockgy@live.com&gt;</span><br><span class="line">| Date:   Sat Nov 23 20:26:10 2019 +0800</span><br><span class="line">|</span><br><span class="line">|     hello.py renamed to Hello.py</span><br><span class="line">|</span><br><span class="line">* commit 5f0628574c79dbc9ebfb1856ec882a80e5946c2b</span><br><span class="line">| Author: SherlockGy &lt;sherlockgy@live.com&gt;</span><br><span class="line">| Date:   Sat Nov 23 19:37:30 2019 +0800</span><br><span class="line">|</span><br><span class="line">|     add hello.py</span><br><span class="line">|</span><br><span class="line">* commit 7499e499b62642764e31475f4119dc253ca2f151</span><br><span class="line">  Author: SherlockGy &lt;sherlockgy@live.com&gt;</span><br><span class="line">  Date:   Fri Nov 22 23:16:30 2019 +0800</span><br><span class="line"></span><br><span class="line">      add ReadMe</span><br></pre></td></tr></table></figure>
+<p>由此可见,我们顺利得在master之前的版本上创建了分支</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/版本控制/" rel="tag"><i class="fa fa-tag"></i> 版本控制</a>
+          
+            <a href="/tags/Git/" rel="tag"><i class="fa fa-tag"></i> Git</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/21/Go语言实用库01——正则表达式/" rel="next" title="Go语言实用库01——正则表达式">
+                <i class="fa fa-chevron-left"></i> Go语言实用库01——正则表达式
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/11/28/Redis系统学习/" rel="prev" title="Redis系统学习">
+                Redis系统学习 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNjk4OC8xMzUyNA=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="https://SherlockGy.github.io/img/siri.jpeg"
+                alt="SherlockGy" />
+            
+              <p class="site-author-name" itemprop="name">SherlockGy</p>
+              <p class="site-description motion-element" itemprop="description">Keep thinking different...</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">111</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">38</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">62</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/SherlockGy" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:479920157@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=404610&auto=0&height=66"></iframe>
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="www.flysnow.org/categories/Golang/" title="GoLang-飞雪无情的博客" target="_blank">GoLang-飞雪无情的博客</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://coolshell.cn" title="Java-酷壳" target="_blank">Java-酷壳</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://cuiqingcai.com" title="Python-静觅丨崔庆才的个人博客" target="_blank">Python-静觅丨崔庆才的个人博客</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://juejin.im" title="掘金" target="_blank">掘金</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.golangtc.com" title="GoLang中国" target="_blank">GoLang中国</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://studygolang.com/" title="GoLang中文社区" target="_blank">GoLang中文社区</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.v2ex.com" title="V2EX" target="_blank">V2EX</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://docs.microsoft.com/zh-cn/" title="Microsoft Docs" target="_blank">Microsoft Docs</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://books.studygolang.com/gopl-zh/" title="Go语言圣经" target="_blank">Go语言圣经</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Git使用上手"><span class="nav-number">1.</span> <span class="nav-text">Git使用上手</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、起步"><span class="nav-number">1.1.</span> <span class="nav-text">一、起步</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-安装"><span class="nav-number">1.1.1.</span> <span class="nav-text">1.1 安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-最小化配置"><span class="nav-number">1.1.2.</span> <span class="nav-text">1.2 最小化配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-1-config的三个作用域"><span class="nav-number">1.1.2.1.</span> <span class="nav-text">1.2.1 config的三个作用域</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-使用本地HTML文档"><span class="nav-number">1.1.3.</span> <span class="nav-text">1.3 使用本地HTML文档</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、建一个Git仓库"><span class="nav-number">1.2.</span> <span class="nav-text">二、建一个Git仓库</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-初始化"><span class="nav-number">1.2.1.</span> <span class="nav-text">2.1 初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-将文件加入Git版本控制"><span class="nav-number">1.2.2.</span> <span class="nav-text">2.2 将文件加入Git版本控制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-1-新建和切换分支"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">2.2.1 新建和切换分支</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-回退修改"><span class="nav-number">1.2.3.</span> <span class="nav-text">2.3 回退修改</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-文件重命名"><span class="nav-number">1.2.4.</span> <span class="nav-text">2.4 文件重命名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-比较版本的差异"><span class="nav-number">1.2.5.</span> <span class="nav-text">2.5 比较版本的差异</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-6-删除分支"><span class="nav-number">1.2.6.</span> <span class="nav-text">2.6 删除分支</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、工作区与暂存区的认识"><span class="nav-number">1.3.</span> <span class="nav-text">三、工作区与暂存区的认识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、图形化工具的介绍"><span class="nav-number">1.4.</span> <span class="nav-text">四、图形化工具的介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、了解-git目录"><span class="nav-number">1.5.</span> <span class="nav-text">五、了解.git目录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-HEAD文件"><span class="nav-number">1.5.1.</span> <span class="nav-text">5.1 HEAD文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-config文件"><span class="nav-number">1.5.2.</span> <span class="nav-text">5.2 config文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-refs目录"><span class="nav-number">1.5.3.</span> <span class="nav-text">5.3 refs目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-objects目录"><span class="nav-number">1.5.4.</span> <span class="nav-text">5.4 objects目录</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#5-4-1-commit、tree、blob三者的关系"><span class="nav-number">1.5.4.1.</span> <span class="nav-text">5.4.1 commit、tree、blob三者的关系</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六、使用分离头指针"><span class="nav-number">1.6.</span> <span class="nav-text">六、使用分离头指针</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SherlockGy</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">191k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">2:false</span>
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Pisces</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  <!-- 页面点击小红心 -->
+  <script type="text/javascript" src="/js/src/love.js"></script>
+</body>
+</html>

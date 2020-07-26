@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Go语言从入门到实战（二）一、变量与常量1.1 变量我们先来看一下Go语言当中的标准变量声明方法： 1var name string = &quot;tom&quot; 其中，var是声明变量的关键字，而name就是我们的变量名。需要特别注意的是，作为类型的string被放在了变量名的后面。这样设计主要是为了引导程序员使用类型自动推导，从而省略变量类型： 12// 使用类型推导var name = &quot;tom&quot;  拓展">
+<meta name="keywords" content="Golang,学习">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言从入门到实战（二）">
+<meta property="og:url" content="http://yoursite.com/2019/09/28/Go语言从入门到实战（二）/index.html">
+<meta property="og:site_name" content="SherlockGy&#39;s Blog">
+<meta property="og:description" content="Go语言从入门到实战（二）一、变量与常量1.1 变量我们先来看一下Go语言当中的标准变量声明方法： 1var name string = &quot;tom&quot; 其中，var是声明变量的关键字，而name就是我们的变量名。需要特别注意的是，作为类型的string被放在了变量名的后面。这样设计主要是为了引导程序员使用类型自动推导，从而省略变量类型： 12// 使用类型推导var name = &quot;tom&quot;  拓展">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-28T14:48:40.796Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Go语言从入门到实战（二）">
+<meta name="twitter:description" content="Go语言从入门到实战（二）一、变量与常量1.1 变量我们先来看一下Go语言当中的标准变量声明方法： 1var name string = &quot;tom&quot; 其中，var是声明变量的关键字，而name就是我们的变量名。需要特别注意的是，作为类型的string被放在了变量名的后面。这样设计主要是为了引导程序员使用类型自动推导，从而省略变量类型： 12// 使用类型推导var name = &quot;tom&quot;  拓展">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="SherlockGy's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/09/28/Go语言从入门到实战（二）/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Go语言从入门到实战（二） | SherlockGy's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <a href="https://github.com/SherlockGy" class="github-corner" aria-label="View source on Github">
+      <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; left: 0; transform: scale(-1, 1);" aria-hidden="true">
+      <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    </a>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SherlockGy's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/28/Go语言从入门到实战（二）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="SherlockGy">
+      <meta itemprop="description" content="Keep thinking different...">
+      <meta itemprop="image" content="https://SherlockGy.github.io/img/siri.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SherlockGy's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Go语言从入门到实战（二）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-09-28 01:23:02 / 修改时间：22:48:40" itemprop="dateCreated datePublished" datetime="2019-09-28T01:23:02+08:00">2019-09-28</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/程序人生/" itemprop="url" rel="index"><span itemprop="name">程序人生</span></a></span>
+
+                
+                
+                  >
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/程序人生/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">7.2k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">7 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Go语言从入门到实战（二）"><a href="#Go语言从入门到实战（二）" class="headerlink" title="Go语言从入门到实战（二）"></a>Go语言从入门到实战（二）</h1><h2 id="一、变量与常量"><a href="#一、变量与常量" class="headerlink" title="一、变量与常量"></a>一、变量与常量</h2><h3 id="1-1-变量"><a href="#1-1-变量" class="headerlink" title="1.1 变量"></a>1.1 变量</h3><p>我们先来看一下<code>Go</code>语言当中的标准变量声明方法：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> name <span class="keyword">string</span> = <span class="string">"tom"</span></span><br></pre></td></tr></table></figure>
+<p>其中，<code>var</code>是声明变量的关键字，而<code>name</code>就是我们的变量名。需要特别注意的是，作为类型的<code>string</code>被放在了变量名的后面。这样设计主要是为了引导程序员使用<strong>类型自动推导</strong>，从而省略变量类型：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用类型推导</span></span><br><span class="line"><span class="keyword">var</span> name = <span class="string">"tom"</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><strong>拓展：</strong>这种类型后置的设计在现代编程语言当中已经非常常见了，如<code>Scala</code>、<code>Kotlin</code>、<code>Swift</code>、<code>Rust</code>等</p>
+</blockquote>
+<p>而当我们需要一次性声明多个变量的时候，则可以使用代码块来做：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	name    <span class="keyword">string</span></span><br><span class="line">	age     <span class="keyword">int</span></span><br><span class="line">	address <span class="keyword">string</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>当我们的变量是局部变量的时候，我们还可以使用<code>简短声明</code>的方法来声明变量：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	name := <span class="string">"tom"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这里，我们有几个注意点需要强调：</p>
+<ol>
+<li>简短声明<strong>仅可使用于局部</strong>，全局变量必须使用<code>var</code>关键字声明</li>
+<li><strong>局部变量</strong>一经声明必须被使用，否则将会编译错误；如果需要丢弃该变量，则使用<strong>下划线</strong><code>_</code>命名变量</li>
+<li>全局变量是<code>包</code>级别的变量，而不是以单个文件作为作用域；全局变量可以声明但不使用</li>
+<li>局部变量如果是不同类型（包括int32与int64也不是相同类型），无论如何都不能直接运算，而需要显式类型转换</li>
+</ol>
+<h3 id="1-2-常量"><a href="#1-2-常量" class="headerlink" title="1.2 常量"></a>1.2 常量</h3><p><code>Go</code>语言的常量使用<code>const</code>关键字进行声明：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> name <span class="keyword">string</span> = <span class="string">"tom"</span></span><br></pre></td></tr></table></figure>
+<p>同样，变量类型是可以省略的：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> name = <span class="string">"tom"</span></span><br></pre></td></tr></table></figure>
+<p>当我们需要一次性声明多个常量的时候，同样可以使用代码块来做：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	name = <span class="string">"tom"</span></span><br><span class="line">	age  = <span class="number">11</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>关于常量，我们也有几点需要强调的：</p>
+<ol>
+<li>常量声明<strong>必须使用关键字的方式</strong>，不能使用简短声明</li>
+<li>常量可以声明后不使用</li>
+<li>常量如果是以<strong>省略变量类型的方式</strong>声明的，<code>整型</code>和<code>浮点型</code>变量之间可以直接运算</li>
+</ol>
+<h3 id="1-3-基于常量的枚举类型"><a href="#1-3-基于常量的枚举类型" class="headerlink" title="1.3 基于常量的枚举类型"></a>1.3 基于常量的枚举类型</h3><p><code>Go</code>并不提供专门的枚举类型关键字，如其他语言当中常见的<code>enum</code>。而是通过常量的关键字<code>const</code> + <code>iota</code>的方式，实现枚举</p>
+<p>我们先来看一段示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">const</span> (</span><br><span class="line">		a = <span class="number">9</span>     <span class="comment">// iota值为0，虽然没有被使用，iota依然存在</span></span><br><span class="line">		b = <span class="literal">iota</span>  <span class="comment">// iota值为1，所以b为1</span></span><br><span class="line">		c         <span class="comment">// iota值为2，c继续使用b的表达式，所以c为2</span></span><br><span class="line">		d = <span class="number">10</span>    <span class="comment">// iota值为3，虽然没有被使用，iota依然存在</span></span><br><span class="line">		e = <span class="literal">iota</span>  <span class="comment">// iota值为4，所以e为4</span></span><br><span class="line">		f = <span class="string">"abc"</span> <span class="comment">// iota值为5，f为"abc"</span></span><br><span class="line">		g         <span class="comment">// iota值为6，g继续使用f的表达式，所以g为"abc"</span></span><br><span class="line">		h = <span class="literal">iota</span>  <span class="comment">// iota值为7，所以h为7</span></span><br><span class="line">	)</span><br><span class="line">	<span class="keyword">const</span> i = <span class="literal">iota</span> <span class="comment">// 新的const，iota重制为0，所以i为0</span></span><br><span class="line"></span><br><span class="line">	fmt.Printf(<span class="string">"a = %v, b = %v, c = %v, "</span>, a, b, c)</span><br><span class="line">	fmt.Printf(<span class="string">"d = %v, e = %v, f = %v, "</span>, d, e, f)</span><br><span class="line">	fmt.Printf(<span class="string">"g = %v, h = %v, i = %v"</span>, g, h, i)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a = 9, b = 1, c = 2, d = 10, e = 4, f = abc, g = abc, h = 7, i = 0</span><br></pre></td></tr></table></figure>
+<p>通过上述例子，可以总结为：</p>
+<ol>
+<li><code>iota</code>不管是否被使用，在同一个<code>const</code>代码块内，都会从0开始不断自增；如果遇到新的<code>const</code>，则重制为0</li>
+<li>如果<code>枚举项</code>没有声明表达式，则继承上一个<code>枚举项</code>的表达式</li>
+</ol>
+<h2 id="二、Go语言的数据类型"><a href="#二、Go语言的数据类型" class="headerlink" title="二、Go语言的数据类型"></a>二、Go语言的数据类型</h2><h3 id="2-1-布尔与字符串类型"><a href="#2-1-布尔与字符串类型" class="headerlink" title="2.1 布尔与字符串类型"></a>2.1 布尔与字符串类型</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">bool</td>
+<td style="text-align:center">布尔类型（true、flase）</td>
+</tr>
+<tr>
+<td style="text-align:center">string</td>
+<td style="text-align:center">字符串</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-2-无符号整数类型"><a href="#2-2-无符号整数类型" class="headerlink" title="2.2 无符号整数类型"></a>2.2 无符号整数类型</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">uint</td>
+<td style="text-align:center">长度由系统架构类型决定</td>
+</tr>
+<tr>
+<td style="text-align:center">uint8</td>
+<td style="text-align:center">长度为8位，即1字节（0～255）</td>
+</tr>
+<tr>
+<td style="text-align:center">uint16</td>
+<td style="text-align:center">长度为16位，即2字节（0 到 65535）</td>
+</tr>
+<tr>
+<td style="text-align:center">uint32</td>
+<td style="text-align:center">长度为32位，即4字节（0 到 4294967295）</td>
+</tr>
+<tr>
+<td style="text-align:center">uint64</td>
+<td style="text-align:center">长度为64位，即8字节（0 到 18446744073709551615）</td>
+</tr>
+<tr>
+<td style="text-align:center">uintptr</td>
+<td style="text-align:center">长度为8位，即1字节（0～255）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-3-有符号整数类型"><a href="#2-3-有符号整数类型" class="headerlink" title="2.3 有符号整数类型"></a>2.3 有符号整数类型</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">int</td>
+<td style="text-align:center">长度由系统架构类型决定</td>
+</tr>
+<tr>
+<td style="text-align:center">int8</td>
+<td style="text-align:center">长度为8位，即1字节（-128 到 127）</td>
+</tr>
+<tr>
+<td style="text-align:center">int16</td>
+<td style="text-align:center">长度为16位，即2字节（-32768 到 32767）</td>
+</tr>
+<tr>
+<td style="text-align:center">int32</td>
+<td style="text-align:center">长度为32位，即4字节（-2147483648 到 2147483647）</td>
+</tr>
+<tr>
+<td style="text-align:center">int64</td>
+<td style="text-align:center">长度为64位，即8字节（-9223372036854775808 到 9223372036854775807）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>注意：</strong>虽然<code>int</code>类型和<code>uint</code>类型长度没有指定，但是不代表它们可以像<code>Python</code>这种语言一样不限制<code>int</code>的大小。例如在64位操作系统上，<code>int</code>和<code>uint</code>的最大值就是<code>int64</code>和<code>uint64</code>的最大值</p>
+<p>我们也可以在代码中轻松获得每个数值类型的最大最小值，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(math.MaxInt8)</span><br><span class="line">	fmt.Println(math.MinInt8)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那如果我们需要操作的数字的大小，<code>int64</code>已经无法满足了，要怎么办呢？</p>
+<p>我们可以使用<code>math/big</code>包下的函数进行处理：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	a, _ := <span class="built_in">new</span>(big.Int).SetString(<span class="string">"999999999999999999999999999999999999"</span>, <span class="number">10</span>)</span><br><span class="line">	fmt.Println(a)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>关于这一点，此处就不再多说了，毕竟这不是目前的重点。如果需要更多内容，可以直接查找相关API文档</p>
+<h3 id="2-4-浮点数类型"><a href="#2-4-浮点数类型" class="headerlink" title="2.4 浮点数类型"></a>2.4 浮点数类型</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">float32</td>
+<td style="text-align:center">长度为4个字节，IEEE-754 32位浮点型数</td>
+</tr>
+<tr>
+<td style="text-align:center">float64</td>
+<td style="text-align:center">长度为8个字节，IEEE-754 64位浮点型数</td>
+</tr>
+</tbody>
+</table>
+<p>不同于整型当中的<code>int</code>类型，浮点数类型要么是<code>float32</code>要么就是<code>float64</code>，不存在<code>float</code>这个类型</p>
+<p>在使用<code>简短声明</code>的时候，编译器会根据当前计算机的架构自动进行推断，从而决定使用<code>float32</code>还是<code>float64</code></p>
+<h4 id="2-4-1-浮点数与字符串类型的转换"><a href="#2-4-1-浮点数与字符串类型的转换" class="headerlink" title="2.4.1 浮点数与字符串类型的转换"></a>2.4.1 浮点数与字符串类型的转换</h4><p>浮点数转换为字符串：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> f64 <span class="keyword">float64</span> = <span class="number">1.12</span></span><br><span class="line">	str := strconv.FormatFloat(f64, <span class="string">'E'</span>, <span class="number">-1</span>, <span class="number">64</span>)</span><br><span class="line">	str2 := fmt.Sprintf(<span class="string">"%v"</span>, f64)</span><br><span class="line">	fmt.Println(str)  <span class="comment">// 1.12E+00</span></span><br><span class="line">	fmt.Println(str2) <span class="comment">// 1.12</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>字符串转换为浮点数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	s := <span class="string">"3.1415926"</span></span><br><span class="line">	float, _ := strconv.ParseFloat(s, <span class="number">64</span>)</span><br><span class="line">	fmt.Println(float)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-复数类型"><a href="#2-5-复数类型" class="headerlink" title="2.5 复数类型"></a>2.5 复数类型</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">complex64</td>
+<td style="text-align:center">32 位复数（实部与虚部分别32位）</td>
+</tr>
+<tr>
+<td style="text-align:center">complex128</td>
+<td style="text-align:center">64 位实数和虚数（实部与虚部分别64位）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-6-别名类型"><a href="#2-6-别名类型" class="headerlink" title="2.6 别名类型"></a>2.6 别名类型</h3><h4 id="2-6-1-byte和rune"><a href="#2-6-1-byte和rune" class="headerlink" title="2.6.1 byte和rune"></a>2.6.1 byte和rune</h4><table>
+<thead>
+<tr>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">byte</td>
+<td style="text-align:center">字节类型，uint8类型的别名</td>
+</tr>
+<tr>
+<td style="text-align:center">rune</td>
+<td style="text-align:center">字符类型，int32类型的别名</td>
+</tr>
+</tbody>
+</table>
+<p>因为<code>Go</code>语言的<code>rune</code>和其他语言的<code>char</code>还是有较大差异，所以我们在这里针对<code>rune</code>类型，多做一些介绍</p>
+<p>我们先看一下<code>Go</code>语言源码中，对于<code>rune</code>类型的注释：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// rune is an alias for int32 and is equivalent to int32 in all ways. It is</span></span><br><span class="line"><span class="comment">// used, by convention, to distinguish character values from integer values.</span></span><br><span class="line"><span class="comment">// 符文是int32的别名，在所有方面都等同于int32。按照惯例，用于区分字符值和整数值。</span></span><br><span class="line"><span class="keyword">type</span> <span class="keyword">rune</span> = <span class="keyword">int32</span></span><br></pre></td></tr></table></figure>
+<p>因此，<code>rune</code>其实并不是一个独立的类型，它只是<code>int32</code>类型的另一个称呼罢了。所以，<code>rune</code>类型可以和<code>int32</code>类型直接做计算，而不需要任何转换。</p>
+<p>如果我们直接将<code>rune</code>类型的值打印出来，那么它就是一个数字：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c := <span class="string">'a'</span></span><br><span class="line">	fmt.Println(c)       	<span class="comment">// 97</span></span><br><span class="line">	fmt.Printf(<span class="string">"%c\n"</span>, c) <span class="comment">// a</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于<code>rune</code>类型的类型转换，下面给出两个示例：</p>
+<p><strong>例1:</strong></p>
+<p>将<code>rune</code>类型转换为字符串：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c := <span class="string">'a'</span></span><br><span class="line">  <span class="comment">// 方法1</span></span><br><span class="line">	fmt.Println(<span class="keyword">string</span>(c))</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 方法2</span></span><br><span class="line">	str := fmt.Sprintf(<span class="string">"%c"</span>, c)</span><br><span class="line">	fmt.Println(str)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>例2：</strong></p>
+<p>将<code>rune</code>类型所代表的数字，转换为字符串：</p>
+<p>这个问题其实可以等价为，将整型转换为字符串。在其他语言当中，如<code>Python</code>，我们是直接使用<code>str()</code>函数进行转换的，但是因为<code>Go</code>语言的<code>rune</code>类型的存在，如果直接使用<code>string()</code>函数，就会得到该<strong>数字对应的字符</strong>，而不是数字本身的字符串格式。这显然不是我们想要的。</p>
+<p>正确的做法应为：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	i := <span class="number">97</span></span><br><span class="line">  <span class="comment">// 方法1</span></span><br><span class="line">	fmt.Println(strconv.Itoa(i)) <span class="comment">// 97</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment">// 方法2 可以同时进行进制转换</span></span><br><span class="line">  fmt.Println(strconv.FormatInt(<span class="keyword">int64</span>(i), <span class="number">10</span>)) <span class="comment">// 97</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="2-6-2-类型定义与类型别名"><a href="#2-6-2-类型定义与类型别名" class="headerlink" title="2.6.2 类型定义与类型别名"></a>2.6.2 类型定义与类型别名</h4><p>这两个概念我们需要重点区分：<code>类型定义</code>和<code>类型别名</code></p>
+<p>什么是<code>类型定义</code>？举个例子：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> myInt <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> i myInt = <span class="number">100</span></span><br><span class="line">	fmt.Println(i)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在上面的例子当中，<code>myInt</code>这个类型就是我们新定义的。那为什么说是新定义的呢？因为，它和<code>int</code>类型其实并不是一个类型。他只是与<code>int</code>类型有共同的实现、共同的能力罢了。</p>
+<p>我们知道<code>Go</code>是一个强类型语言，且不存在类型隐式转换。只要不是同一个类型，就不能直接运算，如下面的代码是不能编译成功的：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> myInt <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> i myInt = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> j = <span class="number">100</span>        <span class="comment">// 默认为int类型</span></span><br><span class="line">	fmt.Println(i + j) <span class="comment">// invalid operation: i + j (mismatched types myInt and int)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是如果我们直接与字面量运算，还是没有问题的：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> myInt <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> i myInt = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> j = i + <span class="number">100</span></span><br><span class="line">	fmt.Println(j) <span class="comment">// 200 并且此时的j也是myInt类型</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以通过使用<code>类型定义</code>这个特性来拓展原有类型的能力：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> myInt <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 我们给新的整数类型myInt赋予了自动翻倍的能力</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(t myInt)</span> <span class="title">double</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">int</span>(t * <span class="number">2</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	i := <span class="number">100</span></span><br><span class="line">	newNum := myInt(i).double()</span><br><span class="line">	fmt.Println(newNum) <span class="comment">// 200</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而<code>类型别名</code>像我们上述提到<code>type</code>和<code>rune</code>时介绍的一样，并不是一个新的类型，只是叫法不同。这个特性是在Go1.9版本时引入的。</p>
+<p>不同于<code>类型定义</code>，我们无法对别名类型的能力进行拓展，因为本来就是同一种类型</p>
+<h2 id="三、条件与循环语句"><a href="#三、条件与循环语句" class="headerlink" title="三、条件与循环语句"></a>三、条件与循环语句</h2><h3 id="3-1-if条件语句"><a href="#3-1-if条件语句" class="headerlink" title="3.1 if条件语句"></a>3.1 if条件语句</h3><p>示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> a = <span class="number">8</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> a &gt; <span class="number">10</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">"大于10"</span>)</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> a &gt; <span class="number">5</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">"a大于5"</span>)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">"a小于5"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>注意：</strong><code>Go</code>语言的<code>if</code>语句，其条件不需要放在括号中</p>
+<h3 id="3-2-switch语句"><a href="#3-2-switch语句" class="headerlink" title="3.2 switch语句"></a>3.2 switch语句</h3><h4 id="3-2-1-基础switch"><a href="#3-2-1-基础switch" class="headerlink" title="3.2.1 基础switch"></a>3.2.1 基础switch</h4><p>示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> a = <span class="number">5</span></span><br><span class="line">	<span class="keyword">switch</span> a &#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="number">0</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>:</span><br><span class="line">		fmt.Println(<span class="string">"10以内的偶数"</span>)</span><br><span class="line">	<span class="keyword">case</span> <span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">9</span>:</span><br><span class="line">		fmt.Println(<span class="string">"10以内的奇数"</span>)</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		fmt.Println(<span class="string">"不是10以内的自然数"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">10以内的奇数</span><br></pre></td></tr></table></figure>
+<p>这里应该能看出<code>Go</code>和其他主流编程语言的诸多不同，我们这里一一列举：</p>
+<ol>
+<li><code>Go</code>语言的switch语句可以用来匹配任何类型，包括结构体</li>
+<li>每个<code>case</code>都可以匹配多个值</li>
+<li>每个<code>case</code>都默认自带<code>break</code>，如果需要实现<code>switch穿透</code>，则在需要穿透的<code>case</code>结尾加上<code>fallthrough</code></li>
+</ol>
+<p>除此之外，<code>switch</code>还可以作为<code>if-else if</code>结构的简写版本：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> a = <span class="number">8</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">switch</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> a &gt; <span class="number">10</span>:</span><br><span class="line">		fmt.Println(<span class="string">"大于10"</span>)</span><br><span class="line">	<span class="keyword">case</span> a &gt; <span class="number">5</span>:</span><br><span class="line">		fmt.Println(<span class="string">"a大于5"</span>)</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		fmt.Println(<span class="string">"a小于5"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-2-2-type-switch"><a href="#3-2-2-type-switch" class="headerlink" title="3.2.2 type switch"></a>3.2.2 type switch</h4><p>type switch主要用于对变量类型进行判断的场景，使用方法如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> a <span class="keyword">interface</span>&#123;&#125; = <span class="string">"123"</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">switch</span> a.(<span class="keyword">type</span>) &#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="keyword">int</span>:</span><br><span class="line">		fmt.Println(<span class="string">"int"</span>)</span><br><span class="line">	<span class="keyword">case</span> <span class="keyword">string</span>:</span><br><span class="line">		fmt.Println(<span class="string">"string"</span>)</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		fmt.Println(<span class="string">"other"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里需要说明的是，<code>type switch</code>只能对<code>interface{}</code>类型使用，<code>interface{}</code>类型是一个<code>接口</code>，<code>Go</code>当中所有类型都实现了该接口，所以<code>type switch</code>其实就是判断一个<code>interface{}</code>的实现到底是什么类型</p>
+<p>提到了<code>type switch</code>，就不能不提<code>type assertion</code>。<code>type assertion</code>是一个类型断言，他能帮助我们先校验类型，后执行操作。</p>
+<p>如下面这个<code>s</code>就可以顺利作为参数传递给<code>println()</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> s <span class="keyword">interface</span>&#123;&#125; = <span class="string">"123"</span></span><br><span class="line">	fmt.Println(s.(<span class="keyword">string</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="3-3-循环语句"><a href="#3-3-循环语句" class="headerlink" title="3.3 循环语句"></a>3.3 循环语句</h3><p><code>Go</code>只有<code>for</code>循，但是存在多种不同的使用方式。比如其他语言当中的<code>while</code>循环，在<code>Go</code>语言中也是通过<code>for</code>来实现</p>
+<h4 id="3-3-1-经典for循环"><a href="#3-3-1-经典for循环" class="headerlink" title="3.3.1 经典for循环"></a>3.3.1 经典for循环</h4><p>示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">10</span>; i++ &#123;</span><br><span class="line">		fmt.Println(i)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中注意点和<code>if</code>是一样的，即不需要使用括号来包围条件</p>
+<h4 id="3-3-2-for循环变体"><a href="#3-3-2-for循环变体" class="headerlink" title="3.3.2 for循环变体"></a>3.3.2 for循环变体</h4><p><code>Go</code>中既然没有<code>while</code>循环，那么怎么实现<code>while</code>循环的效果呢？其实只要把<code>for</code>当作<code>while</code>就可以了：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	i := <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> i &lt; <span class="number">10</span> &#123;</span><br><span class="line">		fmt.Println(i)</span><br><span class="line">		i++</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>for</code>还可以轻松实现无限循环，相比其他语言的<code>while(true)</code>更加简洁：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">"forever"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-3-3-for…range"><a href="#3-3-3-for…range" class="headerlink" title="3.3.3 for…range"></a>3.3.3 for…range</h4><p>当我们需要遍历一个集合或者字符串的时候，使用经典<code>for</code>循环显然是太啰嗦了，我们可以使用<code>for...range</code>语句来简化语法，但是要注意，在某些场景下，<code>for...range</code>不仅仅是帮助我们简化了语法，还多做了一些人性化的事情，后面会详细讲到的。</p>
+<p>经典<code>for</code>循环遍历数组：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Golang/" rel="tag"><i class="fa fa-tag"></i> Golang</a>
+          
+            <a href="/tags/学习/" rel="tag"><i class="fa fa-tag"></i> 学习</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/24/Go语言从入门到实战（一）/" rel="next" title="Go语言从入门到实战（一）">
+                <i class="fa fa-chevron-left"></i> Go语言从入门到实战（一）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/10/21/Go语言实用库02——文本编码/" rel="prev" title="Go语言实用库02——文本编码">
+                Go语言实用库02——文本编码 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNjk4OC8xMzUyNA=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="https://SherlockGy.github.io/img/siri.jpeg"
+                alt="SherlockGy" />
+            
+              <p class="site-author-name" itemprop="name">SherlockGy</p>
+              <p class="site-description motion-element" itemprop="description">Keep thinking different...</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">111</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">38</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">62</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/SherlockGy" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:479920157@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=404610&auto=0&height=66"></iframe>
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="www.flysnow.org/categories/Golang/" title="GoLang-飞雪无情的博客" target="_blank">GoLang-飞雪无情的博客</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://coolshell.cn" title="Java-酷壳" target="_blank">Java-酷壳</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://cuiqingcai.com" title="Python-静觅丨崔庆才的个人博客" target="_blank">Python-静觅丨崔庆才的个人博客</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://juejin.im" title="掘金" target="_blank">掘金</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.golangtc.com" title="GoLang中国" target="_blank">GoLang中国</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://studygolang.com/" title="GoLang中文社区" target="_blank">GoLang中文社区</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.v2ex.com" title="V2EX" target="_blank">V2EX</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://docs.microsoft.com/zh-cn/" title="Microsoft Docs" target="_blank">Microsoft Docs</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://books.studygolang.com/gopl-zh/" title="Go语言圣经" target="_blank">Go语言圣经</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Go语言从入门到实战（二）"><span class="nav-number">1.</span> <span class="nav-text">Go语言从入门到实战（二）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、变量与常量"><span class="nav-number">1.1.</span> <span class="nav-text">一、变量与常量</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-变量"><span class="nav-number">1.1.1.</span> <span class="nav-text">1.1 变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-常量"><span class="nav-number">1.1.2.</span> <span class="nav-text">1.2 常量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-基于常量的枚举类型"><span class="nav-number">1.1.3.</span> <span class="nav-text">1.3 基于常量的枚举类型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、Go语言的数据类型"><span class="nav-number">1.2.</span> <span class="nav-text">二、Go语言的数据类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-布尔与字符串类型"><span class="nav-number">1.2.1.</span> <span class="nav-text">2.1 布尔与字符串类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-无符号整数类型"><span class="nav-number">1.2.2.</span> <span class="nav-text">2.2 无符号整数类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-有符号整数类型"><span class="nav-number">1.2.3.</span> <span class="nav-text">2.3 有符号整数类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-浮点数类型"><span class="nav-number">1.2.4.</span> <span class="nav-text">2.4 浮点数类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-1-浮点数与字符串类型的转换"><span class="nav-number">1.2.4.1.</span> <span class="nav-text">2.4.1 浮点数与字符串类型的转换</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-复数类型"><span class="nav-number">1.2.5.</span> <span class="nav-text">2.5 复数类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-6-别名类型"><span class="nav-number">1.2.6.</span> <span class="nav-text">2.6 别名类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-6-1-byte和rune"><span class="nav-number">1.2.6.1.</span> <span class="nav-text">2.6.1 byte和rune</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-6-2-类型定义与类型别名"><span class="nav-number">1.2.6.2.</span> <span class="nav-text">2.6.2 类型定义与类型别名</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、条件与循环语句"><span class="nav-number">1.3.</span> <span class="nav-text">三、条件与循环语句</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-if条件语句"><span class="nav-number">1.3.1.</span> <span class="nav-text">3.1 if条件语句</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-switch语句"><span class="nav-number">1.3.2.</span> <span class="nav-text">3.2 switch语句</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-基础switch"><span class="nav-number">1.3.2.1.</span> <span class="nav-text">3.2.1 基础switch</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-type-switch"><span class="nav-number">1.3.2.2.</span> <span class="nav-text">3.2.2 type switch</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-循环语句"><span class="nav-number">1.3.3.</span> <span class="nav-text">3.3 循环语句</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-1-经典for循环"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">3.3.1 经典for循环</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-2-for循环变体"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">3.3.2 for循环变体</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-3-for…range"><span class="nav-number">1.3.3.3.</span> <span class="nav-text">3.3.3 for…range</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SherlockGy</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">191k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">2:false</span>
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Pisces</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  <!-- 页面点击小红心 -->
+  <script type="text/javascript" src="/js/src/love.js"></script>
+</body>
+</html>

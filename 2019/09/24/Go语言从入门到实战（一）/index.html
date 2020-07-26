@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Go语言从入门到实战（一）一、为什么要学习Go语言在开始我们的学习旅程之前，我们先来了解一下Go语言，通过建立一个宏观的印象，来熟悉一下Go这门语言，消除陌生的感觉。 首先要强调的是，Go是一门通用语言，这也就意味着，不管是Java、C#、Python还是PHP，这些语言可以做到的事情，理论上Go都可以做；Go可以做到的事情，理论上这些语言也都可以做到。 因此，我们在选择一门技术的时候，都是选择去">
+<meta name="keywords" content="Golang,学习">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言从入门到实战（一）">
+<meta property="og:url" content="http://yoursite.com/2019/09/24/Go语言从入门到实战（一）/index.html">
+<meta property="og:site_name" content="SherlockGy&#39;s Blog">
+<meta property="og:description" content="Go语言从入门到实战（一）一、为什么要学习Go语言在开始我们的学习旅程之前，我们先来了解一下Go语言，通过建立一个宏观的印象，来熟悉一下Go这门语言，消除陌生的感觉。 首先要强调的是，Go是一门通用语言，这也就意味着，不管是Java、C#、Python还是PHP，这些语言可以做到的事情，理论上Go都可以做；Go可以做到的事情，理论上这些语言也都可以做到。 因此，我们在选择一门技术的时候，都是选择去">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-24T19:34:56.907Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Go语言从入门到实战（一）">
+<meta name="twitter:description" content="Go语言从入门到实战（一）一、为什么要学习Go语言在开始我们的学习旅程之前，我们先来了解一下Go语言，通过建立一个宏观的印象，来熟悉一下Go这门语言，消除陌生的感觉。 首先要强调的是，Go是一门通用语言，这也就意味着，不管是Java、C#、Python还是PHP，这些语言可以做到的事情，理论上Go都可以做；Go可以做到的事情，理论上这些语言也都可以做到。 因此，我们在选择一门技术的时候，都是选择去">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="SherlockGy's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/09/24/Go语言从入门到实战（一）/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Go语言从入门到实战（一） | SherlockGy's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <a href="https://github.com/SherlockGy" class="github-corner" aria-label="View source on Github">
+      <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; left: 0; transform: scale(-1, 1);" aria-hidden="true">
+      <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    </a>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SherlockGy's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />分类</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/24/Go语言从入门到实战（一）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="SherlockGy">
+      <meta itemprop="description" content="Keep thinking different...">
+      <meta itemprop="image" content="https://SherlockGy.github.io/img/siri.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SherlockGy's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Go语言从入门到实战（一）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-09-24 21:50:37" itemprop="dateCreated datePublished" datetime="2019-09-24T21:50:37+08:00">2019-09-24</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-09-25 03:34:56" itemprop="dateModified" datetime="2019-09-25T03:34:56+08:00">2019-09-25</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/程序人生/" itemprop="url" rel="index"><span itemprop="name">程序人生</span></a></span>
+
+                
+                
+                  >
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/程序人生/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">5.4k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">5 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Go语言从入门到实战（一）"><a href="#Go语言从入门到实战（一）" class="headerlink" title="Go语言从入门到实战（一）"></a>Go语言从入门到实战（一）</h1><h2 id="一、为什么要学习Go语言"><a href="#一、为什么要学习Go语言" class="headerlink" title="一、为什么要学习Go语言"></a>一、为什么要学习Go语言</h2><p>在开始我们的学习旅程之前，我们先来了解一下Go语言，通过建立一个宏观的印象，来熟悉一下Go这门语言，消除陌生的感觉。</p>
+<p>首先要强调的是，Go是一门<strong>通用语言</strong>，这也就意味着，不管是<code>Java</code>、<code>C#</code>、<code>Python</code>还是<code>PHP</code>，这些语言可以做到的事情，理论上<code>Go</code>都可以做；Go可以做到的事情，理论上这些语言也都可以做到。</p>
+<p>因此，我们在选择一门技术的时候，都是选择去看他<strong>最擅长</strong>的方面。</p>
+<p>但是先别急，我们不妨先去探究一下，<code>Go</code>为什么会被发明？或者说，<code>Go</code>是为了解决什么样的问题而诞生的呢？当我们搞清楚这个问题，<code>Go</code>语言擅长做什么这个问题，也就不言自明了。</p>
+<p>2007年前后，软件开发迎来了新挑战，主要包括：</p>
+<ul>
+<li>摩尔定律逐渐失效，多核硬件架构的广泛应用</li>
+<li>超大规模分布式计算集群</li>
+<li>Web模式导致的前所未有的开发规模和更新速度</li>
+</ul>
+<p>而为了解决这些问题，Google的三位大牛合作创造了Go语言：Rob Pike、Ken Thompson、Robert Griesemer。</p>
+<ul>
+<li><p>Rob Pike：Unix早期开发者、UTF-8创始人、Plan9操作系统创始人</p>
+</li>
+<li><p>Ken Thompson：Unix创始人、B语言创始人、UTF-8创始人、参与设计正则表达式、1983年图灵奖获得者</p>
+</li>
+<li><p>Robert Griesemer：Google V8 JS Engine开发者、Java Hot Spot开发者</p>
+</li>
+</ul>
+<p>所以我们学习Go语言，其最主要的应用场景就是上面所提到的：多核架构下，超大规模集群的项目的开发。</p>
+<p>而天生目标明确的Go语言，毫无疑问的具备鲜明的特点，让我们来一一了解。</p>
+<h2 id="二、Go语言的特点"><a href="#二、Go语言的特点" class="headerlink" title="二、Go语言的特点"></a>二、Go语言的特点</h2><h3 id="2-1-简约"><a href="#2-1-简约" class="headerlink" title="2.1 简约"></a>2.1 简约</h3><p>Go语言所倡导的思想是“Less is more”，他的创造者们希望能用尽量简单的方法，去完成我们的工作，但是Go语言的简约不等于其简单，他的威力丝毫没有因为其简约的设计而弱于其他的编程语言。</p>
+<p>Go语言设计的简约性可以体现在以下几个方面：</p>
+<p>首先，就是关键字的数量：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">C</th>
+<th style="text-align:center">Go</th>
+<th style="text-align:center">C++ 11</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">37</td>
+<td style="text-align:center">25</td>
+<td style="text-align:center">84</td>
+</tr>
+</tbody>
+</table>
+<p>我们都知道<code>C</code>是一门简单而强大的系统级语言，而<code>Go</code>甚至做到了关键字的数量比他还要少；而<code>C++</code>是与<code>Go</code>语言的理念截然相反的，<code>C++</code>几乎吸收了所有他能吸收的特性，导致了他虽然功能强大，但是过于复杂。</p>
+<h3 id="2-2-性能"><a href="#2-2-性能" class="headerlink" title="2.2 性能"></a>2.2 性能</h3><p>Go语言的特点不仅仅在于简约的设计，更少不了的是他强大的执行速度。</p>
+<p>大家都知道<code>Python</code>也是一门上手迅速的编程语言，深受很多程序员的喜爱，然而他的问题就在于作为一门<code>解释性语言</code>性能较弱，因此，<code>Python</code>常用于一些对性能要求不高的地方，如充当“胶水语言”。</p>
+<p>而<code>Go</code>作为一门编译型语言，其拥有超越<code>Java</code>的执行速度；又因为他的简约的设计，他还拥有接近<code>Python</code>的开发速度。同时具备这两个特性，使得Go语言充满了吸引力。</p>
+<h3 id="2-3-组合的编程思想"><a href="#2-3-组合的编程思想" class="headerlink" title="2.3 组合的编程思想"></a>2.3 组合的编程思想</h3><p><code>组合</code>是一种比起传统<code>面向对象</code>编程语言当中的<code>继承</code>更加灵活的编程思想。</p>
+<p><code>组合</code>是<code>has-a</code>的关系，而<code>继承</code>是<code>is-a</code>的关系。这种设计的优越性在于可以进一步的降低<code>耦合</code>，实现更小的<code>封装</code>从而保证功能的专注和单一。我们会在后面的学习中更加深入地感受到这种设计的优越性。</p>
+<p>当然，没有最好的设计，只有更适合的设计。<code>组合</code>并不能全盘否定<code>继承</code>的价值。不过对于<code>Go</code>语言来说，<code>组合</code>更加接近其设计思想。</p>
+<p>因此，我们在学习和使用<code>Go</code>的过程中，需要训练自己使用<code>组合</code>的方式来思考问题，而不是把<code>Go</code>的代码，写成了<code>Go</code>语法版本的<code>Java</code></p>
+<h2 id="三、Go语言的Killer-Application"><a href="#三、Go语言的Killer-Application" class="headerlink" title="三、Go语言的Killer Application"></a>三、Go语言的Killer Application</h2><p>对于一门技术来说，最为重要的除了其即将能创造的价值以外，还有就是已经创造的价值。对一门编程语言来说，如果它曾经实现过<strong>杀手级应用</strong>，那么毫无疑问，对于该语言的推动与发展都是大有裨益的。</p>
+<p>因为，这一方面杀手级应用证明了该语言开发复杂系统的能力，而不仅仅是一个大牛开发的玩具；另一方面，杀手级应用可以将部分应用自身的用户转化为开发该应用的技术的使用者。</p>
+<blockquote>
+<p><strong>杀手级应用</strong>（<strong>Killer application</strong>）是指一个极具价值的计算机程序或服务，消费者愿意为这个程序或服务购买特定硬件、软件产品或服务。——中文维基</p>
+</blockquote>
+<p><code>Go</code>语言就拥有数个杀手级应用：</p>
+<p>用于云计算的两个关键应用是Go语言开发：</p>
+<ul>
+<li>Docker</li>
+<li>Kubernetes</li>
+</ul>
+<p>用于区块链的杀手级应用和Go兼容最好：</p>
+<ul>
+<li>Ethereum</li>
+<li>Hyperledger</li>
+</ul>
+<p>以及不得不提的：Go语言自身的编译器也是使用Go语言实现。这样的方式被称为：<strong>自举</strong></p>
+<h2 id="四、Go语言的安装和准备工作"><a href="#四、Go语言的安装和准备工作" class="headerlink" title="四、Go语言的安装和准备工作"></a>四、Go语言的安装和准备工作</h2><h3 id="4-1-下载Go安装程序"><a href="#4-1-下载Go安装程序" class="headerlink" title="4.1 下载Go安装程序"></a>4.1 下载Go安装程序</h3><p>因为Google退出中国大陆的原因，我们正常无法直接从官方网站下载<code>Go</code>安装程序，推荐前往地址：<a href="https://studygolang.com/dl" target="_blank" rel="noopener">Go语言中文网</a>下载。</p>
+<p>如果是Mac OS的用户，可以使用<code>home brew</code>安装。</p>
+<h3 id="4-2-官网与文档"><a href="#4-2-官网与文档" class="headerlink" title="4.2 官网与文档"></a>4.2 官网与文档</h3><p>Golang的官网是<a href="https://golang.org" target="_blank" rel="noopener">https://golang.org</a>，不过因为上面提到的原因，国内不能正常访问，那么替代方案有这么几种：</p>
+<ul>
+<li><p>方案一：<a href="https://golang.google.cn/" target="_blank" rel="noopener">Google CN提供的镜像网站</a>：该网站最大的好处就是原版英文，可以获得等同于原官网的体验</p>
+</li>
+<li><p>方案二：<a href="https://go-zh.org/" target="_blank" rel="noopener">中文版官网</a>：该网站已经部分汉化了，可以帮助阅读英文有困难的同学们</p>
+</li>
+<li><p>方案三：使用Golang起一个本地服务：安装Golang后，在命令行里输入<code>godoc -http=:8080</code>，并在浏览器访问<code>http://localhost:8080/</code>即可访问本地官网（英文），8080是端口号，可以更改，这种方式优点在于不依赖网络</p>
+</li>
+<li><p>方案四：<a href="https://tip.golang.org/" target="_blank" rel="noopener">https://tip.golang.org/</a>是golang.org的完全限定域名，由Google提供，目前中国大陆可以正常访问</p>
+</li>
+</ul>
+<p><strong>提醒：</strong>针对上面的【方案三】，需要补充说明一点：新版的<code>Go</code>安装程序已经不在包含<code>godoc</code>，必须自行安装<code>godoc</code>（中国大陆需要代理）。</p>
+<h3 id="4-3-Go环境配置"><a href="#4-3-Go环境配置" class="headerlink" title="4.3 Go环境配置"></a>4.3 Go环境配置</h3><p>在此之前，我们先学习两个命令：</p>
+<ol>
+<li>查看当前Go语言版本：<code>go version</code></li>
+<li>查看当前Go语言环境设置：<code>go env</code></li>
+</ol>
+<p>好，那我们开始吧：</p>
+<p>配置环境变量<code>GOPATH</code>是至关重要的一个环节。所谓<code>GOPATH</code>，就是我们存放代码、编译程序的工作目录。</p>
+<p>可以自己随意选择一个目录作为“GoPath”，然后将其配置到环境变量当中（具体配置方法可以参考【4.4设置代理】）</p>
+<p>GoPath路径下的目录结构应该是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">GOPATH</span><br><span class="line">|-src（必要，请自行创建）</span><br><span class="line">|-pkg</span><br><span class="line">|-bin</span><br></pre></td></tr></table></figure>
+<p>其中，我们的代码就存放在<code>src</code>目录下，包括我们从网络上拉取的第三方包，也会存放在这里。</p>
+<p><strong>建议：</strong>将<code>你的GoPath路径/bin</code>【追加】到环境变量<code>PATH</code>里（请自行解决），以确保可以调用<code>Go</code>语言开发的工具</p>
+<p><strong>提示：</strong>从版本1.11开始，我们并不一定要将自己的代码写在GoPath目录下，具体请参见后面介绍“Go Mod”的文章</p>
+<h3 id="4-4-设置代理"><a href="#4-4-设置代理" class="headerlink" title="4.4 设置代理"></a>4.4 设置代理</h3><p><code>Go</code>为我们提供了非常好用的工具<code>go get</code>，可以直接从网络拉取依赖包（例如：github），但是由于下载速度并不理想，且部分存放在Google服务器上的包文件无法正常获取（中国大陆），我们还是通过配置代理来解决吧。</p>
+<p><strong>推荐方法：</strong></p>
+<p>如果你的<code>Go</code>版本大于等于1.13，可以直接使用以下命令配置代理：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> go env -w GOPROXY=https://goproxy.cn,direct</span></span><br></pre></td></tr></table></figure>
+<p><strong>通用方法：</strong></p>
+<p>如果上述推荐方法不适用，或者没有效果，那么我们可以手工配置：</p>
+<ul>
+<li>Windows：添加系统环境变量，<code>GOPROXY</code>，值为<code>https://goproxy.cn</code>；如果你的版本大于等于1.13，值则为<code>https://goproxy.cn,direct</code></li>
+<li>Mac：在目录<code>~/.bash_profile</code>文件下添加：<code>export GOPROXY=https://goproxy.cn</code>，保存并退出；如果你的版本大于等于1.13，则为<code>export GOPROXY=https://goproxy.cn,direct</code></li>
+<li>Mac（补充）：如果你的shell不是<code>bash</code>而是<code>zsh</code>，那么则是在该文件下操作：<code>~/.zshrc</code>。或者，依然在<code>~/.bash_profile</code>文件下操作，但是必须将<code>source ~/.bash_profile</code>配置添加入<code>~/.zshrc</code></li>
+<li>Mac（提醒）：你可以执行<code>source ~/.bash_profile</code>或<code>~/.zshrc</code>使环境变量配置立刻生效</li>
+</ul>
+<p>至此，你的<code>go get</code>命令可以正常工作了。</p>
+<h3 id="4-5-开发工具"><a href="#4-5-开发工具" class="headerlink" title="4.5 开发工具"></a>4.5 开发工具</h3><p><code>Go</code>语言可以使用的开发工具还是比较丰富的，这里稍微列举几种：</p>
+<ol>
+<li>GoLand：Jetbrains家的专业IDE，和大名鼎鼎的Java IDE工具“intellij idea”同门。缺点：收费</li>
+<li>liteide：由中国人自己开发的Go语言IDE工具，免费。<a href="https://github.com/visualfc/liteide/blob/master/liteidex/deploy/welcome/zh_CN/install.md" target="_blank" rel="noopener">下载说明</a>在此，建议下载二进制文件，而不是手动编译</li>
+<li>Eclipse + Goclipse：经典IDE Eclipse通过安装插件支持Go语言开发，免费</li>
+<li>VsCode、Atom、Sublime等 + 插件：代码编辑器（Editor）相比IDE更加轻量，同样免费</li>
+<li>Vim、Emacs + 插件</li>
+</ol>
+<h2 id="五、Go快速上手"><a href="#五、Go快速上手" class="headerlink" title="五、Go快速上手"></a>五、Go快速上手</h2><p>在第一篇文章的最后，我们一起来快速上手一下<code>Go</code>代码的编写吧。</p>
+<h3 id="5-1-Hello-World"><a href="#5-1-Hello-World" class="headerlink" title="5.1 Hello World"></a>5.1 Hello World</h3><ol>
+<li><p>在你的GoPath目录下的src目录内，创建项目目录（名称自取）。</p>
+</li>
+<li><p>在项目目录下，创建文件hello.go（名称自取）</p>
+</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 声明包</span></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="comment">// 导入包</span></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 主函数</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="comment">// 向控制台输出文本内容</span></span><br><span class="line">	fmt.Println(<span class="string">"Hello World"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行代码：</p>
+<p>在<code>.go</code>文件所在目录下，执行命令：<code>go run hello.go</code></p>
+<p>控制台输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Hello World</span><br></pre></td></tr></table></figure>
+<h3 id="5-2-解释说明"><a href="#5-2-解释说明" class="headerlink" title="5.2 解释说明"></a>5.2 解释说明</h3><p><strong>第1行：</strong></p>
+<p><code>Go</code>语言的单行注释，不参与程序执行</p>
+<p>多行注释则为：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">	fmt.Println("Hello World")</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><strong>第2行：</strong></p>
+<p><code>Go</code>和其他很多语言一样，使用<code>包</code>来管理和组织代码，其中规则如下：</p>
+<ol>
+<li>同一个目录下，所有<code>.go</code>文件的包名必须一致</li>
+<li><code>main</code>包下，必须有且只能有一个<code>main</code>函数</li>
+<li>目录的名称不一定非要和包名一致</li>
+<li><code>main</code>方法所在的文件的文件名不要求是<code>main.go</code></li>
+</ol>
+<p><strong>第5、6、7行：</strong></p>
+<p>导入依赖包，其中规则如下：</p>
+<ol>
+<li>当需要导入的包仅有一个时，可以简写成一行：<code>import &quot;fmt&quot;</code></li>
+<li>包可以设置别名，如<code>import f &quot;fmt&quot;</code></li>
+<li>导入的包，一般必须使用，否则编译不通过</li>
+<li>如果不使用导入的包，且想要通过编译，需要将下划线<code>_</code>作为包别名：<code>import _ &quot;fmt&quot;</code></li>
+</ol>
+<p><strong>第10行：</strong></p>
+<p><code>main函数</code>是整个程序的入口，具体规则如下：</p>
+<ol>
+<li>该示例中，<code>main函数</code>声明为唯一写法。即：没有参数列表、没有返回值</li>
+<li><code>main</code>包下必须有一个<code>main函数</code>，并且只能有一个<code>main函数</code></li>
+<li><code>Go</code>语言中，所有函数声明均是使用<code>func</code>关键字</li>
+<li><code>Go</code>语言中，函数体使用<strong>花括号</strong>包围，且<strong>左花括号不能另起一行</strong></li>
+</ol>
+<p><strong>第12行：</strong></p>
+<p>函数的调用，具体规则如下：</p>
+<ol>
+<li>函数&amp;表达式结尾均<strong>不需要添加分号</strong></li>
+<li>一般情况下，调用包函数必须写上<code>包名.</code>。如果需要省略这个部分，可以使用点<code>.</code>作为包别名：<code>import . &quot;fmt&quot;</code></li>
+<li><code>Go</code>语言中，函数名&amp;变量名的首字母大小写均代表<strong>包外可见性</strong>。大写代表可见，反之不可见</li>
+</ol>
+<h3 id="5-3-程序退出码"><a href="#5-3-程序退出码" class="headerlink" title="5.3 程序退出码"></a>5.3 程序退出码</h3><p>我们可以用程序<strong>退出码</strong>来表示程序的执行结果，如：返回0代表执行成功，其他则代表出现异常</p>
+<p>由于<code>Go</code>语言<code>main函数</code>不支持返回值，所以我们需要给<code>os</code>包下的<code>Exit()</code>函数传值实现</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"Hello World"</span>)</span><br><span class="line">  <span class="comment">// 设置程序退出码</span></span><br><span class="line">	os.Exit(<span class="number">0</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>注意：</strong>这里的退出码范围为0～255，如果传递-1，则会当作255</p>
+<h3 id="5-4-传递命令行参数"><a href="#5-4-传递命令行参数" class="headerlink" title="5.4 传递命令行参数"></a>5.4 传递命令行参数</h3><p>实用的命令行工具都需要传递参数给我们的程序，由于<code>Go</code>的<code>main函数</code>没有参数列表，所以需要使用<code>os</code>包下的<code>Args()</code>函数去接收命令行参数</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="comment">// 获取并打印命令行参数</span></span><br><span class="line">	fmt.Println(os.Args[<span class="number">1</span>])</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此处<code>Args()</code>函数返回的是一个<code>字符串切片</code>，关于<code>字符串切片</code>我们后面会学习到。这里我们只需要明白，<code>[0]</code>代表取出列表中的第一个元素，而<code>[1]</code>就是取出第二个元素</p>
+<p><code>Args()</code>函数返回的第一个元素（即下标0）永远是程序本身，而第二个元素（下标1）就是我们传入的第一个参数，以此类推…</p>
+<p>执行上面的代码：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> go run Hello.go haha</span></span><br></pre></td></tr></table></figure>
+<p>控制台输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">haha</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Golang/" rel="tag"><i class="fa fa-tag"></i> Golang</a>
+          
+            <a href="/tags/学习/" rel="tag"><i class="fa fa-tag"></i> 学习</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/03/Go操作文件IO读与写/" rel="next" title="Go操作文件IO读与写">
+                <i class="fa fa-chevron-left"></i> Go操作文件IO读与写
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/09/28/Go语言从入门到实战（二）/" rel="prev" title="Go语言从入门到实战（二）">
+                Go语言从入门到实战（二） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zNjk4OC8xMzUyNA=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="https://SherlockGy.github.io/img/siri.jpeg"
+                alt="SherlockGy" />
+            
+              <p class="site-author-name" itemprop="name">SherlockGy</p>
+              <p class="site-description motion-element" itemprop="description">Keep thinking different...</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">111</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">38</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">62</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/SherlockGy" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:479920157@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=404610&auto=0&height=66"></iframe>
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                友情链接
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="www.flysnow.org/categories/Golang/" title="GoLang-飞雪无情的博客" target="_blank">GoLang-飞雪无情的博客</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://coolshell.cn" title="Java-酷壳" target="_blank">Java-酷壳</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://cuiqingcai.com" title="Python-静觅丨崔庆才的个人博客" target="_blank">Python-静觅丨崔庆才的个人博客</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://juejin.im" title="掘金" target="_blank">掘金</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.golangtc.com" title="GoLang中国" target="_blank">GoLang中国</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://studygolang.com/" title="GoLang中文社区" target="_blank">GoLang中文社区</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.v2ex.com" title="V2EX" target="_blank">V2EX</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://docs.microsoft.com/zh-cn/" title="Microsoft Docs" target="_blank">Microsoft Docs</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://books.studygolang.com/gopl-zh/" title="Go语言圣经" target="_blank">Go语言圣经</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Go语言从入门到实战（一）"><span class="nav-number">1.</span> <span class="nav-text">Go语言从入门到实战（一）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、为什么要学习Go语言"><span class="nav-number">1.1.</span> <span class="nav-text">一、为什么要学习Go语言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、Go语言的特点"><span class="nav-number">1.2.</span> <span class="nav-text">二、Go语言的特点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-简约"><span class="nav-number">1.2.1.</span> <span class="nav-text">2.1 简约</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-性能"><span class="nav-number">1.2.2.</span> <span class="nav-text">2.2 性能</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-组合的编程思想"><span class="nav-number">1.2.3.</span> <span class="nav-text">2.3 组合的编程思想</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、Go语言的Killer-Application"><span class="nav-number">1.3.</span> <span class="nav-text">三、Go语言的Killer Application</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、Go语言的安装和准备工作"><span class="nav-number">1.4.</span> <span class="nav-text">四、Go语言的安装和准备工作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-下载Go安装程序"><span class="nav-number">1.4.1.</span> <span class="nav-text">4.1 下载Go安装程序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-官网与文档"><span class="nav-number">1.4.2.</span> <span class="nav-text">4.2 官网与文档</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-Go环境配置"><span class="nav-number">1.4.3.</span> <span class="nav-text">4.3 Go环境配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-4-设置代理"><span class="nav-number">1.4.4.</span> <span class="nav-text">4.4 设置代理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-开发工具"><span class="nav-number">1.4.5.</span> <span class="nav-text">4.5 开发工具</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、Go快速上手"><span class="nav-number">1.5.</span> <span class="nav-text">五、Go快速上手</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-Hello-World"><span class="nav-number">1.5.1.</span> <span class="nav-text">5.1 Hello World</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-解释说明"><span class="nav-number">1.5.2.</span> <span class="nav-text">5.2 解释说明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-程序退出码"><span class="nav-number">1.5.3.</span> <span class="nav-text">5.3 程序退出码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-传递命令行参数"><span class="nav-number">1.5.4.</span> <span class="nav-text">5.4 传递命令行参数</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SherlockGy</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">191k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">2:false</span>
+  
+</div>
+
+
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动 v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Pisces</a> v6.3.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.3.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  <!-- 页面点击小红心 -->
+  <script type="text/javascript" src="/js/src/love.js"></script>
+</body>
+</html>
