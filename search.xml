@@ -423,9 +423,9 @@
       </tags>
   </entry>
   <entry>
-    <title><![CDATA[Swift语言快速入门03——字符串和集合类型]]></title>
-    <url>%2F2019%2F03%2F31%2FSwift%E8%AF%AD%E8%A8%80%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A803%E2%80%94%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%92%8C%E9%9B%86%E5%90%88%E7%B1%BB%E5%9E%8B%2F</url>
-    <content type="text"><![CDATA[说明本系列是自学经历的笔记，不提供多余文字说明，默认有编程基础 正文1234567891011121314151617181920212223242526272829303132333435// 1. 用Character类型定义字符串var a : Character = "好"// 2. 遍历字符串var str = "我爱中国"for i in str &#123; print(i)&#125;// 3. 获得字符串的下标，并通过下标取出字符串中的字符var str2 = "我爱中国"let index = str2.index(str2.startIndex, offsetBy: 2)print(str2[index])// 4. 字符串和字符拼接，不能使用+号var ch : Character = "国"var begin : String = "我爱中"begin.append(ch)print(begin)// 5. 使用Tuple打包数据let success = (200, "HTTP ok")let fileNotFound = (404, "File not found")success.0success.1type(of: success) // 类型：(Int, String)组成的Tuplelet me = (name : "Sherlock", age : 23, job : "Developer") // 让Tuple更容易取值me.nameme.jobvar (successCode, successMsg) = success // 使用Tuple给多个变量赋值successCodesuccessMsg]]></content>
+    <title><![CDATA[Swift语言快速入门02——基本运算符]]></title>
+    <url>%2F2019%2F03%2F31%2FSwift%E8%AF%AD%E8%A8%80%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A802%E2%80%94%E2%80%94%E5%9F%BA%E6%9C%AC%E8%BF%90%E7%AE%97%E7%AC%A6%2F</url>
+    <content type="text"><![CDATA[说明本系列是自学经历的笔记，不提供多余文字说明，默认有编程基础 正文123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263// 1. 算术运算let a = 10let b = 20a + b"3" + ".14" // 字符串拼接// 2. 赋值运算符let c = a// 3. 求余数b % aa % b// 4. 组合赋值运算符var d = 1d += 1 // 等同于d = d + 1print(d)// 5. 比较运算符let A = 10let B = 20print(A == B)print(A &gt; B)print(A != B)// 6. 三元运算符let C = 10let D = 20let E = C &gt; D ? C : 100print(E)// 7. 空合运算符let F : String? = nilprint(F ?? "123")// 8. 区间运算符// 8.1 闭区间运算符// a...bprint("开始打印闭区间运算符...")for i in 1...5 &#123; print(i)&#125;print("打印闭区间运算符结束")// 8.2 半开区间运算符print("开始打印半开区间运算符...")for i in 1..&lt;5 &#123; print(i)&#125;print("打印半开区间运算符结束")// 8.3 单侧区间运算符let arr1 = [1, 2, 3, 4, 5]print("打印单侧区间运算符开始...")for i in arr1[..&lt;2] &#123; // 打印索引为0、1的元素 print(i)&#125;print("打印单侧区间运算符结束")// 9. 逻辑运算符// 与、或、非// &amp;&amp; || !]]></content>
       <categories>
         <category>程序人生</category>
         <category>Swift</category>
@@ -437,9 +437,9 @@
       </tags>
   </entry>
   <entry>
-    <title><![CDATA[Swift语言快速入门02——基本运算符]]></title>
-    <url>%2F2019%2F03%2F31%2FSwift%E8%AF%AD%E8%A8%80%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A802%E2%80%94%E2%80%94%E5%9F%BA%E6%9C%AC%E8%BF%90%E7%AE%97%E7%AC%A6%2F</url>
-    <content type="text"><![CDATA[说明本系列是自学经历的笔记，不提供多余文字说明，默认有编程基础 正文123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263// 1. 算术运算let a = 10let b = 20a + b"3" + ".14" // 字符串拼接// 2. 赋值运算符let c = a// 3. 求余数b % aa % b// 4. 组合赋值运算符var d = 1d += 1 // 等同于d = d + 1print(d)// 5. 比较运算符let A = 10let B = 20print(A == B)print(A &gt; B)print(A != B)// 6. 三元运算符let C = 10let D = 20let E = C &gt; D ? C : 100print(E)// 7. 空合运算符let F : String? = nilprint(F ?? "123")// 8. 区间运算符// 8.1 闭区间运算符// a...bprint("开始打印闭区间运算符...")for i in 1...5 &#123; print(i)&#125;print("打印闭区间运算符结束")// 8.2 半开区间运算符print("开始打印半开区间运算符...")for i in 1..&lt;5 &#123; print(i)&#125;print("打印半开区间运算符结束")// 8.3 单侧区间运算符let arr1 = [1, 2, 3, 4, 5]print("打印单侧区间运算符开始...")for i in arr1[..&lt;2] &#123; // 打印索引为0、1的元素 print(i)&#125;print("打印单侧区间运算符结束")// 9. 逻辑运算符// 与、或、非// &amp;&amp; || !]]></content>
+    <title><![CDATA[Swift语言快速入门03——字符串和集合类型]]></title>
+    <url>%2F2019%2F03%2F31%2FSwift%E8%AF%AD%E8%A8%80%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A803%E2%80%94%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%92%8C%E9%9B%86%E5%90%88%E7%B1%BB%E5%9E%8B%2F</url>
+    <content type="text"><![CDATA[说明本系列是自学经历的笔记，不提供多余文字说明，默认有编程基础 正文1234567891011121314151617181920212223242526272829303132333435// 1. 用Character类型定义字符串var a : Character = "好"// 2. 遍历字符串var str = "我爱中国"for i in str &#123; print(i)&#125;// 3. 获得字符串的下标，并通过下标取出字符串中的字符var str2 = "我爱中国"let index = str2.index(str2.startIndex, offsetBy: 2)print(str2[index])// 4. 字符串和字符拼接，不能使用+号var ch : Character = "国"var begin : String = "我爱中"begin.append(ch)print(begin)// 5. 使用Tuple打包数据let success = (200, "HTTP ok")let fileNotFound = (404, "File not found")success.0success.1type(of: success) // 类型：(Int, String)组成的Tuplelet me = (name : "Sherlock", age : 23, job : "Developer") // 让Tuple更容易取值me.nameme.jobvar (successCode, successMsg) = success // 使用Tuple给多个变量赋值successCodesuccessMsg]]></content>
       <categories>
         <category>程序人生</category>
         <category>Swift</category>
@@ -694,8 +694,8 @@
         <category>Mac</category>
       </categories>
       <tags>
-        <tag>Mac</tag>
         <tag>Linux</tag>
+        <tag>Mac</tag>
         <tag>系统配置</tag>
       </tags>
   </entry>
