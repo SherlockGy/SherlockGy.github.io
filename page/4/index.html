@@ -560,223 +560,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/21/Go语言实用库01——正则表达式/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="SherlockGy">
-      <meta itemprop="description" content="Keep thinking different...">
-      <meta itemprop="image" content="https://SherlockGy.github.io/img/siri.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SherlockGy's Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/10/21/Go语言实用库01——正则表达式/" itemprop="url">
-                  Go语言实用库01——正则表达式
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-10-21 20:53:56" itemprop="dateCreated datePublished" datetime="2019-10-21T20:53:56+08:00">2019-10-21</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-10-26 01:11:17" itemprop="dateModified" datetime="2019-10-26T01:11:17+08:00">2019-10-26</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/程序人生/" itemprop="url" rel="index"><span itemprop="name">程序人生</span></a></span>
-
-                
-                
-                  >
-                
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/程序人生/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-            <div class="post-symbolscount">
-              
-
-              
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-file-word-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">本文字数：</span>
-                
-                <span title="本文字数">1.8k</span>
-              
-
-              
-                <span class="post-meta-divider">|</span>
-              
-
-              
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-clock-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
-                
-                <span title="阅读时长">2 分钟</span>
-              
-            </div>
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h1 id="Go语言中的正则表达式"><a href="#Go语言中的正则表达式" class="headerlink" title="Go语言中的正则表达式"></a>Go语言中的正则表达式</h1><h2 id="一、正则表达式匹配"><a href="#一、正则表达式匹配" class="headerlink" title="一、正则表达式匹配"></a>一、正则表达式匹配</h2><h3 id="1-1-匹配单个子串"><a href="#1-1-匹配单个子串" class="headerlink" title="1.1 匹配单个子串"></a>1.1 匹配单个子串</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">"my email is sherlockjgy@gmail.com"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 正则表达式规则声明，解析正则表达式</span></span><br><span class="line">	<span class="comment">// 返回Regexp对象，用于后续操作</span></span><br><span class="line">	compile, err := regexp.Compile(<span class="string">`[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+`</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"你的正则表达式存在语法错误！"</span>)</span><br><span class="line">    &#125;  </span><br><span class="line">    <span class="comment">// 从目标字符串当中查找是否存在符合正则表达式规则的字符子串</span></span><br><span class="line">    <span class="comment">// 返回true or false</span></span><br><span class="line">	isMatch := compile.MatchString(str)</span><br><span class="line">	fmt.Printf(<span class="string">"目标字符串中是否存在符合规则的子串：%v\n"</span>, isMatch) <span class="comment">// true</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从目标字符串当中查找并返回符合正则表达式规则的字符子串</span></span><br><span class="line">    <span class="comment">// 若不存在，则返回空串</span></span><br><span class="line">	matchString := compile.FindString(str)</span><br><span class="line">	fmt.Println(matchString) <span class="comment">// sherlockjgy@gmail.com</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><strong>提醒：</strong>建议将正则表达式规则书写在【`】引号（键盘1左边的按键）中，这样Go语言不会解析表达式中的转义字符，否则每个斜杠都需要双斜杠代替</p>
-</blockquote>
-<h3 id="1-2-匹配多个子串"><a href="#1-2-匹配多个子串" class="headerlink" title="1.2 匹配多个子串"></a>1.2 匹配多个子串</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">`my email are sherlockjgy@gmail.com</span></span><br><span class="line"><span class="string">and shelockgy@live.com`</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 正则表达式规则声明，解析正则表达式</span></span><br><span class="line">	<span class="comment">// 返回Regexp对象，用于后续操作</span></span><br><span class="line">	compile, err := regexp.Compile(<span class="string">`[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+`</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"你的正则表达式存在语法错误！"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从目标字符串当中查找并返回【多个】符合正则表达式规则的字符子串</span></span><br><span class="line">    <span class="comment">// 第二个参数代表需要查询多少个符合要求的子串，-1代表查询所有</span></span><br><span class="line">	matchString := compile.FindAllString(str, <span class="number">-1</span>)</span><br><span class="line">	fmt.Println(matchString, <span class="built_in">len</span>(matchString)) <span class="comment">// [sherlockjgy@gmail.com shelockgy@live.com] 2</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="1-3-字符串匹配并分组"><a href="#1-3-字符串匹配并分组" class="headerlink" title="1.3 字符串匹配并分组"></a>1.3 字符串匹配并分组</h3><p>在正则表达式中运用小括号，可以对被匹配成功对子串进行分组</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">`my email are sherlockjgy@gmail.com</span></span><br><span class="line"><span class="string">and shelockgy@live.com</span></span><br><span class="line"><span class="string">and helloworld@test.com.cn`</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 正则表达式规则声明，解析正则表达式</span></span><br><span class="line">	<span class="comment">// 返回Regexp对象，用于后续操作</span></span><br><span class="line">	compile, err := regexp.Compile(<span class="string">`([A-Za-z0-9]+)@([A-Za-z0-9]+)([.A-Za-z0-9]+)`</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"你的正则表达式存在语法错误！"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 返回一个二维数组</span></span><br><span class="line">	matchString := compile.FindAllStringSubmatch(str, <span class="number">-1</span>)</span><br><span class="line">	<span class="keyword">for</span> _, value := <span class="keyword">range</span> matchString &#123;</span><br><span class="line">		fmt.Println(value)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>输出：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[sherlockjgy@gmail.com sherlockjgy gmail .com]</span><br><span class="line">[shelockgy@live.com shelockgy live .com]</span><br><span class="line">[helloworld@test.com.cn helloworld test .com.cn]</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2019/10/21/Go语言实用库01——正则表达式/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/21/Go语言实用库02——文本编码/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -940,6 +723,223 @@
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2019/10/21/Go语言实用库02——文本编码/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/21/Go语言实用库01——正则表达式/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="SherlockGy">
+      <meta itemprop="description" content="Keep thinking different...">
+      <meta itemprop="image" content="https://SherlockGy.github.io/img/siri.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SherlockGy's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/21/Go语言实用库01——正则表达式/" itemprop="url">
+                  Go语言实用库01——正则表达式
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-10-21 20:53:56" itemprop="dateCreated datePublished" datetime="2019-10-21T20:53:56+08:00">2019-10-21</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-10-26 01:11:17" itemprop="dateModified" datetime="2019-10-26T01:11:17+08:00">2019-10-26</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/程序人生/" itemprop="url" rel="index"><span itemprop="name">程序人生</span></a></span>
+
+                
+                
+                  >
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/程序人生/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">1.8k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">2 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h1 id="Go语言中的正则表达式"><a href="#Go语言中的正则表达式" class="headerlink" title="Go语言中的正则表达式"></a>Go语言中的正则表达式</h1><h2 id="一、正则表达式匹配"><a href="#一、正则表达式匹配" class="headerlink" title="一、正则表达式匹配"></a>一、正则表达式匹配</h2><h3 id="1-1-匹配单个子串"><a href="#1-1-匹配单个子串" class="headerlink" title="1.1 匹配单个子串"></a>1.1 匹配单个子串</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">"my email is sherlockjgy@gmail.com"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 正则表达式规则声明，解析正则表达式</span></span><br><span class="line">	<span class="comment">// 返回Regexp对象，用于后续操作</span></span><br><span class="line">	compile, err := regexp.Compile(<span class="string">`[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+`</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"你的正则表达式存在语法错误！"</span>)</span><br><span class="line">    &#125;  </span><br><span class="line">    <span class="comment">// 从目标字符串当中查找是否存在符合正则表达式规则的字符子串</span></span><br><span class="line">    <span class="comment">// 返回true or false</span></span><br><span class="line">	isMatch := compile.MatchString(str)</span><br><span class="line">	fmt.Printf(<span class="string">"目标字符串中是否存在符合规则的子串：%v\n"</span>, isMatch) <span class="comment">// true</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从目标字符串当中查找并返回符合正则表达式规则的字符子串</span></span><br><span class="line">    <span class="comment">// 若不存在，则返回空串</span></span><br><span class="line">	matchString := compile.FindString(str)</span><br><span class="line">	fmt.Println(matchString) <span class="comment">// sherlockjgy@gmail.com</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><strong>提醒：</strong>建议将正则表达式规则书写在【`】引号（键盘1左边的按键）中，这样Go语言不会解析表达式中的转义字符，否则每个斜杠都需要双斜杠代替</p>
+</blockquote>
+<h3 id="1-2-匹配多个子串"><a href="#1-2-匹配多个子串" class="headerlink" title="1.2 匹配多个子串"></a>1.2 匹配多个子串</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">`my email are sherlockjgy@gmail.com</span></span><br><span class="line"><span class="string">and shelockgy@live.com`</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 正则表达式规则声明，解析正则表达式</span></span><br><span class="line">	<span class="comment">// 返回Regexp对象，用于后续操作</span></span><br><span class="line">	compile, err := regexp.Compile(<span class="string">`[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+`</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"你的正则表达式存在语法错误！"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从目标字符串当中查找并返回【多个】符合正则表达式规则的字符子串</span></span><br><span class="line">    <span class="comment">// 第二个参数代表需要查询多少个符合要求的子串，-1代表查询所有</span></span><br><span class="line">	matchString := compile.FindAllString(str, <span class="number">-1</span>)</span><br><span class="line">	fmt.Println(matchString, <span class="built_in">len</span>(matchString)) <span class="comment">// [sherlockjgy@gmail.com shelockgy@live.com] 2</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="1-3-字符串匹配并分组"><a href="#1-3-字符串匹配并分组" class="headerlink" title="1.3 字符串匹配并分组"></a>1.3 字符串匹配并分组</h3><p>在正则表达式中运用小括号，可以对被匹配成功对子串进行分组</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> str = <span class="string">`my email are sherlockjgy@gmail.com</span></span><br><span class="line"><span class="string">and shelockgy@live.com</span></span><br><span class="line"><span class="string">and helloworld@test.com.cn`</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 正则表达式规则声明，解析正则表达式</span></span><br><span class="line">	<span class="comment">// 返回Regexp对象，用于后续操作</span></span><br><span class="line">	compile, err := regexp.Compile(<span class="string">`([A-Za-z0-9]+)@([A-Za-z0-9]+)([.A-Za-z0-9]+)`</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"你的正则表达式存在语法错误！"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 返回一个二维数组</span></span><br><span class="line">	matchString := compile.FindAllStringSubmatch(str, <span class="number">-1</span>)</span><br><span class="line">	<span class="keyword">for</span> _, value := <span class="keyword">range</span> matchString &#123;</span><br><span class="line">		fmt.Println(value)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[sherlockjgy@gmail.com sherlockjgy gmail .com]</span><br><span class="line">[shelockgy@live.com shelockgy live .com]</span><br><span class="line">[helloworld@test.com.cn helloworld test .com.cn]</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2019/10/21/Go语言实用库01——正则表达式/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
