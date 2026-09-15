@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-a602ce05-124d-4822-95cf-374afc24ec42",
+      "title": "Java Agent 框架演变图谱",
+      "date": "2026-09-15",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "2a3f21d8cf88831fd8459e52fd24e2047589a9278ee17bb7d8b32fbe605943bd",
+      "images": [
+        {
+          "src": "./images/2026/09/album-a602ce05-124d-4822-95cf-374afc24ec42/001.png",
+          "alt": "Java Agent 框架演变图谱 · 第 1 页",
+          "width": 1672,
+          "height": 941
+        }
+      ]
+    },
+    {
       "id": "album-50d58605-016e-429c-91ea-1b4a361261b5",
       "title": "Agent 中的 Connector 是什么",
       "date": "2026-09-15",
