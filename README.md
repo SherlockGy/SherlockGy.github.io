@@ -47,7 +47,7 @@
 
 ## 对接 Cloudflare Worker
 
-在 `config.js` 中填写公开的 `uploadEndpoint` 即可启用发布按钮和上传口令。GitHub 凭据只能保存在 Worker 的 Secret 中，不能写入本仓库。当前仓库提供前端和接口约定，尚未部署 Worker。
+`config.js` 已填写 Worker 的公开地址。将 [worker.js](worker/worker.js) 粘贴到 Cloudflare 编辑器，并按照 [部署说明](worker/SETUP.md) 设置两个 Secret。GitHub 凭据只能保存在 Worker 的 Secret 中，不能写入本仓库。Worker 需在你的 Cloudflare 账户中完成部署，前端才可以实际发布图集。
 
 详见 [Worker 接口约定](docs/worker-api.md)。默认限制为 30 张、单张 10 MiB、合计 30 MiB；后端应实施相同或更严格的限制。支持 JPG、PNG、WebP、GIF、AVIF。
 

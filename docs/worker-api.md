@@ -1,6 +1,6 @@
 # Cloudflare Worker 上传接口约定
 
-前端已经实现此接口调用。Worker 尚未部署；`config.js` 的 `uploadEndpoint` 为空时，仅启用本地预览，不发出上传请求。
+前端和 [Worker 实现](../worker/worker.js) 均已提供。按 [部署说明](../worker/SETUP.md) 在 Cloudflare 编辑器粘贴代码、设置两个 Secret 即可连接。`config.js` 的 `uploadEndpoint` 为空时，仅启用本地预览，不发出上传请求。
 
 ## 请求
 
@@ -10,7 +10,7 @@
 
 | 字段 | 内容 |
 | --- | --- |
-| `requestId` | UUID，同一请求幂等标识 |
+| `requestId` | UUID v4，同一批内容的重试复用该编号 |
 | `title` | 必填，去除首尾空白后 1–120 字 |
 | `date` | 必填，有效的 `YYYY-MM-DD`，用户选定的归档日期 |
 | `description` | 选填，最多 1000 字 |

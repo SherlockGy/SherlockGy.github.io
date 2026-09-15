@@ -4,7 +4,7 @@ import { normalizeManifest, groupByMonth, filterAlbums, validDate, validateFiles
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const state = { albums: [], query: '', month: '', type: 'all', demo: new URLSearchParams(location.search).get('demo') === '1',
-  album: null, page: 0, mode: 'page', zoom: 1, preview: null, files: [], urls: [], busy: false, loadError: false, scrollY: 0 };
+  album: null, page: 0, mode: 'page', zoom: 1, preview: null, files: [], urls: [], requestId: null, busy: false, loadError: false, scrollY: 0 };
 const reader = $('#reader');
 const uploadDialog = $('#upload-dialog');
 let pageObserver;
@@ -257,7 +257,7 @@ function goPage(page) {
 
 function resetDraft() {
   state.urls.forEach(url => URL.revokeObjectURL(url));
-  state.files = []; state.urls = []; state.preview = null;
+  state.files = []; state.urls = []; state.preview = null; state.requestId = null;
   $('#upload-form').reset(); $('#album-date').value = localDate(); $('#upload-status').textContent = '';
   $('#upload-status').className = 'upload-status'; renderFiles();
 }
@@ -281,7 +281,7 @@ async function addFiles(incoming) {
   const next = [...state.files, ...incoming];
   try {
     validateFiles(next, config);
-    state.files = next;
+    state.files = next; state.requestId = null;
     state.urls.push(...incoming.map(file => URL.createObjectURL(file)));
     $('#upload-status').textContent = '';
     if (!$('#album-title').value && incoming[0]) $('#album-title').value = incoming[0].name.replace(/\.[^.]+$/, '').slice(0, 120);
@@ -298,7 +298,7 @@ function renderFiles() {
     row.append(el('span', 'file-order', String(index + 1).padStart(2, '0')), img, name);
     for (const [label, delta, text] of [['向前移动', -1, '↑'], ['向后移动', 1, '↓']]) {
       const move = button(text, 'icon-button', () => {
-        const target = index + delta;
+        const target = index + delta; state.requestId = null;
         [state.files[index], state.files[target]] = [state.files[target], state.files[index]];
         [state.urls[index], state.urls[target]] = [state.urls[target], state.urls[index]];
         renderFiles();
@@ -307,7 +307,7 @@ function renderFiles() {
       row.append(move);
     }
     const remove = button('×', 'icon-button', () => {
-      URL.revokeObjectURL(state.urls[index]); state.files.splice(index, 1); state.urls.splice(index, 1); renderFiles();
+      state.requestId = null; URL.revokeObjectURL(state.urls[index]); state.files.splice(index, 1); state.urls.splice(index, 1); renderFiles();
     });
     remove.setAttribute('aria-label', `移除第 ${index + 1} 张图片`); remove.disabled = state.busy; row.append(remove); list.append(row);
   });
@@ -336,7 +336,7 @@ async function submitAlbum(event) {
     $$('#upload-form input, #upload-form textarea, #upload-form button').forEach(node => node.disabled = true);
     status.textContent = '正在上传并保存，请保持页面打开…';
     const body = new FormData();
-    const requestId = crypto.randomUUID();
+    const requestId = state.requestId ||= crypto.randomUUID();
     body.append('requestId', requestId); body.append('title', title); body.append('date', date); body.append('description', description);
     state.files.forEach(file => body.append('images', file, file.name));
     const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 120000);
@@ -350,7 +350,7 @@ async function submitAlbum(event) {
     status.className = 'upload-status success';
     status.textContent = '图集已保存。网站发布需要一点时间，稍后刷新首页即可查看。';
     $('#access-code').value = '';
-    state.urls.forEach(url => URL.revokeObjectURL(url)); state.urls = []; state.files = [];
+    state.urls.forEach(url => URL.revokeObjectURL(url)); state.urls = []; state.files = []; state.requestId = null;
     $('#album-title').value = ''; $('#album-description').value = '';
   } catch (error) {
     status.textContent = error.name === 'AbortError' ? '等待上传服务超时。图片可能已保存，请先刷新检查，避免重复上传。' : error instanceof TypeError ? '无法连接上传服务。请检查网络或服务配置后重试。' : error.message;
@@ -389,6 +389,7 @@ $('#copy-link').addEventListener('click', async () => {
 $('#upload-close').addEventListener('click', closeUpload);
 uploadDialog.addEventListener('cancel', event => { event.preventDefault(); closeUpload(); });
 $('#upload-form').addEventListener('submit', submitAlbum);
+for (const selector of ['#album-title', '#album-date', '#album-description']) $(selector).addEventListener('input', () => { state.requestId = null; });
 $('#file-input').addEventListener('change', event => addFiles([...event.target.files]));
 const drop = $('#drop-zone');
 for (const name of ['dragenter', 'dragover']) drop.addEventListener(name, event => { event.preventDefault(); if (!state.busy) drop.classList.add('dragover'); });
