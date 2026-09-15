@@ -8,8 +8,9 @@
 | `GITHUB_TOKEN` | 你创建的 GitHub fine-grained personal access token，仅授权 `SherlockGy.github.io` 仓库，Repository permissions → Contents 选择 Read and write |
 | `UPLOAD_PASSWORD` | 自己设置至少 8 位的上传口令，建议混合字母和数字；以后在图集网站上传时输入这个口令 |
 
-3. 保存并部署 Secret。打开 Worker 根地址，显示 `"ready": true` 表示两个配置已经读到；GitHub 权限需通过实际上传验证。
-4. 回到图集网站，刷新，点击 **新建图集**，选择图片、填写名称，输入 `UPLOAD_PASSWORD` 的值，点击 **发布图集**。
+3. 保存并部署 Secret。打开 Worker 根地址，显示 `"ready": true` 表示两个配置已经读到，不代表 GitHub 连接和权限已验证。
+4. 回到图集网站，刷新，点击 **新建图集**，输入 `UPLOAD_PASSWORD` 的值，点击 **测试连接**，无需选择图片。成功说明 GitHub 连接及目录读取正常；它不会写入仓库，因此不能验证写入权限。
+5. 选择图片、填写名称，点击 **发布图集**，完成第一次实际上传。
 
 前端 `config.js` 已设置为截图中的地址：
 
@@ -21,6 +22,15 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 创建 Token 的入口：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token。Resource owner 选择 SherlockGy；Repository access 选择 Only select repositories，再选 SherlockGy.github.io；设置有效期。仅需 Contents 的 Read and write，Metadata 的 Read-only 为自动附带权限。
 
+## 超时和连接诊断
+
+- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-15-diagnostics-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
+- 打开 Cloudflare → Workers & Pages → `github-image-upload` → **Logs → Live**，开始查看实时日志，再回网站点击 **测试连接**或重试上传。
+- 日志中的 `github.start`、`github.success`、`github.error` 标记每一步，`stage` 表示读取主分支、读取图集目录、保存第几张图片或发布图集。`elapsedMs` 是耗时，`httpStatus` 是 GitHub 返回的 HTTP 状态，`traceId` 与页面错误中的请求编号对应。
+- 真正超过单步 20 秒限时或收到超时异常时，才返回 `GITHUB_TIMEOUT`。其他网络或请求异常返回 `GITHUB_CONNECTION_ERROR`；GitHub 拒绝请求返回 `GITHUB_ERROR` 并保留 HTTP 状态。401 通常需要检查 Token；403 可能涉及权限、限流或仓库限制；404 需要检查仓库授权及目标分支、文件。
+- 日志不记录图片、口令、Token、鉴权头或请求正文；异常信息会过滤凭据。排查时只需提供页面错误或对应 `github.error` 日志，不要提供 Secret。
+- 测试连接及失败重试会保留当前图片、名称和请求编号。刷新页面会丢失尚未提交的草稿，请先保留原始图片。客户端上传等待超时后，先检查图集目录；未刷新时原样重试会复用请求编号。
+
 ## 运行说明
 
 - 不需要 KV、D1、R2 或 npm 依赖。
@@ -31,4 +41,4 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 - 代码上限为单张 10 MiB、合计 30 MiB。Cloudflare Free 的 CPU 限额较低，大图批量编码可能触发 1102；遇到时先减小图片或分批，需稳定处理大图时再评估 Workers Paid。未在你的 Cloudflare 账户进行负载测试。
 - 显示保存成功后，GitHub Pages 还需要完成发布，稍后刷新网站查看。
 
-参考：[Cloudflare Secret 设置](https://developers.cloudflare.com/workers/configuration/secrets/)、[GitHub Token 创建](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)、[Cloudflare 运行限制](https://developers.cloudflare.com/workers/platform/limits/)。
+参考：[Cloudflare Secret 设置](https://developers.cloudflare.com/workers/configuration/secrets/)、[GitHub Token 创建](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)、[Cloudflare 实时日志](https://developers.cloudflare.com/workers/observability/logs/real-time-logs/)、[Cloudflare 运行限制](https://developers.cloudflare.com/workers/platform/limits/)。

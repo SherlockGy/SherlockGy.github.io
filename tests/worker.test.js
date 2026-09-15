@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker/worker.js';
 
@@ -6,6 +6,13 @@ const env = { GITHUB_TOKEN: 'test-token-not-a-real-secret', UPLOAD_PASSWORD: 'te
 const origin = 'https://sherlockgy.github.io';
 const png = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6Z9sAAAAASUVORK5CYII=', 'base64'));
 let ip = 0;
+beforeEach(t => {
+  t.mock.method(console, 'log', () => {});
+  t.mock.method(console, 'error', () => {});
+});
+function checkRequest(password = env.UPLOAD_PASSWORD) {
+  return new Request('https://worker.test/check', { method: 'POST', headers: { Origin: origin, Authorization: `Bearer ${password}`, 'CF-Connecting-IP': `192.0.2.${++ip}` } });
+}
 function request({ id = crypto.randomUUID(), title = '知识图集', count = 1, bytes = png, type = 'image/png', password = env.UPLOAD_PASSWORD, source = origin, date = '2026-09-15' } = {}) {
   const form = new FormData();
   form.set('requestId', id); form.set('title', title); form.set('date', date); form.set('description', '图片说明');
@@ -100,8 +107,61 @@ test('a lost commit response is recoverable without duplicating the album', asyn
   const old = globalThis.fetch; t.after(() => { globalThis.fetch = old; });
   const fake = fakeGit({ loseResponse: true }); globalThis.fetch = fake.fetch;
   const id = crypto.randomUUID();
-  assert.equal((await worker.fetch(request({ id }), env)).status, 504);
+  assert.equal((await worker.fetch(request({ id }), env)).status, 502);
   assert.equal(fake.manifest().albums.length, 1);
   assert.equal((await worker.fetch(request({ id }), env)).status, 201);
   assert.equal(fake.manifest().albums.length, 1);
+});
+
+test('connection check authenticates, reads the current manifest and never writes to GitHub', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  assert.equal((await worker.fetch(checkRequest('incorrect'), env)).status, 401);
+  assert.equal(fake.calls.length, 0);
+  const response = await worker.fetch(checkRequest(), { ...env, GITHUB_TOKEN: `\n ${env.GITHUB_TOKEN} \n` });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
+  assert.equal(result.version, '2026-09-15-diagnostics-1'); assert.ok(result.traceId);
+  assert.equal(fake.calls.length, 3); assert.ok(fake.calls.every(call => call.method === 'GET'));
+  assert.equal(fake.manifest().albums.length, 0);
+});
+
+test('connection errors and timeouts are distinguished, staged, and redacted in responses and logs', async t => {
+  const logs = [];
+  t.mock.method(console, 'error', value => logs.push(value));
+  t.mock.method(globalThis, 'fetch', async () => { throw new TypeError(`Invalid header ${env.GITHUB_TOKEN} ${env.UPLOAD_PASSWORD} github_pat_exampletoken`); });
+  const response = await worker.fetch(checkRequest(), env);
+  assert.equal(response.status, 502);
+  const data = await response.json();
+  assert.equal(data.error.code, 'GITHUB_CONNECTION_ERROR');
+  assert.equal(data.error.stage, '读取主分支'); assert.equal(data.error.errorName, 'TypeError');
+  assert.ok(data.error.traceId); assert.equal(typeof data.error.elapsedMs, 'number');
+  assert.ok(logs.some(item => item.event === 'github.error' && item.traceId === data.error.traceId && item.timedOut === false));
+  for (const secret of [env.GITHUB_TOKEN, env.UPLOAD_PASSWORD, 'github_pat_exampletoken']) {
+    assert.ok(!JSON.stringify({ data, logs }).includes(secret));
+  }
+  t.mock.method(globalThis, 'fetch', async () => { throw new DOMException('Request timed out', 'TimeoutError'); });
+  const timeout = await worker.fetch(checkRequest(), env);
+  assert.equal(timeout.status, 504);
+  const timeoutData = await timeout.json();
+  assert.equal(timeoutData.error.code, 'GITHUB_TIMEOUT'); assert.equal(timeoutData.error.timeoutMs, 20000);
+  assert.equal(timeoutData.error.stage, '读取主分支');
+});
+
+test('GitHub HTTP errors, invalid JSON and malformed tokens are not reported as timeouts', async t => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ message: 'Bad credentials' }, { status: 401 }));
+  const denied = await worker.fetch(checkRequest(), env);
+  assert.equal(denied.status, 502);
+  const data = await denied.json();
+  assert.equal(data.error.code, 'GITHUB_ERROR'); assert.equal(data.error.httpStatus, 401);
+  assert.equal(data.error.stage, '读取主分支');
+  const invalidUpstream = t.mock.method(globalThis, 'fetch', async () => new Response('<html>Invalid upstream response</html>'));
+  const invalid = await worker.fetch(checkRequest(), env);
+  assert.equal(invalid.status, 502);
+  assert.equal((await invalid.json()).error.code, 'GITHUB_INVALID_RESPONSE');
+  const callsBefore = invalidUpstream.mock.callCount();
+  const malformed = await worker.fetch(checkRequest(), { ...env, GITHUB_TOKEN: 'test-\ntoken' });
+  assert.equal(malformed.status, 503);
+  assert.equal((await malformed.json()).error.code, 'GITHUB_TOKEN_FORMAT');
+  assert.equal(invalidUpstream.mock.callCount(), callsBefore);
 });

@@ -48,7 +48,7 @@
         <label class="field-label" for="album-description">简短说明 <span class="optional">选填</span></label><textarea class="form-input" id="album-description" maxlength="1000" rows="2" placeholder="记录主题、出处，或留下阅读线索"></textarea>
         <label class="drop-zone" id="drop-zone" for="file-input"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="6" y="8" width="28" height="26" rx="3"/><path d="m7 28 9-10 8 8 5-5 5 5M25 4v10m-5-5h10"/></svg><strong>点击选择，或拖入图片</strong><span>一次上传组成一个图集，可调整阅读顺序</span><small>JPG、PNG、WebP、GIF、AVIF · 最多 30 张</small></label><input id="file-input" class="visually-hidden" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif">
         <div id="file-list" class="file-list"></div>
-        <div id="access-code-field" hidden><label class="field-label" for="access-code">上传口令</label><input class="form-input" id="access-code" type="password" autocomplete="off" placeholder="输入你的上传口令"><p class="field-note">仅用于本次上传，关闭后清除。</p></div>
+        <div id="access-code-field" hidden><label class="field-label" for="access-code">上传口令</label><input class="form-input" id="access-code" type="password" autocomplete="off" placeholder="输入你的上传口令"><p class="field-note">仅用于本次操作，关闭后清除。</p><button class="text-button" id="check-connection" type="button">测试连接</button></div>
         <p id="upload-status" class="upload-status" role="status" aria-live="polite"></p>
       </div><footer class="dialog-footer"><span id="file-summary">尚未选择图片</span><button class="primary-button" id="upload-submit" type="submit">预览图集 →</button></footer>
     </form>

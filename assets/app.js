@@ -314,6 +314,44 @@ function renderFiles() {
   $('#file-summary').textContent = state.files.length ? `${state.files.length} 张图片 · ${(state.files.reduce((sum, file) => sum + file.size, 0) / 1048576).toFixed(1)} MB` : '尚未选择图片';
 }
 
+function serviceError(data, fallback) {
+  const message = data?.error?.message || fallback;
+  const traceId = data?.error?.traceId;
+  return new Error(typeof traceId === 'string' ? `${message}（请求编号：${traceId}）` : message);
+}
+
+async function checkConnection() {
+  if (state.busy || !config.uploadEndpoint) return;
+  const status = $('#upload-status'); status.className = 'upload-status';
+  try {
+    const endpoint = new URL(config.uploadEndpoint);
+    if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password) throw new Error('上传服务地址需要配置为 HTTPS');
+    const code = $('#access-code').value.trim();
+    if (!code) throw new Error('请先输入上传口令，再测试连接');
+    state.busy = true;
+    $$('#upload-form input, #upload-form textarea, #upload-form button').forEach(node => node.disabled = true);
+    status.textContent = '正在检查连接和图集目录，请稍候…';
+    const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 75000);
+    let response, data;
+    try {
+      response = await fetch(new URL('/check', endpoint), { method: 'POST', headers: { Authorization: `Bearer ${code}` }, signal: controller.signal, redirect: 'error', credentials: 'omit' });
+      data = await response.json().catch(error => { if (controller.signal.aborted) throw error; return null; });
+    } finally { clearTimeout(timer); }
+    if (response.status === 404) throw new Error('请先在 Cloudflare 部署新版 Worker 代码，再测试连接');
+    if (!response.ok) throw serviceError(data, `连接检查失败（HTTP ${response.status}）`);
+    if (data?.status !== 'readable') throw new Error('上传服务未返回检查结果，请确认已部署新版 Worker 代码');
+    status.className = 'upload-status success';
+    status.textContent = 'GitHub 连接和图集目录读取正常。写入权限仍需通过实际上传验证。';
+  } catch (error) {
+    status.textContent = error.name === 'AbortError' ? '等待连接检查超时，请查看 Worker 的实时日志。当前图片已保留。'
+      : error instanceof TypeError ? '无法连接上传服务，请检查网络或服务配置。当前图片已保留。' : error.message;
+  } finally {
+    state.busy = false;
+    $$('#upload-form input, #upload-form textarea, #upload-form button').forEach(node => node.disabled = false);
+    renderFiles();
+  }
+}
+
 async function submitAlbum(event) {
   event.preventDefault(); if (state.busy) return;
   const status = $('#upload-status'); status.className = 'upload-status';
@@ -340,11 +378,12 @@ async function submitAlbum(event) {
     body.append('requestId', requestId); body.append('title', title); body.append('date', date); body.append('description', description);
     state.files.forEach(file => body.append('images', file, file.name));
     const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 120000);
-    let response;
-    try { response = await fetch(endpoint.href, { method: 'POST', headers: { Authorization: `Bearer ${code}` }, body, signal: controller.signal, redirect: 'error', credentials: 'omit' }); }
-    finally { clearTimeout(timer); }
-    const data = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(data?.error?.message || ({ 401: '上传口令不正确', 403: '没有上传权限', 413: '图片总大小超过上传服务限制', 409: '目录已更新，请刷新检查后重试' }[response.status] || `上传失败（${response.status}）`));
+    let response, data;
+    try {
+      response = await fetch(endpoint.href, { method: 'POST', headers: { Authorization: `Bearer ${code}` }, body, signal: controller.signal, redirect: 'error', credentials: 'omit' });
+      data = await response.json().catch(error => { if (controller.signal.aborted) throw error; return null; });
+    } finally { clearTimeout(timer); }
+    if (!response.ok) throw serviceError(data, { 401: '上传口令不正确', 403: '没有上传权限', 413: '图片总大小超过上传服务限制', 409: '目录已更新，请刷新检查后重试' }[response.status] || `上传失败（${response.status}）`);
     if (data?.status !== 'committed' || typeof data.commitSha !== 'string') throw new Error('上传服务未返回保存凭据，请先检查图集目录再重试');
     normalizeManifest({ schemaVersion: 1, albums: [data.album] }, document.baseURI);
     status.className = 'upload-status success';
@@ -389,6 +428,7 @@ $('#copy-link').addEventListener('click', async () => {
 $('#upload-close').addEventListener('click', closeUpload);
 uploadDialog.addEventListener('cancel', event => { event.preventDefault(); closeUpload(); });
 $('#upload-form').addEventListener('submit', submitAlbum);
+$('#check-connection').addEventListener('click', checkConnection);
 for (const selector of ['#album-title', '#album-date', '#album-description']) $(selector).addEventListener('input', () => { state.requestId = null; });
 $('#file-input').addEventListener('change', event => addFiles([...event.target.files]));
 const drop = $('#drop-zone');

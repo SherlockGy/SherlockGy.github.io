@@ -46,13 +46,32 @@
 
 ## 错误响应
 
-HTTP 400 / 401 / 403 / 409 / 413 / 429 / 500，JSON：
+HTTP 400 / 401 / 403 / 409 / 413 / 429 / 500 / 502 / 503 / 504，JSON：
 
 ```json
-{ "error": { "code": "INVALID_FILE", "message": "仅支持 JPG、PNG、WebP、GIF、AVIF 图片" } }
+{ "error": { "code": "INVALID_FILE", "message": "仅支持 JPG、PNG、WebP、GIF、AVIF 图片", "traceId": "<request UUID>" } }
 ```
 
 不要返回堆栈、GitHub Token、完整上游鉴权头或其他内部凭据。客户端 120 秒超时不等于服务端失败，超时后应先检查目录，避免重复提交。
+
+GitHub 请求错误额外返回 `stage` 和耗时 `elapsedMs`，若已收到 HTTP 响应则包含 `httpStatus`。真正超时为 HTTP 504 / `GITHUB_TIMEOUT`（单步限时 20 秒）；其他请求异常为 HTTP 502 / `GITHUB_CONNECTION_ERROR`，附带过滤凭据后的 `reason`；HTTP 拒绝为 `GITHUB_ERROR`。这些错误的 `traceId` 与 Worker 实时日志相同。
+
+## 只读连接检查
+
+`POST /check`，发送与上传相同的 `Authorization`，无需请求正文，也无需图片或名称。与上传共用 CORS、口令验证和频率限制；仅依次读取主分支、当前提交及图集目录，绝不写入仓库。成功返回 HTTP 200：
+
+```json
+{
+  "status": "readable",
+  "version": "2026-09-15-diagnostics-1",
+  "traceId": "<request UUID>",
+  "elapsedMs": 500,
+  "albumCount": 0,
+  "message": "GitHub 连接和图集目录读取正常。写入权限仍需通过实际上传验证。"
+}
+```
+
+`GET /health` 无需口令，返回部署版本及配置是否存在；不会访问 GitHub，不能证明 GitHub 可用。结构化日志记录 `github.start` / `github.success` / `github.error`，不记录请求正文、图片或凭据。
 
 ## 后端处理约束
 

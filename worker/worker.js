@@ -6,16 +6,38 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
+const VERSION = '2026-09-15-diagnostics-1';
+const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
 const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
 const encoder = new TextEncoder();
 const attempts = new Map(); // Best-effort per-isolate throttling, not a global quota.
 
 class UploadError extends Error {
-  constructor(status, code, message) { super(message); this.status = status; this.code = code; }
+  constructor(status, code, message, details = {}) { super(message); this.status = status; this.code = code; this.details = details; }
 }
 class GitHubError extends Error {
-  constructor(status) { super('GitHub request failed'); this.status = status; }
+  constructor(status, details = {}) { super('GitHub request failed'); this.status = status; this.details = details; }
+}
+function log(env, event, details = {}, error = false) {
+  console[error ? 'error' : 'log']({ event, traceId: env._traceId, ...details });
+}
+function safeReason(error, env) {
+  let message = String(error?.message || 'Unknown error');
+  for (const value of [env.GITHUB_TOKEN, env.GITHUB_TOKEN?.trim(), env.UPLOAD_PASSWORD]) {
+    if (typeof value === 'string' && value) message = message.split(value).join('[REDACTED]');
+  }
+  return message.replace(/(?:github_pat_|gh[pousr]_)[A-Za-z0-9_]+/g, '[REDACTED]').replace(/[\r\n\t]/g, ' ').slice(0, 250);
+}
+function githubStage(path, method) {
+  if (path.startsWith('/git/ref/')) return '读取主分支';
+  if (path.startsWith('/git/commits/')) return '读取当前提交';
+  if (path.startsWith('/contents/')) return '读取图集目录';
+  if (path === '/git/blobs') return '保存图片';
+  if (path === '/git/trees') return '保存目录变更';
+  if (path === '/git/commits') return '创建提交';
+  if (method === 'PATCH') return '发布图集';
+  return '访问 GitHub';
 }
 function fail(status, code, message) { throw new UploadError(status, code, message); }
 function reply(request, data, status = 200) {
@@ -48,26 +70,61 @@ function throttle(request) {
   if (!entry || entry.until < now) { entry = { count: 0, until: now + 60000 }; attempts.set(ip, entry); }
   if (++entry.count > 12) fail(429, 'RATE_LIMITED', '操作过于频繁，请一分钟后重试');
 }
-async function github(env, path, { method = 'GET', body, raw = false } = {}) {
-  let response;
+async function github(env, path, { method = 'GET', body, raw = false, stage = githubStage(path, method) } = {}) {
+  const token = typeof env.GITHUB_TOKEN === 'string' ? env.GITHUB_TOKEN.trim() : '';
+  if (!token || /[^\x21-\x7e]/.test(token)) {
+    throw new UploadError(503, 'GITHUB_TOKEN_FORMAT', 'GITHUB_TOKEN 含空格、换行或非英文字符，请重新粘贴完整 Token 到 Secret', { stage });
+  }
+  const started = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GITHUB_TIMEOUT_MS);
+  let httpStatus;
+  log(env, 'github.start', { stage, method, path: path.split('?')[0] });
   try {
-    response = await fetch(`https://api.github.com/repos/${REPOSITORY}${path}`, {
+    const response = await fetch(`https://api.github.com/repos/${REPOSITORY}${path}`, {
       method,
-      headers: { 'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'SherlockGy-Atlas-Worker',
+      headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'SherlockGy-Atlas-Worker',
         'Accept': raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json',
         'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2026-03-10' },
       body: body === undefined ? undefined : JSON.stringify(body),
-      redirect: 'error', signal: AbortSignal.timeout(20000),
+      redirect: 'error', signal: controller.signal,
     });
-  } catch { fail(504, 'GITHUB_TIMEOUT', '连接 GitHub 超时，请保留当前图片并重试'); }
-  if (!response.ok) { await response.body?.cancel(); throw new GitHubError(response.status); }
-  if (raw) {
-    // Bound manifest size even if the upstream response is chunked.
-    const stream = limitedStream(response.body, 5 * MIB);
-    try { return await new Response(stream).json(); }
-    catch { fail(500, 'INVALID_MANIFEST', '仓库中的图集目录无法读取，或已经超过 5 MB'); }
+    httpStatus = response.status;
+    if (!response.ok) {
+      const details = { stage, httpStatus, elapsedMs: Date.now() - started };
+      await response.body?.cancel().catch(() => {});
+      throw new GitHubError(httpStatus, details);
+    }
+    let result;
+    try {
+      result = raw
+        ? await new Response(limitedStream(response.body, 5 * MIB)).json()
+        : await response.json();
+    } catch (error) {
+      if (controller.signal.aborted || ['AbortError', 'TimeoutError'].includes(error?.name)) throw error;
+      if (error?.name === 'SyntaxError' || error instanceof UploadError) {
+        throw new UploadError(502, 'GITHUB_INVALID_RESPONSE', `${stage}：GitHub 返回内容格式不正确或超过大小限制`, { stage, httpStatus });
+      }
+      throw error;
+    }
+    log(env, 'github.success', { stage, httpStatus, elapsedMs: Date.now() - started });
+    return result;
+  } catch (error) {
+    const details = { stage, elapsedMs: Date.now() - started, ...(httpStatus ? { httpStatus } : {}) };
+    if (error instanceof GitHubError || error instanceof UploadError) {
+      log(env, 'github.error', { ...details, code: error.code || 'GITHUB_HTTP_ERROR' }, true);
+      throw error;
+    }
+    const timedOut = controller.signal.aborted || ['AbortError', 'TimeoutError'].includes(error?.name);
+    const reason = safeReason(error, env);
+    log(env, 'github.error', { ...details, errorName: error?.name || 'Error', reason, timedOut }, true);
+    throw new UploadError(timedOut ? 504 : 502, timedOut ? 'GITHUB_TIMEOUT' : 'GITHUB_CONNECTION_ERROR',
+      timedOut ? `${stage}：GitHub 请求超时（上限 ${GITHUB_TIMEOUT_MS / 1000} 秒），请保留当前图片并重试`
+        : `${stage}：GitHub 请求异常：${reason}。请保留当前图片`,
+      { ...details, errorName: error?.name || 'Error', ...(timedOut ? { timeoutMs: GITHUB_TIMEOUT_MS } : { reason }) });
+  } finally {
+    clearTimeout(timer);
   }
-  return response.json();
 }
 function limitedStream(stream, limit) {
   let size = 0;
@@ -171,7 +228,7 @@ async function upload(request, env) {
   // Sequential binary uploads bound memory and outbound connections.
   for (let index = 0; index < files.length; index++) {
     const bytes = new Uint8Array(await files[index].arrayBuffer());
-    const blob = await github(env, '/git/blobs', { method: 'POST', body: { content: base64(bytes), encoding: 'base64' } });
+    const blob = await github(env, '/git/blobs', { method: 'POST', stage: `保存第 ${index + 1}/${files.length} 张图片`, body: { content: base64(bytes), encoding: 'base64' } });
     const path = `${directory}/${String(index + 1).padStart(3, '0')}.${info[index].extension}`;
     imageEntries.push({ path, mode: '100644', type: 'blob', sha: blob.sha });
     const image = { src: `./${path}`, alt: `${title} · 第 ${index + 1} 页` };
@@ -201,13 +258,15 @@ async function upload(request, env) {
 
 export default {
   async fetch(request, env) {
+    env = { ...env, _traceId: crypto.randomUUID() };
+    const started = Date.now();
     try {
       const path = new URL(request.url).pathname;
       const origin = request.headers.get('Origin');
       if (origin && origin !== ORIGIN) fail(403, 'ORIGIN_DENIED', '请从你的图集网站发起上传');
-      if (!['/', '/albums', '/health'].includes(path)) fail(404, 'NOT_FOUND', '接口不存在');
+      if (!['/', '/albums', '/health', '/check'].includes(path)) fail(404, 'NOT_FOUND', '接口不存在');
       if (request.method === 'OPTIONS') return reply(request, null, 204);
-      if (request.method === 'GET') return reply(request, { service: 'SherlockGy Atlas Upload',
+      if (request.method === 'GET') return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
         ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
         message: '请在图集网站中上传图片。', endpoint: '/albums' });
       if (request.method !== 'POST' || path === '/health') fail(405, 'METHOD_NOT_ALLOWED', '请使用 POST /albums');
@@ -215,14 +274,25 @@ export default {
       throttle(request);
       const authorization = request.headers.get('Authorization') || '';
       if (authorization.length > 1024 || !authorization.startsWith('Bearer ') || !await passwordMatches(authorization.slice(7), env.UPLOAD_PASSWORD)) fail(401, 'UNAUTHORIZED', '上传口令不正确');
-      return reply(request, await upload(request, env), 201);
+      log(env, 'request.start', { path, method: request.method });
+      if (path === '/check') {
+        const snapshot = await readHead(env);
+        log(env, 'check.success', { elapsedMs: Date.now() - started });
+        return reply(request, { status: 'readable', version: VERSION, traceId: env._traceId,
+          elapsedMs: Date.now() - started, albumCount: snapshot.manifest.albums.length,
+          message: 'GitHub 连接和图集目录读取正常。写入权限仍需通过实际上传验证。' });
+      }
+      const result = await upload(request, env);
+      log(env, 'upload.success', { elapsedMs: Date.now() - started, commitSha: result.commitSha });
+      return reply(request, result, 201);
     } catch (error) {
-      if (error instanceof UploadError) return reply(request, { error: { code: error.code, message: error.message } }, error.status);
+      log(env, 'request.error', { elapsedMs: Date.now() - started, code: error.code || (error instanceof GitHubError ? 'GITHUB_HTTP_ERROR' : 'INTERNAL_ERROR'), ...(error.details || {}) }, true);
+      if (error instanceof UploadError) return reply(request, { error: { code: error.code, message: error.message, ...error.details, traceId: env._traceId } }, error.status);
       if (error instanceof GitHubError) {
         const message = [401, 403].includes(error.status) ? 'GitHub Token 无效、权限不足或请求受到限制，请检查 Worker 的 Secret 和仓库 Contents 写权限'
           : error.status === 404 ? 'GitHub 无法访问指定仓库、分支或目录，请检查 Token 的仓库授权'
           : 'GitHub 暂时无法保存，请保留当前图片后重试';
-        return reply(request, { error: { code: 'GITHUB_ERROR', message } }, 502);
+        return reply(request, { error: { code: 'GITHUB_ERROR', message: `${error.details.stage}：${message}（HTTP ${error.status}）`, ...error.details, traceId: env._traceId } }, 502);
       }
       return reply(request, { error: { code: 'INTERNAL_ERROR', message: '上传未能完成，请保留当前图片后重试' } }, 500);
     }
