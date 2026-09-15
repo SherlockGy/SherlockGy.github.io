@@ -6,7 +6,7 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-15-diagnostics-1';
+const VERSION = '2026-09-15-diagnostics-2';
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
 const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
@@ -87,12 +87,16 @@ async function github(env, path, { method = 'GET', body, raw = false, stage = gi
         'Accept': raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json',
         'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2026-03-10' },
       body: body === undefined ? undefined : JSON.stringify(body),
-      redirect: 'error', signal: controller.signal,
+      // Some Workers runtimes reject 'error'; inspect redirects without following them.
+      redirect: 'manual', signal: controller.signal,
     });
     httpStatus = response.status;
     if (!response.ok) {
       const details = { stage, httpStatus, elapsedMs: Date.now() - started };
       await response.body?.cancel().catch(() => {});
+      if ([301, 302, 303, 307, 308].includes(httpStatus)) {
+        throw new UploadError(502, 'GITHUB_REDIRECT', `${stage}：GitHub 返回重定向（HTTP ${httpStatus}），已停止请求，请检查仓库地址是否变更`, details);
+      }
       throw new GitHubError(httpStatus, details);
     }
     let result;

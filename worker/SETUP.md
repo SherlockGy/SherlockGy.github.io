@@ -24,7 +24,8 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 ## 超时和连接诊断
 
-- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-15-diagnostics-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
+- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-15-diagnostics-2` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
+- 若旧版提示 `Invalid redirect value`，属于 Worker 运行环境不支持 `redirect: 'error'` 的兼容性错误，请部署新版。新版使用 `manual` 并检查重定向状态，不会跟随跳转转发 Token；无需为此修改上传口令或重新生成 Token。
 - 打开 Cloudflare → Workers & Pages → `github-image-upload` → **Logs → Live**，开始查看实时日志，再回网站点击 **测试连接**或重试上传。
 - 日志中的 `github.start`、`github.success`、`github.error` 标记每一步，`stage` 表示读取主分支、读取图集目录、保存第几张图片或发布图集。`elapsedMs` 是耗时，`httpStatus` 是 GitHub 返回的 HTTP 状态，`traceId` 与页面错误中的请求编号对应。
 - 真正超过单步 20 秒限时或收到超时异常时，才返回 `GITHUB_TIMEOUT`。其他网络或请求异常返回 `GITHUB_CONNECTION_ERROR`；GitHub 拒绝请求返回 `GITHUB_ERROR` 并保留 HTTP 状态。401 通常需要检查 Token；403 可能涉及权限、限流或仓库限制；404 需要检查仓库授权及目标分支、文件。

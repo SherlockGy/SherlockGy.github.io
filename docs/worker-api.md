@@ -63,7 +63,7 @@ GitHub 请求错误额外返回 `stage` 和耗时 `elapsedMs`，若已收到 HTT
 ```json
 {
   "status": "readable",
-  "version": "2026-09-15-diagnostics-1",
+  "version": "2026-09-15-diagnostics-2",
   "traceId": "<request UUID>",
   "elapsedMs": 500,
   "albumCount": 0,
@@ -72,6 +72,8 @@ GitHub 请求错误额外返回 `stage` 和耗时 `elapsedMs`，若已收到 HTT
 ```
 
 `GET /health` 无需口令，返回部署版本及配置是否存在；不会访问 GitHub，不能证明 GitHub 可用。结构化日志记录 `github.start` / `github.success` / `github.error`，不记录请求正文、图片或凭据。
+
+Worker 对 GitHub 请求使用 `redirect: 'manual'`。收到 301、302、303、307 或 308 时返回 HTTP 502 / `GITHUB_REDIRECT`，不读取或跟随 `Location`，避免将鉴权头转发至其他地址。部分 Worker 运行环境不支持 `redirect: 'error'`，浏览器前端的 Fetch 配置不受此限制影响。
 
 ## 后端处理约束
 

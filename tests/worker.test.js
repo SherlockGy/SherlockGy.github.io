@@ -28,6 +28,7 @@ function fakeGit({ conflicts = 0, loseResponse = false } = {}) {
     const target = new URL(url); assert.equal(target.origin, 'https://api.github.com');
     assert.ok(target.pathname.startsWith('/repos/SherlockGy/SherlockGy.github.io/'));
     assert.equal(options.headers.Authorization, `Bearer ${env.GITHUB_TOKEN}`);
+    assert.equal(options.redirect, 'manual', 'Workers GitHub requests must inspect redirects without following them');
     const path = target.pathname.replace('/repos/SherlockGy/SherlockGy.github.io', '');
     const body = options.body ? JSON.parse(options.body) : null;
     calls.push({ path, method: options.method, body });
@@ -121,7 +122,7 @@ test('connection check authenticates, reads the current manifest and never write
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
-  assert.equal(result.version, '2026-09-15-diagnostics-1'); assert.ok(result.traceId);
+  assert.equal(result.version, '2026-09-15-diagnostics-2'); assert.ok(result.traceId);
   assert.equal(fake.calls.length, 3); assert.ok(fake.calls.every(call => call.method === 'GET'));
   assert.equal(fake.manifest().albums.length, 0);
 });
@@ -164,4 +165,29 @@ test('GitHub HTTP errors, invalid JSON and malformed tokens are not reported as 
   assert.equal(malformed.status, 503);
   assert.equal((await malformed.json()).error.code, 'GITHUB_TOKEN_FORMAT');
   assert.equal(invalidUpstream.mock.callCount(), callsBefore);
+});
+
+test('GitHub redirects stop at the first response without forwarding credentials or reading the redirect body', async t => {
+  let upstreamStatus = 301;
+  const upstream = t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(new URL(url).origin, 'https://api.github.com');
+    if (options.redirect === 'error') throw new TypeError('Invalid redirect value, must be one of follow or manual');
+    assert.equal(options.redirect, 'manual');
+    return new Response('Not JSON: this redirect body must not be parsed', {
+      status: upstreamStatus, headers: { Location: `https://untrusted.example/${env.GITHUB_TOKEN}` },
+    });
+  });
+  for (const status of [301, 302, 303, 307, 308]) {
+    upstreamStatus = status;
+    const before = upstream.mock.callCount();
+    const response = await worker.fetch(checkRequest(), env);
+    assert.equal(response.status, 502);
+    const result = await response.json();
+    assert.equal(result.error.code, 'GITHUB_REDIRECT');
+    assert.equal(result.error.stage, '读取主分支'); assert.equal(result.error.httpStatus, status);
+    assert.ok(result.error.traceId);
+    assert.equal(upstream.mock.callCount(), before + 1);
+    assert.ok(!JSON.stringify(result).includes(env.GITHUB_TOKEN));
+    assert.ok(!JSON.stringify(result).includes('untrusted.example'));
+  }
 });
