@@ -194,6 +194,8 @@ function closeReader(changeRoute = true) {
 
 function syncReaderControls() {
   const total = state.album.images.length;
+  $('.segmented', reader).hidden = total === 1;
+  $('.reader-footer', reader).hidden = total === 1;
   $('#page-number').value = state.page + 1; $('#page-number').max = total;
   $('#page-total').textContent = `/ ${total} 页`;
   $('#prev-page').disabled = state.page === 0;
