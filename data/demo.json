@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "albums": [
+    {
+      "id": "demo-reading",
+      "title": "让图片成为可以重读的笔记",
+      "date": "2026-09-15",
+      "description": "从单页收藏，到一组完整的知识图集。",
+      "tags": [
+        "阅读方法"
+      ],
+      "images": [
+        {
+          "src": "./assets/demo/reading-01.svg",
+          "width": 960,
+          "height": 680
+        },
+        {
+          "src": "./assets/demo/reading-02.svg",
+          "width": 960,
+          "height": 680
+        }
+      ]
+    },
+    {
+      "id": "demo-questions",
+      "title": "做判断前，先问三个问题",
+      "date": "2026-09-08",
+      "description": "目标、证据与边界，一张图梳理思考起点。",
+      "tags": [
+        "思考框架"
+      ],
+      "images": [
+        {
+          "src": "./assets/demo/questions.svg",
+          "width": 960,
+          "height": 680
+        }
+      ]
+    },
+    {
+      "id": "demo-context",
+      "title": "为零散信息补上上下文",
+      "date": "2026-08-22",
+      "description": "围绕同一个主题，把线索组织起来。",
+      "tags": [
+        "知识整理"
+      ],
+      "images": [
+        {
+          "src": "./assets/demo/context-01.svg",
+          "width": 960,
+          "height": 680
+        },
+        {
+          "src": "./assets/demo/context-02.svg",
+          "width": 960,
+          "height": 680
+        },
+        {
+          "src": "./assets/demo/notes.svg",
+          "width": 960,
+          "height": 680
+        }
+      ]
+    },
+    {
+      "id": "demo-notes",
+      "title": "一页一件事：图集整理小记",
+      "date": "2026-06-12",
+      "description": "名称、顺序与日期，让收藏更容易回看。",
+      "tags": [
+        "整理方法"
+      ],
+      "images": [
+        {
+          "src": "./assets/demo/notes.svg",
+          "width": 960,
+          "height": 680
+        }
+      ]
+    }
+  ]
+}
