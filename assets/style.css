@@ -279,8 +279,8 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .dialog-header h2 { font-size: 22px; }
   .dialog-content { padding: 19px; }
   .dialog-footer { padding: 14px 19px; }
-  .form-row { gap: 13px; }
-  .date-help { font-size: 14px; }
+  .form-row { display: block; }
+  .date-help { padding-top: 0; margin-top: 7px; font-size: 14px; }
   .file-item { gap: 5px; padding: 6px; }
   .file-item img { width: 30px; }
   .file-item .icon-button { width: 24px; padding: 4px; }
