@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { normalizeManifest, groupByMonth, filterAlbums, validDate, safeImageUrl, validateFiles } from '../assets/model.js';
 import config from '../config.js';
-const fixture = JSON.parse(await readFile(new URL('../data/demo.json', import.meta.url)));
+// Test-only metadata: never loaded by the website.
+const fixture = { schemaVersion: 1, albums: [
+  { id: 'test-reading', title: '阅读笔记', date: '2026-09-15', images: ['./images/test-a.png', './images/test-b.png'] },
+  { id: 'test-questions', title: '判断问题', date: '2026-09-08', images: ['./images/test-c.png'] },
+  { id: 'test-context', title: '上下文', date: '2026-08-22', tags: ['知识整理'], images: ['./images/test-d.png', './images/test-e.png'] },
+  { id: 'test-notes', title: '整理笔记', date: '2026-06-12', images: ['./images/test-f.png'] },
+] };
 const albums = normalizeManifest(fixture);
 
 test('only populated months appear, newest first; single and multiple images are retained', () => {
@@ -13,7 +19,7 @@ test('only populated months appear, newest first; single and multiple images are
   assert.equal(groupByMonth([]).length, 0);
 });
 test('month, keyword and image-count filters combine correctly', () => {
-  assert.deepEqual(filterAlbums(albums, { query: '判断', month: '2026-09', type: 'single' }).map(a => a.id), ['demo-questions']);
+  assert.deepEqual(filterAlbums(albums, { query: '判断', month: '2026-09', type: 'single' }).map(a => a.id), ['test-questions']);
   assert.equal(filterAlbums(albums, { month: '2026-07' }).length, 0);
   assert.equal(filterAlbums(albums, { query: '知识整理' }).length, 1);
   assert.equal(filterAlbums(albums, { type: 'multiple' }).length, 2);
@@ -37,7 +43,7 @@ test('file count, type, empty content and byte limits are enforced', () => {
   for (const files of [[], Array(31).fill(file), [{ ...file, size: 0 }], [{ ...file, type: 'image/svg+xml' }],
     [{ ...file, size: 11 * 1048576 }], Array(4).fill({ ...file, size: 9 * 1048576 })]) assert.throws(() => validateFiles(files, config));
 });
-test('production starts with no invented albums', async () => {
+test('production manifest remains valid as real albums are added', async () => {
   const data = JSON.parse(await readFile(new URL('../data/albums.json', import.meta.url)));
-  assert.deepEqual(normalizeManifest(data), []);
+  assert.doesNotThrow(() => normalizeManifest(data));
 });

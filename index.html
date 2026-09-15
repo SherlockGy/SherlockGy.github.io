@@ -3,54 +3,68 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f6f8fa">
-  <meta name="description" content="按月份收藏与阅读图片，让值得留下的知识有迹可循。">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="SherlockGy 的图集，按月归档与阅读。">
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/style.css">
-  <script type="module" src="./assets/app.js"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=20260915-personal">
+  <script type="module" src="./assets/app.js?v=20260915-personal"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
   <div class="app-shell">
     <aside class="sidebar" aria-label="归档导航">
-      <a class="brand" href="./" aria-label="图集首页"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>图集<small>SHERLOCKGY / ATLAS</small></span></a>
-      <div class="sidebar-body"><p class="eyebrow">我的收藏</p>
-        <button class="nav-all active" id="all-months"><span><span class="small-grid" aria-hidden="true">▦</span>全部图集</span><span id="nav-count">0</span></button>
-        <div class="archive-label"><span class="eyebrow">按月归档</span><span class="archive-line"></span></div>
-        <nav id="month-nav" aria-label="月份"><p class="sidebar-empty">有图集的月份会出现在这里</p></nav>
+      <a class="brand" href="./" aria-label="SherlockGy 图集首页">
+        <svg class="icon brand-icon" aria-hidden="true"><use href="./assets/icons.svg#folio"/></svg>
+        <span>SherlockGy</span>
+      </a>
+      <div class="sidebar-body">
+        <button class="nav-all active" id="all-months" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#grid"/></svg><span>全部图集</span><span class="nav-count" id="nav-count">0</span></button>
+        <p class="archive-label">归档</p>
+        <nav id="month-nav" aria-label="月份"></nav>
       </div>
-      <div class="sidebar-bottom"><span class="small-rule"></span><p>把值得重读的，留在这里。</p><span class="utility">A PERSONAL VISUAL ARCHIVE</span></div>
+      <a class="repository-link" href="https://github.com/SherlockGy/SherlockGy.github.io" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#github"/></svg><span>GitHub</span><svg class="icon external-icon" aria-hidden="true"><use href="./assets/icons.svg#external"/></svg></a>
     </aside>
-    <div class="main-shell">
-      <header class="topbar"><span class="topbar-title">个人图集 <span>/</span> <span id="location-label">全部</span></span><div class="topbar-actions"><button class="text-button" id="demo-toggle">查看示例</button><button class="primary-button" id="new-album"><span aria-hidden="true">＋</span> 新建图集</button></div></header>
-      <main id="main" tabindex="-1">
-        <div id="demo-notice" class="demo-notice" hidden><span>示例模式 · 以下为阅读演示，不属于你的收藏。</span><button class="text-button" id="leave-demo">退出示例 ↗</button></div>
-        <section class="collection-heading"><div><p class="eyebrow">THE COLLECTION</p><h1 id="page-title">所有图集<span class="heading-dot">.</span></h1><p class="intro">收藏成集，按月归档，随时重读。</p></div><div class="collection-count"><strong id="album-count">0</strong><span>个图集 <span class="count-divider">/</span> <span id="image-count">0</span> 张图片</span></div></section>
-        <div class="collection-toolbar"><div class="tabs" role="group" aria-label="图集类型"><button class="tab active" data-type="all" aria-pressed="true">全部</button><button class="tab" data-type="multiple" aria-pressed="false">多图图集</button><button class="tab" data-type="single" aria-pressed="false">单张图片</button></div><label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" id="search" placeholder="搜索图集名称、关键词" aria-label="搜索图集名称、关键词"><kbd>/</kbd></label></div>
-        <div id="result-summary" class="result-summary" aria-live="polite"></div>
-        <div id="collection" aria-busy="true"><div class="loading-state">正在加载图集…</div></div>
-      </main>
-      <footer class="site-footer"><span>SHERLOCKGY <span class="footer-slash">/</span> 图集</span><span>一点收藏，一点积累。</span></footer>
-    </div>
+    <main id="main" tabindex="-1">
+      <header class="collection-header">
+        <div class="collection-heading"><h1 id="page-title">全部图集</h1><p class="collection-count"><span id="album-count">0</span> 个图集<span class="count-divider">·</span><span id="image-count">0</span> 张图片</p></div>
+        <div class="header-actions">
+          <label class="search"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#search"/></svg><input type="search" id="search" placeholder="搜索名称或说明" aria-label="搜索图集名称、关键词"><kbd>/</kbd></label>
+          <button class="primary-button new-button" id="new-album"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#plus"/></svg><span>添加图集</span></button>
+        </div>
+      </header>
+      <div class="collection-toolbar"><div class="tabs" role="group" aria-label="图集类型"><button class="tab active" data-type="all" aria-pressed="true">全部</button><button class="tab" data-type="multiple" aria-pressed="false">多图</button><button class="tab" data-type="single" aria-pressed="false">单图</button></div><div id="result-summary" class="result-summary" aria-live="polite"></div></div>
+      <div id="collection" aria-busy="true"><div class="loading-state">正在读取图集…</div></div>
+    </main>
   </div>
   <dialog id="reader" class="reader" aria-labelledby="reader-title">
-    <header class="reader-header"><button id="reader-close" class="back-button" aria-label="返回图集">← <span>返回图集</span></button><div class="reader-heading"><h2 id="reader-title"></h2><p id="reader-meta"></p></div><div class="reader-actions"><button id="copy-link" class="icon-button" aria-label="复制图集链接" title="复制图集链接">↗</button><button id="fullscreen" class="icon-button" aria-label="全屏阅读" title="全屏阅读">⛶</button></div></header>
-    <div class="reader-toolbar"><div class="segmented" role="group" aria-label="阅读模式"><button id="mode-page" class="active" aria-pressed="true">逐页阅读</button><button id="mode-scroll" aria-pressed="false">连续阅读</button></div><div class="zoom-controls"><button id="zoom-out" class="icon-button" aria-label="缩小">−</button><button id="zoom-reset" class="text-button" title="恢复适合宽度">适宽</button><button id="zoom-in" class="icon-button" aria-label="放大">＋</button><span class="control-divider"></span><a id="original-image" class="text-button" target="_blank" rel="noopener noreferrer">查看原图 ↗</a></div></div>
+    <header class="reader-header">
+      <button id="reader-close" class="icon-button reader-back" aria-label="返回图集" title="返回图集"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#arrow-left"/></svg></button>
+      <div class="reader-heading"><h2 id="reader-title"></h2><p id="reader-meta"></p></div>
+      <div class="reader-actions"><button id="copy-link" class="icon-button" aria-label="复制图集链接" title="复制图集链接"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#link"/></svg></button><button id="fullscreen" class="icon-button" aria-label="网页全屏" aria-pressed="false" title="网页全屏"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#expand"/></svg></button></div>
+    </header>
+    <div class="reader-toolbar">
+      <div class="segmented" role="group" aria-label="阅读模式"><button id="mode-page" class="active" aria-label="逐页阅读" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#image"/></svg><span>逐页</span></button><button id="mode-scroll" aria-label="连续阅读" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#scroll"/></svg><span>连续</span></button></div>
+      <div class="zoom-controls"><button id="zoom-out" class="icon-button" aria-label="缩小" title="缩小"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#minus"/></svg></button><button id="zoom-reset" class="text-button" title="恢复适合宽度">适宽</button><button id="zoom-in" class="icon-button" aria-label="放大" title="放大"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#plus"/></svg></button><span class="control-divider"></span><a id="original-image" class="original-link" target="_blank" rel="noopener noreferrer" aria-label="查看原图" title="查看原图"><span>原图</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#external"/></svg></a></div>
+    </div>
     <div id="reader-stage" class="reader-stage" tabindex="0" aria-label="图片阅读区域"></div>
-    <footer class="reader-footer"><button id="prev-page" class="secondary-button" aria-label="上一页">← <span>上一页</span></button><div class="page-control"><label for="page-number">第</label><input id="page-number" type="number" min="1" value="1" aria-label="跳转到页码"><span id="page-total"></span></div><button id="next-page" class="secondary-button" aria-label="下一页"><span>下一页</span> →</button></footer>
+    <footer class="reader-footer"><button id="prev-page" class="secondary-button" aria-label="上一页"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg><span>上一页</span></button><div class="page-control"><input id="page-number" type="number" min="1" value="1" aria-label="跳转到页码"><span id="page-total"></span></div><button id="next-page" class="secondary-button" aria-label="下一页"><span>下一页</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></footer>
   </dialog>
   <dialog id="upload-dialog" class="upload-dialog" aria-labelledby="upload-title">
-    <form id="upload-form"><header class="dialog-header"><div><p class="eyebrow">ADD TO COLLECTION</p><h2 id="upload-title">新建图集</h2></div><button type="button" class="icon-button" id="upload-close" aria-label="关闭新建图集">×</button></header>
-      <div class="dialog-content"><p id="upload-hint" class="form-hint"></p>
-        <label class="field-label" for="album-title">图集名称</label><input class="form-input" id="album-title" maxlength="120" placeholder="为这组图片起一个名字" required>
-        <div class="form-row"><div><label class="field-label" for="album-date">归档日期</label><input class="form-input" id="album-date" type="date" required></div><div class="date-help">图集会归入该日期对应的月份</div></div>
-        <label class="field-label" for="album-description">简短说明 <span class="optional">选填</span></label><textarea class="form-input" id="album-description" maxlength="1000" rows="2" placeholder="记录主题、出处，或留下阅读线索"></textarea>
-        <label class="drop-zone" id="drop-zone" for="file-input"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="6" y="8" width="28" height="26" rx="3"/><path d="m7 28 9-10 8 8 5-5 5 5M25 4v10m-5-5h10"/></svg><strong>点击选择，或拖入图片</strong><span>一次上传组成一个图集，可调整阅读顺序</span><small>JPG、PNG、WebP、GIF、AVIF · 最多 30 张</small></label><input id="file-input" class="visually-hidden" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif">
+    <form id="upload-form">
+      <header class="dialog-header"><h2 id="upload-title">添加图集</h2><button type="button" class="icon-button" id="upload-close" aria-label="关闭添加图集"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#close"/></svg></button></header>
+      <div class="dialog-content">
+        <p id="upload-hint" class="form-hint"></p>
+        <label class="field-label" for="album-title">图集名称</label><input class="form-input" id="album-title" maxlength="120" placeholder="填写名称" required>
+        <div class="form-row"><div><label class="field-label" for="album-date">归档日期</label><input class="form-input" id="album-date" type="date" required></div><p class="date-help">按此日期归档到月份</p></div>
+        <label class="field-label" for="album-description">说明 <span class="optional">选填</span></label><textarea class="form-input" id="album-description" maxlength="1000" rows="2" placeholder="主题、出处或备注"></textarea>
+        <label class="drop-zone" id="drop-zone" for="file-input"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#images"/></svg><strong>选择图片</strong><span>或拖到这里，可一次添加多张</span><small>JPG / PNG / WebP / GIF / AVIF · 最多 30 张</small></label>
+        <input id="file-input" class="visually-hidden" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif">
         <div id="file-list" class="file-list"></div>
-        <div id="access-code-field" hidden><label class="field-label" for="access-code">上传口令</label><input class="form-input" id="access-code" type="password" autocomplete="off" placeholder="输入你的上传口令"><p class="field-note">仅用于本次操作，关闭后清除。</p><button class="text-button" id="check-connection" type="button">测试连接</button></div>
+        <div id="access-code-field" hidden><label class="field-label" for="access-code">上传口令</label><div class="access-code-row"><input class="form-input" id="access-code" type="password" autocomplete="off" placeholder="输入口令"><button class="secondary-button" id="check-connection" type="button">测试连接</button></div><p class="field-note">关闭窗口后清除口令</p></div>
         <p id="upload-status" class="upload-status" role="status" aria-live="polite"></p>
-      </div><footer class="dialog-footer"><span id="file-summary">尚未选择图片</span><button class="primary-button" id="upload-submit" type="submit">预览图集 →</button></footer>
+      </div>
+      <footer class="dialog-footer"><span id="file-summary">尚未选择图片</span><button class="primary-button" id="upload-submit" type="submit">保存图集</button></footer>
     </form>
   </dialog>
   <div class="toast" id="toast" role="status" hidden></div>

@@ -3,14 +3,20 @@ import { normalizeManifest, groupByMonth, filterAlbums, validDate, validateFiles
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const state = { albums: [], query: '', month: '', type: 'all', demo: new URLSearchParams(location.search).get('demo') === '1',
+const state = { albums: [], query: '', month: '', type: 'all', expanded: false,
   album: null, page: 0, mode: 'page', zoom: 1, preview: null, files: [], urls: [], requestId: null, busy: false, loadError: false, scrollY: 0 };
 const reader = $('#reader');
 const uploadDialog = $('#upload-dialog');
 let pageObserver;
 let lastFocused;
 let toastTimer;
-const icon = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="5" width="9" height="9" rx="1"/><path d="M5 2h9v9"/></svg>';
+function icon(name) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'icon'); svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', `./assets/icons.svg#${name}`); svg.append(use);
+  return svg;
+}
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -45,8 +51,7 @@ function imageNode(image, lazy = true) {
 async function loadAlbums() {
   $('#collection').setAttribute('aria-busy', 'true');
   try {
-    const source = state.demo ? './data/demo.json' : config.manifestUrl;
-    const response = await fetch(source, { cache: 'no-cache' });
+    const response = await fetch(config.manifestUrl, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`目录加载失败（${response.status}）`);
     state.albums = normalizeManifest(await response.json(), document.baseURI);
     state.loadError = false;
@@ -62,7 +67,7 @@ async function loadAlbums() {
 function renderNav() {
   const nav = $('#month-nav'); nav.replaceChildren();
   const groups = groupByMonth(state.albums);
-  if (!groups.length) nav.append(el('p', 'sidebar-empty', '有图集的月份会出现在这里'));
+  $('.archive-label').hidden = !groups.length;
   let year = '', yearGroup;
   for (const [month, albums] of groups) {
     if (year !== month.slice(0, 4)) {
@@ -74,7 +79,7 @@ function renderNav() {
     });
     link.setAttribute('aria-label', `${year} 年 ${Number(month.slice(5))} 月，${albums.length} 个图集`);
     if (state.month === month) link.setAttribute('aria-current', 'true');
-    link.append(el('span', '', `${month.slice(5)} 月`), el('span', '', String(albums.length)));
+    link.append(el('span', '', `${Number(month.slice(5))} 月`), el('span', '', String(albums.length)));
     yearGroup.append(link);
   }
   $('#all-months').classList.toggle('active', !state.month);
@@ -85,14 +90,8 @@ function renderNav() {
 function emptyState(kind) {
   const box = el('section', 'empty-state');
   if (kind === 'empty') {
-    const art = el('div', 'empty-art'); art.setAttribute('aria-hidden', 'true');
-    art.innerHTML = '<div class="empty-sheet back"><span class="sheet-label">VISUAL NOTES</span><div class="sheet-square"></div></div><div class="empty-sheet front"><span class="sheet-label">YOUR COLLECTION</span><strong>一页<br>一知</strong><div class="sheet-line"></div><div class="sheet-line short"></div></div>';
-    box.append(art, el('h2', '', '从第一份图集开始'), el('p', '', '一张知识卡片，或一组完整笔记。'), el('p', '', '给图片一个名字，让每次重读都有迹可循。'));
-    const actions = el('div', 'empty-actions');
-    actions.append(button('＋ 新建图集', 'primary-button', openUpload), button('先看看阅读示例 ↗', 'text-button', () => setDemo(true)));
-    const note = el('div', 'empty-note');
-    for (const text of ['单图 / 多图', '按月归档', '专注阅读']) note.append(el('span', '', text));
-    box.append(actions, note);
+    const add = button('', 'primary-button', openUpload); add.append(icon('plus'), el('span', '', '添加图集'));
+    box.append(icon('images'), el('h2', '', '还没有图集'), el('p', '', '添加图片后，会按日期归档。'), add);
   } else if (kind === 'error') {
     box.append(el('h2', '', '暂时无法加载图集'), el('p', '', state.errorMessage), button('重新加载', 'secondary-button', loadAlbums));
   } else {
@@ -105,14 +104,11 @@ function emptyState(kind) {
 
 function renderCatalog() {
   renderNav();
-  $('#demo-notice').hidden = !state.demo;
-  $('#demo-toggle').textContent = state.demo ? '返回我的图集' : '查看示例';
   const filtered = filterAlbums(state.albums, state);
   $('#album-count').textContent = filtered.length;
   $('#image-count').textContent = filtered.reduce((count, album) => count + album.images.length, 0);
-  const title = state.month ? `${state.month.slice(0, 4)} 年 ${Number(state.month.slice(5))} 月` : '所有图集';
-  $('#page-title').replaceChildren(document.createTextNode(title), el('span', 'heading-dot', '.'));
-  $('#location-label').textContent = state.month ? state.month.replace('-', ' / ') : '全部';
+  const title = state.month ? `${state.month.slice(0, 4)} 年 ${Number(state.month.slice(5))} 月` : '全部图集';
+  $('#page-title').textContent = title;
   $$('.tab').forEach(tab => {
     const active = tab.dataset.type === state.type;
     tab.classList.toggle('active', active); tab.setAttribute('aria-pressed', String(active));
@@ -124,9 +120,10 @@ function renderCatalog() {
   for (const [month, albums] of groupByMonth(filtered)) {
     const section = el('section', 'month-section'); section.dataset.month = month;
     const header = el('div', 'month-heading');
-    const caption = el('div', 'month-caption');
-    caption.append(el('h2', '', `${Number(month.slice(5))} 月 · ${month.slice(0, 4)}`), el('small', '', `${month.slice(0, 4)} / COLLECTION`));
-    header.append(el('span', 'month-number', month.slice(5)), caption, el('span', 'line'), el('span', 'month-count', `${albums.length} 个图集`));
+    const number = el('h2', 'month-number', month.slice(5)); number.append(el('span', '', '月'));
+    number.setAttribute('aria-label', `${month.slice(0, 4)} 年 ${Number(month.slice(5))} 月`);
+    const year = el('time', 'month-year', month.slice(0, 4)); year.dateTime = month;
+    header.append(number, year);
     const grid = el('div', 'album-grid');
     for (const album of albums) {
       const card = el('a', `album-card${album.images.length > 1 ? ' multiple' : ''}`);
@@ -135,23 +132,17 @@ function renderCatalog() {
       const cover = el('div', 'cover');
       const coverImage = imageNode({ ...album.images[0], alt: '' });
       coverImage.addEventListener('error', () => { coverImage.hidden = true; cover.prepend(el('span', 'card-description', '封面暂时无法显示')); }, { once: true });
-      const badge = el('span', 'image-badge'); badge.innerHTML = icon;
-      badge.append(document.createTextNode(`${album.images.length} 张`)); cover.append(coverImage, badge);
+      const badge = el('span', 'image-badge'); badge.append(icon(album.images.length > 1 ? 'images' : 'image'));
+      badge.append(document.createTextNode(`${album.images.length} 张`)); cover.append(coverImage);
       const info = el('div', 'card-info'); info.append(el('h3', '', album.title));
       if (album.description) info.append(el('p', 'card-description', album.description));
       const meta = el('div', 'card-meta');
       const date = el('time', '', album.date.replaceAll('-', '.')); date.dateTime = album.date; meta.append(date);
       if (album.tags[0]) meta.append(el('span', 'tag', album.tags[0]));
-      meta.append(el('span', 'card-arrow', '↗')); info.append(meta); card.append(cover, info); grid.append(card);
+      meta.append(badge); info.append(meta); card.append(cover, info); grid.append(card);
     }
     section.append(header, grid); container.append(section);
   }
-}
-
-function setDemo(enabled) {
-  const url = new URL(location.href); url.hash = '';
-  if (enabled) url.searchParams.set('demo', '1'); else url.searchParams.delete('demo');
-  location.assign(url.href);
 }
 
 function route() {
@@ -171,14 +162,25 @@ function route() {
     reader.showModal(); updateBodyLock(); $('#reader-close').focus();
   }
   $('#reader-title').textContent = album.title;
-  $('#reader-meta').textContent = `${album.date.replaceAll('-', '.')}  /  ${album.images.length} 张图片${album.local ? '  /  本地预览 · 尚未保存' : state.demo ? '  /  示例图集' : ''}`;
+  $('#reader-meta').textContent = `${album.date.replaceAll('-', '.')}  ·  ${album.images.length} 张图片${album.local ? '  ·  本地预览，尚未保存' : ''}`;
   $('#copy-link').disabled = !!album.local;
   document.title = `${album.title} · 图集`;
   renderReader();
 }
 
+function setExpanded(expanded) {
+  state.expanded = expanded;
+  reader.classList.toggle('expanded', expanded);
+  const control = $('#fullscreen');
+  const label = expanded ? '退出网页全屏' : '网页全屏';
+  control.setAttribute('aria-pressed', String(expanded));
+  control.setAttribute('aria-label', label); control.title = label;
+  control.replaceChildren(icon(expanded ? 'collapse' : 'expand'));
+  if (reader.open && state.album) applyZoom();
+}
+
 function closeReader(changeRoute = true) {
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  setExpanded(false);
   pageObserver?.disconnect();
   if (reader.open) {
     reader.close(); updateBodyLock();
@@ -238,10 +240,13 @@ function renderReader() {
 }
 
 function applyZoom() {
-  const available = Math.max(200, $('#reader-stage').clientWidth - (innerWidth <= 760 ? 20 : 64));
+  if (!state.album || !reader.open) return;
+  const stage = $('#reader-stage'), style = getComputedStyle(stage);
+  const available = Math.max(1, stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+  const width = Math.round((state.expanded ? available : Math.min(1120, available)) * state.zoom);
   $$('.reader-page').forEach(figure => {
-    figure.style.width = `${Math.round(Math.min(980, available) * state.zoom)}px`;
-    figure.classList.toggle('zoomed', Math.min(980, available) * state.zoom > available);
+    figure.style.width = `${width}px`;
+    figure.classList.toggle('zoomed', width > available);
   });
   syncReaderControls();
 }
@@ -264,9 +269,9 @@ function resetDraft() {
 function openUpload() {
   resetDraft();
   $('#upload-hint').textContent = config.uploadEndpoint
-    ? '选择一张或多张图片，填写名称后发布到图集。第一张图片会作为封面。'
+    ? '第一张图片作为封面，添加后可调整顺序。'
     : '上传服务尚未连接。你可以先命名、排序并预览图片；本地预览不会保存，关闭或刷新页面后失效。';
-  $('#upload-submit').textContent = config.uploadEndpoint ? '发布图集 →' : '预览图集 →';
+  $('#upload-submit').textContent = config.uploadEndpoint ? '保存图集' : '预览图集';
   $('#access-code-field').hidden = !config.uploadEndpoint;
   $('#access-code').required = !!config.uploadEndpoint;
   uploadDialog.showModal(); updateBodyLock(); $('#album-title').focus();
@@ -296,19 +301,21 @@ function renderFiles() {
     const img = el('img'); img.src = state.urls[index]; img.alt = '';
     const name = el('span', 'file-name', file.name); name.append(el('small', '', `${(file.size / 1048576).toFixed(2)} MB${index === 0 ? ' · 封面' : ''}`));
     row.append(el('span', 'file-order', String(index + 1).padStart(2, '0')), img, name);
-    for (const [label, delta, text] of [['向前移动', -1, '↑'], ['向后移动', 1, '↓']]) {
-      const move = button(text, 'icon-button', () => {
+    for (const [label, delta, name] of [['向前移动', -1, 'chevron-up'], ['向后移动', 1, 'chevron-down']]) {
+      const move = button('', 'icon-button', () => {
         const target = index + delta; state.requestId = null;
         [state.files[index], state.files[target]] = [state.files[target], state.files[index]];
         [state.urls[index], state.urls[target]] = [state.urls[target], state.urls[index]];
         renderFiles();
       });
+      move.append(icon(name)); move.title = label;
       move.setAttribute('aria-label', `${label}第 ${index + 1} 张图片`); move.disabled = state.busy || index + delta < 0 || index + delta >= state.files.length;
       row.append(move);
     }
-    const remove = button('×', 'icon-button', () => {
+    const remove = button('', 'icon-button', () => {
       state.requestId = null; URL.revokeObjectURL(state.urls[index]); state.files.splice(index, 1); state.urls.splice(index, 1); renderFiles();
     });
+    remove.append(icon('close')); remove.title = '移除图片';
     remove.setAttribute('aria-label', `移除第 ${index + 1} 张图片`); remove.disabled = state.busy; row.append(remove); list.append(row);
   });
   $('#file-summary').textContent = state.files.length ? `${state.files.length} 张图片 · ${(state.files.reduce((sum, file) => sum + file.size, 0) / 1048576).toFixed(1)} MB` : '尚未选择图片';
@@ -403,11 +410,9 @@ async function submitAlbum(event) {
 $('#all-months').addEventListener('click', () => { state.month = ''; renderCatalog(); });
 $$('.tab').forEach(tab => tab.addEventListener('click', () => { state.type = tab.dataset.type; renderCatalog(); }));
 $('#search').addEventListener('input', event => { state.query = event.target.value; renderCatalog(); });
-$('#demo-toggle').addEventListener('click', () => setDemo(!state.demo));
-$('#leave-demo').addEventListener('click', () => setDemo(false));
 $('#new-album').addEventListener('click', openUpload);
 $('#reader-close').addEventListener('click', () => closeReader());
-reader.addEventListener('cancel', event => { event.preventDefault(); closeReader(); });
+reader.addEventListener('cancel', event => { event.preventDefault(); if (state.expanded) setExpanded(false); else closeReader(); });
 $('#prev-page').addEventListener('click', () => goPage(state.page - 1));
 $('#next-page').addEventListener('click', () => goPage(state.page + 1));
 $('#page-number').addEventListener('change', event => goPage((Number(event.target.value) || 1) - 1));
@@ -415,12 +420,7 @@ for (const mode of ['page', 'scroll']) $(`#mode-${mode}`).addEventListener('clic
 $('#zoom-out').addEventListener('click', () => { state.zoom = Math.max(.5, state.zoom - .25); applyZoom(); });
 $('#zoom-in').addEventListener('click', () => { state.zoom = Math.min(3, state.zoom + .25); applyZoom(); });
 $('#zoom-reset').addEventListener('click', () => { state.zoom = 1; applyZoom(); });
-$('#fullscreen').hidden = !document.fullscreenEnabled;
-$('#fullscreen').addEventListener('click', async () => {
-  try { if (document.fullscreenElement) await document.exitFullscreen(); else await reader.requestFullscreen(); }
-  catch { toast('当前浏览器无法进入全屏'); }
-});
-document.addEventListener('fullscreenchange', () => { $('#fullscreen').setAttribute('aria-label', document.fullscreenElement ? '退出全屏' : '全屏阅读'); });
+$('#fullscreen').addEventListener('click', () => setExpanded(!state.expanded));
 $('#copy-link').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(location.href); toast('已复制当前阅读链接'); }
   catch { toast('复制未成功，请复制浏览器地址栏中的链接'); }
