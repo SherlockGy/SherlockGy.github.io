@@ -6,7 +6,7 @@
 | Name | Value |
 | --- | --- |
 | `GITHUB_TOKEN` | 你创建的 GitHub fine-grained personal access token，仅授权 `SherlockGy.github.io` 仓库，Repository permissions → Contents 选择 Read and write |
-| `UPLOAD_PASSWORD` | 自己设置至少 16 位的上传口令，建议 32 位随机字母和数字；以后在图集网站上传时输入这个口令 |
+| `UPLOAD_PASSWORD` | 自己设置至少 8 位的上传口令，建议混合字母和数字；以后在图集网站上传时输入这个口令 |
 
 3. 保存并部署 Secret。打开 Worker 根地址，显示 `"ready": true` 表示两个配置已经读到；GitHub 权限需通过实际上传验证。
 4. 回到图集网站，刷新，点击 **新建图集**，选择图片、填写名称，输入 `UPLOAD_PASSWORD` 的值，点击 **发布图集**。

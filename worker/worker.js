@@ -208,10 +208,10 @@ export default {
       if (!['/', '/albums', '/health'].includes(path)) fail(404, 'NOT_FOUND', '接口不存在');
       if (request.method === 'OPTIONS') return reply(request, null, 204);
       if (request.method === 'GET') return reply(request, { service: 'SherlockGy Atlas Upload',
-        ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 16),
+        ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
         message: '请在图集网站中上传图片。', endpoint: '/albums' });
       if (request.method !== 'POST' || path === '/health') fail(405, 'METHOD_NOT_ALLOWED', '请使用 POST /albums');
-      if (!env.GITHUB_TOKEN || typeof env.UPLOAD_PASSWORD !== 'string' || env.UPLOAD_PASSWORD.length < 16) fail(503, 'NOT_CONFIGURED', '请先在 Cloudflare 添加 GITHUB_TOKEN 和至少 16 位的 UPLOAD_PASSWORD Secret');
+      if (!env.GITHUB_TOKEN || typeof env.UPLOAD_PASSWORD !== 'string' || env.UPLOAD_PASSWORD.length < 8) fail(503, 'NOT_CONFIGURED', '请先在 Cloudflare 添加 GITHUB_TOKEN 和至少 8 位的 UPLOAD_PASSWORD Secret');
       throttle(request);
       const authorization = request.headers.get('Authorization') || '';
       if (authorization.length > 1024 || !authorization.startsWith('Bearer ') || !await passwordMatches(authorization.slice(7), env.UPLOAD_PASSWORD)) fail(401, 'UNAUTHORIZED', '上传口令不正确');
