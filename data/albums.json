@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-50d58605-016e-429c-91ea-1b4a361261b5",
+      "title": "Agent 中的 Connector 是什么",
+      "date": "2026-09-15",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "cea836c616a091682dcd5f52dd22eda38b8bd876e8a2acec78f56217d20a5dfc",
+      "images": [
+        {
+          "src": "./images/2026/09/album-50d58605-016e-429c-91ea-1b4a361261b5/001.png",
+          "alt": "Agent 中的 Connector 是什么 · 第 1 页",
+          "width": 1536,
+          "height": 1024
+        }
+      ]
+    },
+    {
       "id": "album-d87eef59-72f3-4b5c-aac0-6f4c7ee5f523",
       "title": "佳明产品定位图",
       "date": "2026-09-15",
