@@ -1,6 +1,6 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-design-1';
 import { createSlideshow } from './slideshow.js?v=20260917-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -116,14 +116,13 @@ function renderNav() {
     if (state.view === 'series' && state.seriesId === item.id) link.setAttribute('aria-current', 'page');
     seriesNav.append(link);
   }
-  if (!state.series.length) seriesNav.append(el('p', 'series-nav-empty', '按主题建立长期学习目录'));
 }
 
 function emptyState(kind) {
   const box = el('section', 'empty-state');
   if (kind === 'empty') {
     const add = button('', 'primary-button', openUpload); add.append(icon('plus'), el('span', '', '添加图集'));
-    box.append(icon('images'), el('h2', '', '还没有图集'), el('p', '', '添加图片后，会按日期归档。'), add);
+    box.append(icon('images'), el('h2', '', '暂无图集'), add);
   } else if (kind === 'error') {
     box.append(el('h2', '', '暂时无法加载图集'), el('p', '', state.errorMessage), button('重新加载', 'secondary-button', loadAlbums));
   } else {
@@ -135,6 +134,7 @@ function emptyState(kind) {
 }
 
 function renderCatalog() {
+  document.body.dataset.view = state.view;
   renderNav();
   const seriesIds = new Set(state.series.filter(item => !state.seriesId || seriesTrail(state.series, item.id).some(parent => parent.id === state.seriesId)).map(item => item.id));
   const seriesAlbums = state.albums.filter(album => seriesIds.has(album.seriesId));
@@ -176,8 +176,7 @@ function renderCatalog() {
     if (filtered.length) { const grid = el('div', 'album-grid series-albums'); renderCards(grid, filtered); container.append(grid); }
     if (!children.length && !filtered.length) {
       const empty = el('section', 'empty-state');
-      empty.append(el('h2', '', state.query || state.type !== 'all' ? '没有找到相符的内容' : '开始整理这个系列'),
-        el('p', '', '可以建立下级系列，也可以添加图集。'),
+      empty.append(el('h2', '', state.query || state.type !== 'all' ? '没有找到相符的内容' : '暂无内容'),
         button('管理系列', 'secondary-button', () => seriesManager.open(state.seriesId)), button('添加图集', 'primary-button', openUpload));
       container.append(empty);
     }
@@ -207,6 +206,7 @@ function renderCards(grid, albums) {
       coverImage.addEventListener('error', () => { coverImage.hidden = true; cover.prepend(el('span', 'card-description', '封面暂时无法显示')); }, { once: true });
       const badge = el('span', 'image-badge'); badge.append(icon(album.images.length > 1 ? 'images' : 'image'));
       badge.append(document.createTextNode(`${album.images.length} 张`)); cover.append(coverImage);
+      const open = el('span', 'card-open'); open.setAttribute('aria-hidden', 'true'); open.append(icon('expand')); cover.append(open);
       const info = el('div', 'card-info'); info.append(el('h3', '', album.title));
       if (album.description) info.append(el('p', 'card-description', album.description));
       const meta = el('div', 'card-meta');

@@ -51,7 +51,7 @@ async function service(path, password, body) {
 
 function managerDialog(id, title, description, onOpenChange) {
   const dialog = node('dialog', 'upload-dialog manager-dialog'); dialog.id = id; dialog.setAttribute('aria-labelledby', `${id}-title`);
-  dialog.innerHTML = `<form><header class="dialog-header"><h2 id="${id}-title"></h2><button type="button" class="icon-button manager-close" aria-label="关闭">×</button></header>
+  dialog.innerHTML = `<form><header class="dialog-header"><h2 id="${id}-title"></h2><button type="button" class="icon-button manager-close" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#close"/></svg></button></header>
     <div class="dialog-content"><p class="form-hint manager-description"></p>
     <label class="field-label" for="${id}-password">上传口令</label><div class="access-code-row"><input id="${id}-password" class="form-input manager-password" type="password" autocomplete="off" placeholder="输入口令" required><button type="button" class="secondary-button manager-load">载入最新内容</button></div>
     <p class="field-note">关闭窗口后清除口令；修改后点击保存才会生效。</p><div class="manager-workspace" hidden></div><p class="upload-status" role="status" aria-live="polite"></p></div>
@@ -196,7 +196,7 @@ export function createImageEditor(onOpenChange, onSaved) {
 }
 
 export function createSeriesManager(onOpenChange, onSaved) {
-  const ui = managerDialog('series-manager', '管理系列', '建立多层系列，调整各层顺序，或将已有图集移入系列。系列图集不按月份归档。', onOpenChange);
+  const ui = managerDialog('series-manager', '管理系列', '调整系列层级、顺序和图集归属。', onOpenChange);
   ui.path = '/library'; ui.onSaved = onSaved;
   let series = [], placements = [], titles = new Map(), selected = '', newTitle = '';
   const moveWithin = (list, item, delta, sameGroup) => {
@@ -229,7 +229,7 @@ export function createSeriesManager(onOpenChange, onSaved) {
     })); ui.workspace.append(create);
     ui.workspace.append(node('h3', 'manager-heading', selected ? '下级系列' : '顶层系列'));
     const children = series.filter(item => item.parentId === selected);
-    if (!children.length) ui.workspace.append(node('p', 'field-note', '此处还没有系列。填写名称即可添加。'));
+    if (!children.length) ui.workspace.append(node('p', 'field-note', selected ? '暂无下级系列' : '暂无系列'));
     for (const item of children) {
       const row = node('section', 'series-edit-row');
       const title = input('系列名称', item.title); title.control.setAttribute('aria-label', `系列名称：${item.title}`);
@@ -243,7 +243,7 @@ export function createSeriesManager(onOpenChange, onSaved) {
     }
     ui.workspace.append(node('h3', 'manager-heading', selected ? '本系列的图集' : '按月归档的图集'));
     const albums = placements.filter(item => item.seriesId === selected);
-    if (!albums.length) ui.workspace.append(node('p', 'field-note', selected ? '此系列还没有图集。可在顶层将已有图集移入，或关闭窗口后添加新图集。' : '没有按月归档的图集。'));
+    if (!albums.length) ui.workspace.append(node('p', 'field-note', '暂无图集'));
     for (const item of albums) {
       const row = node('section', 'series-edit-row'); row.append(node('h4', 'manager-album-title', titles.get(item.id)));
       const destination = node('label', 'manager-field'); destination.append(node('span', 'field-label', '图集归属'));
