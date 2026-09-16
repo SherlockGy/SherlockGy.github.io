@@ -4,32 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="SherlockGy 的知识图集，按月份或系列整理与阅读。">
+  <meta name="description" content="SherlockGy 的月份图集与系列图集。">
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./assets/style.css?v=20260917-type-1">
-  <script type="module" src="./assets/app.js?v=20260917-design-1"></script>
+  <script type="module" src="./assets/app.js?v=20260917-review-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="归档导航">
+    <aside class="sidebar" aria-label="图集导航">
       <a class="brand" href="./" aria-label="SherlockGy 图集首页">
         <span class="brand-mark"><svg class="icon brand-icon" aria-hidden="true"><use href="./assets/icons.svg#folio"/></svg></span>
         <span class="brand-wordmark">SherlockGy<span class="brand-label">图集</span></span>
       </a>
       <div class="sidebar-body">
-        <button class="nav-all active" id="all-months" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#grid"/></svg><span>按月归档</span><span class="nav-count" id="nav-count">0</span></button>
-        <p class="archive-label">归档</p>
+        <button class="nav-all active" id="all-months" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#grid"/></svg><span>月份图集</span><span class="nav-count" id="nav-count">0</span></button>
+        <p class="archive-label">月份目录</p>
         <nav id="month-nav" aria-label="月份"></nav>
-        <div class="series-nav-section"><div class="series-nav-heading"><button class="text-button" id="all-series"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#folio"/></svg><span>全部系列</span></button><button class="text-button" id="manage-series">管理</button></div><nav id="series-nav" aria-label="系列"></nav></div>
+        <div class="series-nav-section"><div class="series-nav-heading"><button class="text-button" id="all-series"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#folio"/></svg><span>系列图集</span></button><button class="text-button" id="manage-series">管理</button></div><nav id="series-nav" aria-label="系列"></nav></div>
       </div>
       <a class="repository-link" href="https://github.com/SherlockGy/SherlockGy.github.io" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#github"/></svg><span>GitHub</span><svg class="icon external-icon" aria-hidden="true"><use href="./assets/icons.svg#external"/></svg></a>
     </aside>
     <main id="main" tabindex="-1">
       <nav id="series-breadcrumbs" class="breadcrumbs" aria-label="当前位置" hidden></nav>
       <header class="collection-header">
-        <div class="collection-heading"><h1 id="page-title">按月归档</h1><p class="collection-count"><span id="album-count">0</span> 个图集<span class="count-divider">·</span><span id="image-count">0</span> 张图片<small id="series-count-note" hidden>（含子系列）</small></p></div>
+        <div class="collection-heading"><h1 id="page-title">月份图集</h1><p class="collection-count"><span id="album-count">0</span> 个图集<span class="count-divider">·</span><span id="image-count">0</span> 张图片<small id="series-count-note" hidden>（含子系列）</small></p></div>
         <div class="header-actions">
           <label class="search"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#search"/></svg><input type="search" id="search" placeholder="搜索名称或说明" aria-label="搜索图集名称、关键词"><kbd>/</kbd></label>
           <button class="primary-button new-button" id="new-album"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#plus"/></svg><span>添加图集</span></button>
@@ -71,7 +71,7 @@
       <div class="dialog-content">
         <p id="upload-hint" class="form-hint"></p>
         <label class="field-label" for="album-title">图集名称</label><input class="form-input" id="album-title" maxlength="120" placeholder="填写名称" required>
-        <label class="field-label" for="album-series">图集归属</label><select class="form-input" id="album-series"><option value="">按月归档</option></select>
+        <label class="field-label" for="album-series">图集归属</label><select class="form-input" id="album-series"><option value="">月份图集</option></select>
         <div class="form-row" id="album-date-row"><div><label class="field-label" for="album-date">归档日期</label><input class="form-input" id="album-date" type="date" required></div><p class="date-help">按此日期归档到月份</p></div>
         <label class="field-label" for="album-description">说明 <span class="optional">选填</span></label><textarea class="form-input" id="album-description" maxlength="1000" rows="2" placeholder="主题、出处或备注"></textarea>
         <label class="drop-zone" id="drop-zone" for="file-input"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#images"/></svg><strong>选择图片</strong><span>或拖到这里，可一次添加多张</span><small>JPG / PNG / WebP / GIF / AVIF · 最多 30 张</small></label>

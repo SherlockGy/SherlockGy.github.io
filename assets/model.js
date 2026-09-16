@@ -19,7 +19,7 @@ export function normalizeManifest(data, base) {
   const seriesIds = new Set(normalizeSeries(data).map(item => item.id));
   const ids = new Set();
   return data.albums.map(album => {
-    if (!album || !/^[a-zA-Z0-9_-]{1,100}$/.test(album.id) || ids.has(album.id)) throw new Error('图集编号缺失、重复或格式不正确');
+    if (!album || typeof album.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(album.id) || ids.has(album.id)) throw new Error('图集编号缺失、重复或格式不正确');
     ids.add(album.id);
     if (typeof album.title !== 'string' || !album.title.trim() || album.title.length > 120) throw new Error('图集名称须为 1–120 字');
     if (album.seriesId ? !seriesIds.has(album.seriesId) : !validDate(album.date)) throw new Error('图集需要有效的所属系列或归档日期');

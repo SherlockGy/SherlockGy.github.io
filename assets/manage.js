@@ -1,5 +1,5 @@
 import config from '../config.js';
-import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-1';
+import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-review-1';
 
 function node(tag, className, text) {
   const value = document.createElement(tag);
@@ -216,7 +216,7 @@ export function createSeriesManager(onOpenChange, onSaved) {
   const render = () => {
     ui.workspace.replaceChildren();
     const location = node('label', 'manager-field'); location.append(node('span', 'field-label', '当前整理位置'));
-    const select = seriesSelect(series, selected, '全部系列（顶层）');
+    const select = seriesSelect(series, selected, '顶层系列');
     select.addEventListener('change', () => { selected = select.value; render(); }); location.append(select); ui.workspace.append(location);
     const create = node('div', 'manager-create');
     const title = input('新系列名称', newTitle); title.control.placeholder = '例如：经济学';
@@ -241,13 +241,13 @@ export function createSeriesManager(onOpenChange, onSaved) {
       controls.prepend(action('进入系列', () => { selected = item.id; render(); }));
       row.append(title.wrapper, parentLabel, controls); ui.workspace.append(row);
     }
-    ui.workspace.append(node('h3', 'manager-heading', selected ? '本系列的图集' : '按月归档的图集'));
+    ui.workspace.append(node('h3', 'manager-heading', selected ? '本系列的图集' : '月份图集'));
     const albums = placements.filter(item => item.seriesId === selected);
     if (!albums.length) ui.workspace.append(node('p', 'field-note', '暂无图集'));
     for (const item of albums) {
       const row = node('section', 'series-edit-row'); row.append(node('h4', 'manager-album-title', titles.get(item.id)));
       const destination = node('label', 'manager-field'); destination.append(node('span', 'field-label', '图集归属'));
-      const select = seriesSelect(series, item.seriesId, '按月归档');
+      const select = seriesSelect(series, item.seriesId, '月份图集');
       select.addEventListener('change', () => {
         item.seriesId = select.value;
         if (!item.seriesId && !validDate(item.date)) selected = '';
@@ -272,7 +272,7 @@ export function createSeriesManager(onOpenChange, onSaved) {
   };
   ui.payload = () => {
     normalizeSeries({ series });
-    if (placements.some(item => !item.seriesId && !validDate(item.date))) throw new Error('移回按月归档的图集需要填写有效日期');
+    if (placements.some(item => !item.seriesId && !validDate(item.date))) throw new Error('移入月份图集时需要填写有效日期');
     const body = new FormData(); body.set('series', JSON.stringify(series)); body.set('placements', JSON.stringify(placements)); return body;
   };
   return { open(id = '') { selected = id; ui.open(); } };

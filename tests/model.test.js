@@ -34,6 +34,11 @@ test('malformed manifests are reported instead of silently losing content', () =
     { schemaVersion: 1, albums: [{ ...fixture.albums[0], images: [] }] },
     { schemaVersion: 1, albums: [{ ...fixture.albums[0], date: '2026-02-30' }] }]) assert.throws(() => normalizeManifest(data));
 });
+test('album ids must be strings that can be opened by a reading link', () => {
+  for (const id of [undefined, null, 123, true]) {
+    assert.throws(() => normalizeManifest({ ...fixture, albums: [{ ...fixture.albums[0], id }] }), /图集编号/);
+  }
+});
 test('image URLs reject executable protocols and embedded credentials', () => {
   for (const url of ['javascript:alert(1)', 'data:text/html,test', 'file:///tmp/file', 'https://user:pass@example.com/img.png']) assert.throws(() => safeImageUrl(url));
   assert.equal(safeImageUrl('./images/example.png'), 'https://sherlockgy.github.io/images/example.png');
