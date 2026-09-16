@@ -10,7 +10,20 @@
 
 3. 保存并部署 Secret。打开 Worker 根地址，显示 `"ready": true` 表示两个配置已经读到，不代表 GitHub 连接和权限已验证。
 4. 回到图集网站，刷新，点击 **添加图集**，输入 `UPLOAD_PASSWORD` 的值，点击 **测试连接**，无需选择图片。成功说明 GitHub 连接及目录读取正常；它不会写入仓库，因此不能验证写入权限。
-5. 选择图片、填写名称，点击 **保存图集**，完成第一次实际上传。
+5. 选择图片、填写名称与归属，点击 **保存图集**，完成第一次实际上传。
+
+## 升级系列与编辑功能
+
+先发布新版前端，再将本目录 `worker.js` 的完整代码部署到现有 Worker。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-09-16-series-edit-1`。
+
+- 侧栏“管理”进入系列管理，输入现有上传口令并载入最新内容。支持多层系列、同级排序、重命名和调整上级。
+- 可将已有图集移入系列或移回月份归档；无日期的图集移回月份归档时需要选择日期。
+- 新建图集时选择系列即可，不需要填写归档日期。
+- 阅读窗口“编辑图片”支持新增、排序和换图。编辑后的图集最多 30 张；只对本次新文件执行上传，换图使用新的文件地址。
+- 保存时会检查版本。遇到冲突，当前草稿保留，需自行选择“重新载入”后再编辑。重新载入会提示放弃当前修改。
+- 旧图文件保留，换图不等于删除历史图片；同一页码链接在排序后可能显示另一张图片。
+
+前端出现新入口不代表 Worker 已升级。若提示部署新版或接口不存在，先更新 Worker；仅更新 GitHub 中的源文件不会更新线上 Worker。仓库中的自动测试使用模拟 GitHub，不证明 Cloudflare 的实际部署和写权限已经验证。
 
 前端 `config.js` 已设置为截图中的地址：
 
@@ -24,7 +37,7 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 ## 超时和连接诊断
 
-- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-15-diagnostics-2` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
+- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-16-series-edit-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
 - 若旧版提示 `Invalid redirect value`，属于 Worker 运行环境不支持 `redirect: 'error'` 的兼容性错误，请部署新版。新版使用 `manual` 并检查重定向状态，不会跟随跳转转发 Token；无需为此修改上传口令或重新生成 Token。
 - 打开 Cloudflare → Workers & Pages → `github-image-upload` → **Logs → Live**，开始查看实时日志，再回网站点击 **测试连接**或重试上传。
 - 日志中的 `github.start`、`github.success`、`github.error` 标记每一步，`stage` 表示读取主分支、读取图集目录、保存第几张图片或发布图集。`elapsedMs` 是耗时，`httpStatus` 是 GitHub 返回的 HTTP 状态，`traceId` 与页面错误中的请求编号对应。

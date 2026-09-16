@@ -12,7 +12,8 @@
 | --- | --- |
 | `requestId` | UUID v4，同一批内容的重试复用该编号 |
 | `title` | 必填，去除首尾空白后 1–120 字 |
-| `date` | 必填，有效的 `YYYY-MM-DD`，用户选定的归档日期 |
+| `date` | 按月归档时必填，有效的 `YYYY-MM-DD`；系列图集不使用此字段 |
+| `seriesId` | 选填，已有系列的编号；填写后图集归属该系列，不进入月份归档 |
 | `description` | 选填，最多 1000 字 |
 | `images` | 重复字段，按出现顺序保存，1–30 张 |
 
@@ -44,6 +45,44 @@
 
 前端提示“已保存，等待网站发布”，不会在 Pages 尚未更新时虚构已上线状态。GitHub Pages 有部署与缓存延迟，用户稍后刷新即可看到。
 
+## 编辑已有图集
+
+`GET /albums/{id}` 需要上传口令，读取 GitHub 当前分支，返回 `{ album, series, revision }`。`revision` 是该图集完整记录的 SHA-256，用来检测并发编辑。响应不缓存。
+
+`POST /albums/{id}` 同样使用口令和 `multipart/form-data`：
+
+| 字段 | 内容 |
+| --- | --- |
+| `requestId` | UUID v4，同一草稿的原样重试复用 |
+| `revision` | 载入图集时取得的版本 |
+| `order` | JSON 数组，表示最终图片顺序 |
+| `images` | 本次新增或替换的文件，可为零张；仅排序时不传 |
+
+`order` 条目只接受以下形式，编号都从零开始：
+
+- `{ "existing": 2 }`：保留原列表第 3 张图片。
+- `{ "file": 0 }`：插入本次上传的第 1 个文件。
+- `{ "file": 1, "replaces": 0 }`：用本次上传的第 2 个文件替换原列表第 1 张。
+
+每张原图必须恰好保留或替换一次，每个上传文件必须恰好引用一次。编辑后仍为 1–30 张。客户端不能指定文件路径；Worker 自行生成包含请求编号的新地址，旧文件不删除。
+
+成功返回 HTTP 200，格式为 `{ status: "committed", commitSha, album }`。没有变化时返回 `{ status: "unchanged", album }`，不创建 Git 提交。同一图集版本发生变化返回 HTTP 409 / `ALBUM_CHANGED`，保留草稿后由用户选择重新载入。其他仓库文件的并发更新会有限重试并保留。
+
+## 多层系列与图集归属
+
+`GET /library` 需要上传口令，返回 `{ manifest, revision }`。版本只覆盖系列列表和图集的归属、日期、顺序，因此并发图片修改不会被目录整理覆盖。
+
+`POST /library` 使用口令和 `multipart/form-data`，提交 `requestId`、`revision`、`series`、`placements`。最后两个字段为 JSON：
+
+- `series`：完整的系列数组，条目为 `{ id, title, parentId }`。顶层 `parentId` 为 `""`；最多 200 个系列，名称 1–120 字，编号唯一，不得有循环或缺失上级。已有系列必须保留，可新增、重命名、调整层级和排序。
+- `placements`：完整的图集排列，条目为 `{ id, seriesId, date }`。所有已有图集必须恰好出现一次，禁止通过目录接口添加或丢弃图集。`seriesId` 为空时必须提供有效归档日期；归属系列时不要求日期，已有日期由服务端保留。
+
+系列数组中同级条目的相对顺序、图集数组中同一系列条目的相对顺序分别决定展示顺序。新系列图集通过 `POST /albums` 创建，不要求日期，保存到 `images/series/<album-id>/`。将原月份图集移入系列只更新目录，原图片地址不变。
+
+目录保存成功返回 HTTP 200 / `{ status: "committed", commitSha, manifest }`；未变化时返回 `{ status: "unchanged", manifest }`。目录版本变更返回 HTTP 409 / `LIBRARY_CHANGED`，不会覆盖别人的变更。
+
+图片编辑和目录整理分别保留最近 50 次请求编号及内容指纹。同一编号的原样重试返回成功，编号被用于不同内容时返回 HTTP 409 / `REQUEST_REUSED`；不再保留的旧请求仍受版本检查约束。接口共用现有口令、来源限制、限流、请求体上限和 GitHub 访问超时。新增日志通过统一 `logPrefix` 标明入口、中文操作和图集编号或追踪编号。
+
 ## 错误响应
 
 HTTP 400 / 401 / 403 / 409 / 413 / 429 / 500 / 502 / 503 / 504，JSON：
@@ -63,7 +102,7 @@ GitHub 请求错误额外返回 `stage` 和耗时 `elapsedMs`，若已收到 HTT
 ```json
 {
   "status": "readable",
-  "version": "2026-09-15-diagnostics-2",
+  "version": "2026-09-16-series-edit-1",
   "traceId": "<request UUID>",
   "elapsedMs": 500,
   "albumCount": 0,
@@ -78,7 +117,7 @@ Worker 对 GitHub 请求使用 `redirect: 'manual'`。收到 301、302、303、3
 ## 后端处理约束
 
 1. 为固定站点 `https://sherlockgy.github.io` 配置 CORS。
-   - 响应 `OPTIONS`，允许 `POST, OPTIONS` 和 `Authorization, Content-Type`。
+   - 响应 `OPTIONS`，允许 `GET, POST, OPTIONS` 和 `Authorization, Content-Type`。
    - 所有成功与错误响应均包含正确的 CORS 头，使用 `Vary: Origin`。
    - CORS 不能代替鉴权。Worker 必须验证独立的上传口令，限制请求速率。
 2. 验证名称、日期、文件数量、总大小和每张图片的真实格式。
@@ -88,7 +127,7 @@ Worker 对 GitHub 请求使用 `redirect: 'manual'`。收到 301、302、303、3
 3. 仓库、分支、目录在 Worker 中固定。
    - 仓库：`SherlockGy/SherlockGy.github.io`；分支：`master`。
    - GitHub Token 作为 Secret 保存，仅授予本仓库的 Contents 写权限。
-   - 将图片写入 `images/YYYY/MM/<id>/`，与 `data/albums.json` 一起原子提交。
+   - 将图片写入月份或系列目录，与 `data/albums.json` 一起原子提交；排序和归属变更只更新目录。
 4. 使用 Git Data API 创建 blobs、tree、commit，然后以 **非强制**方式更新分支引用。
    - 读取最新 head 和完整图集目录，追加图集，保留其他图集及站点文件。
    - 并发冲突时重读最新目录并重试；有限次失败返回 409，不能覆盖已有目录。

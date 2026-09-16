@@ -1,0 +1,176 @@
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+export function fitImage(width, height, viewportWidth, viewportHeight, padding = 12) {
+  if (!(width > 0 && height > 0 && viewportWidth > 0 && viewportHeight > 0)) return { width: 0, height: 0 };
+  const ratio = Math.min(Math.max(1, viewportWidth - padding * 2) / width, Math.max(1, viewportHeight - padding * 2) / height);
+  return { width: width * ratio, height: height * ratio };
+}
+
+export function constrainPan(x, y, width, height, viewportWidth, viewportHeight) {
+  // Beyond each image edge, allow blank space equal to half the viewing area.
+  const limitX = Math.max(0, (width - viewportWidth) / 2 + viewportWidth * .5);
+  const limitY = Math.max(0, (height - viewportHeight) / 2 + viewportHeight * .5);
+  return { x: clamp(x, -limitX, limitX), y: clamp(y, -limitY, limitY) };
+}
+
+export function zoomAtPoint(view, nextScale, point) {
+  const scale = clamp(nextScale, .25, 8), ratio = scale / view.scale;
+  return { scale, x: point.x - (point.x - view.x) * ratio, y: point.y - (point.y - view.y) * ratio };
+}
+
+export function createWheelPager() {
+  let lastTime = -Infinity, total = 0, locked = false, direction = 0;
+  return {
+    reset() { lastTime = -Infinity; total = 0; locked = false; direction = 0; },
+    feed(delta, time) {
+      if (!delta) return 0;
+      const sign = Math.sign(delta);
+      // A continuous touchpad gesture (including inertia) turns only one page.
+      if (time - lastTime > 180 || sign !== direction) { total = 0; locked = false; }
+      lastTime = time; direction = sign; total += delta;
+      if (locked || Math.abs(total) < 36) return 0;
+      locked = true;
+      return sign;
+    },
+  };
+}
+
+export function createSlideshow(root, { onSelect, onExit }) {
+  const $ = selector => root.querySelector(selector);
+  const canvas = $('.slideshow-canvas'), list = $('.slideshow-list');
+  const handButton = $('#slideshow-hand'), fitButton = $('#slideshow-fit');
+  const status = $('#slideshow-status'), pager = createWheelPager();
+  let album = null, page = 0, currentImage = null, hand = false, drag = null;
+  let view = { scale: 1, x: 0, y: 0 }, fitted = { width: 0, height: 0 };
+
+  function stopDrag() {
+    if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
+    drag = null; canvas.classList.remove('dragging');
+  }
+  function paint() {
+    const pan = constrainPan(view.x, view.y, fitted.width * view.scale, fitted.height * view.scale, canvas.clientWidth, canvas.clientHeight);
+    view = { ...view, ...pan };
+    if (currentImage) {
+      currentImage.style.width = `${fitted.width}px`; currentImage.style.height = `${fitted.height}px`;
+      currentImage.style.transform = `translate(-50%, -50%) translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
+    }
+    fitButton.textContent = view.scale === 1 ? '适屏' : `${Math.round(view.scale * 100)}%`;
+  }
+  function resize() {
+    if (root.hidden || !currentImage?.naturalWidth) return;
+    fitted = fitImage(currentImage.naturalWidth, currentImage.naturalHeight, canvas.clientWidth, canvas.clientHeight);
+    stopDrag(); paint();
+  }
+  function resetView() {
+    stopDrag(); view = { scale: 1, x: 0, y: 0 }; paint();
+  }
+  function setHand(enabled) {
+    hand = enabled; pager.reset(); resetView();
+    canvas.classList.toggle('hand-mode', hand);
+    handButton.setAttribute('aria-pressed', String(hand));
+    const label = hand ? '关闭拖动，恢复适屏' : '开启拖动与滚轮缩放';
+    handButton.setAttribute('aria-label', label); handButton.title = label;
+    $('#slideshow-hint').textContent = hand ? '拖动查看 · 滚轮缩放' : '滚轮翻页 · 点击目录跳转';
+  }
+  function renderDirectory() {
+    list.replaceChildren();
+    $('#slideshow-title').textContent = album.title;
+    $('#slideshow-title').title = album.title;
+    album.images.forEach((image, index) => {
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'slideshow-thumb';
+      button.setAttribute('aria-label', `第 ${index + 1} 张${image.alt ? `：${image.alt}` : ''}`);
+      button.title = button.getAttribute('aria-label');
+      const img = document.createElement('img'); img.src = image.src; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+      img.draggable = false;
+      img.addEventListener('error', () => { img.hidden = true; });
+      const preview = document.createElement('span'); preview.className = 'slideshow-thumbnail'; preview.append(img);
+      const number = document.createElement('span'); number.className = 'slideshow-number'; number.textContent = String(index + 1).padStart(2, '0');
+      button.append(preview, number);
+      button.addEventListener('click', () => { pager.reset(); onSelect(index); });
+      list.append(button);
+    });
+  }
+  function show(nextAlbum, nextPage) {
+    const logPrefix = `[showSlideshow 图集放映][albumId=${nextAlbum.id}][page=${nextPage + 1}]`;
+    const changedAlbum = album !== nextAlbum;
+    album = nextAlbum; page = nextPage;
+    if (changedAlbum) { setHand(false); renderDirectory(); }
+    resetView();
+    [...list.children].forEach((button, index) => {
+      if (index === page) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
+    const active = list.children[page];
+    if (active) {
+      const top = active.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+      if (top < list.scrollTop) list.scrollTop = top;
+      else if (top + active.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = top + active.offsetHeight - list.clientHeight;
+    }
+    $('#slideshow-count').textContent = `${page + 1} / ${album.images.length}`;
+    $('#slideshow-prev').disabled = page === 0;
+    $('#slideshow-next').disabled = page === album.images.length - 1;
+    const source = album.images[page], img = document.createElement('img');
+    currentImage = img; fitted = { width: 0, height: 0 };
+    img.className = 'slideshow-image'; img.alt = source.alt || `第 ${page + 1} 张图片`; img.draggable = false;
+    img.decoding = 'async'; img.hidden = true;
+    status.replaceChildren(document.createTextNode('正在加载图片…')); status.hidden = false;
+    canvas.replaceChildren(img, status); canvas.setAttribute('aria-busy', 'true');
+    img.addEventListener('load', () => {
+      if (currentImage !== img) return;
+      resize(); img.hidden = false; status.hidden = true; canvas.setAttribute('aria-busy', 'false');
+    });
+    img.addEventListener('error', () => {
+      if (currentImage !== img) return;
+      console.warn(`${logPrefix} 图片加载失败`);
+      img.hidden = true; canvas.setAttribute('aria-busy', 'false');
+      const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'text-button'; retry.textContent = '重新加载';
+      retry.addEventListener('click', () => show(album, page));
+      status.replaceChildren(document.createTextNode('这张图片暂时无法加载'), retry); status.hidden = false;
+    });
+    img.src = source.src;
+  }
+  $('#slideshow-exit').addEventListener('click', onExit);
+  $('#slideshow-prev').addEventListener('click', () => onSelect(page - 1));
+  $('#slideshow-next').addEventListener('click', () => onSelect(page + 1));
+  handButton.addEventListener('click', () => setHand(!hand));
+  fitButton.addEventListener('click', resetView);
+  canvas.addEventListener('dragstart', event => event.preventDefault());
+  canvas.addEventListener('wheel', event => {
+    event.preventDefault();
+    const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1);
+    if (hand) {
+      if (!currentImage?.naturalWidth) return;
+      stopDrag();
+      const rect = canvas.getBoundingClientRect();
+      view = zoomAtPoint(view, view.scale * Math.exp(-clamp(delta, -120, 120) * .0025),
+        { x: event.clientX - rect.left - rect.width / 2, y: event.clientY - rect.top - rect.height / 2 });
+      paint();
+    } else {
+      const step = pager.feed(delta, event.timeStamp);
+      if (step && page + step >= 0 && page + step < album.images.length) onSelect(page + step);
+    }
+  }, { passive: false });
+  canvas.addEventListener('pointerdown', event => {
+    if (!hand || event.button !== 0 || drag || !currentImage?.naturalWidth || event.target.closest('button')) return;
+    event.preventDefault(); canvas.focus({ preventScroll: true });
+    drag = { id: event.pointerId, startX: event.clientX, startY: event.clientY, x: view.x, y: view.y };
+    canvas.setPointerCapture(event.pointerId); canvas.classList.add('dragging');
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (!drag || drag.id !== event.pointerId) return;
+    view.x = drag.x + event.clientX - drag.startX; view.y = drag.y + event.clientY - drag.startY; paint();
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(type, stopDrag);
+  new ResizeObserver(resize).observe(canvas);
+  return {
+    open(nextAlbum, nextPage) {
+      root.hidden = false; setHand(false); show(nextAlbum, nextPage); canvas.focus({ preventScroll: true });
+    },
+    show,
+    resize,
+    close() {
+      setHand(false); root.hidden = true; album = null; currentImage = null;
+      canvas.replaceChildren(status); list.replaceChildren();
+    },
+  };
+}

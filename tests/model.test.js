@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { normalizeManifest, groupByMonth, filterAlbums, validDate, safeImageUrl, validateFiles } from '../assets/model.js';
+import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, safeImageUrl, validateFiles } from '../assets/model.js';
+import { buildImageOrder } from '../assets/manage.js';
 import config from '../config.js';
 // Test-only metadata: never loaded by the website.
 const fixture = { schemaVersion: 1, albums: [
@@ -46,4 +47,34 @@ test('file count, type, empty content and byte limits are enforced', () => {
 test('production manifest remains valid as real albums are added', async () => {
   const data = JSON.parse(await readFile(new URL('../data/albums.json', import.meta.url)));
   assert.doesNotThrow(() => normalizeManifest(data));
+});
+
+test('undated series albums retain manual order and never enter month archives', () => {
+  const data = { schemaVersion: 1, series: [{ id: 'economics', title: '经济学' }, { id: 'macro', title: '宏观', parentId: 'economics' }],
+    albums: [fixture.albums[0], { id: 'z-last', title: '基础', seriesId: 'macro', images: ['./images/test-a.png'] },
+      { id: 'a-first', title: '进阶', seriesId: 'macro', date: '2020-01-01', images: ['./images/test-b.png'] }] };
+  const albums = normalizeManifest(data), series = normalizeSeries(data);
+  assert.deepEqual(groupByMonth(albums).map(([month]) => month), ['2026-09']);
+  assert.deepEqual(filterAlbums(albums, { view: 'series', seriesId: 'macro' }).map(item => item.id), ['z-last', 'a-first']);
+  assert.equal(filterAlbums(albums, { view: 'archive' }).length, 1);
+  assert.equal(filterAlbums(albums, { view: 'series' }).length, 0);
+  assert.equal(filterAlbums(albums, { month: '2020-01' }).length, 0);
+  assert.deepEqual(seriesTrail(series, 'macro').map(item => item.title), ['经济学', '宏观']);
+  assert.deepEqual(flattenSeries(series).map(item => item.depth), [0, 1]);
+});
+test('series graphs reject loops, duplicate ids and nonexistent parents or album destinations', () => {
+  for (const series of [
+    [{ id: 'a', title: 'A', parentId: 'a' }],
+    [{ id: 'a', title: 'A', parentId: 'b' }, { id: 'b', title: 'B', parentId: 'a' }],
+    [{ id: 'a', title: 'A', parentId: 'missing' }],
+    [{ id: 'a', title: 'A' }, { id: 'a', title: 'A' }],
+  ]) assert.throws(() => normalizeSeries({ series }));
+  assert.throws(() => normalizeManifest({ schemaVersion: 1, albums: [{ ...fixture.albums[0], seriesId: 'missing' }] }));
+});
+test('editing sends only new files and preserves original identity through reorder and replacement', () => {
+  const replacement = { name: 'replace.png' }, added = { name: 'added.png' };
+  const result = buildImageOrder([{ existing: 2 }, { existing: 0, file: replacement }, { file: added }, { existing: 1 }]);
+  assert.deepEqual(result.files, [replacement, added]);
+  assert.deepEqual(result.order, [{ existing: 2 }, { file: 0, replaces: 0 }, { file: 1 }, { existing: 1 }]);
+  assert.deepEqual(buildImageOrder([{ existing: 1 }, { existing: 0 }]).files, []);
 });

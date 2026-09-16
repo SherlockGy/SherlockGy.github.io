@@ -6,7 +6,7 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-15-diagnostics-2';
+const VERSION = '2026-09-16-series-edit-1';
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
 const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
@@ -20,7 +20,7 @@ class GitHubError extends Error {
   constructor(status, details = {}) { super('GitHub request failed'); this.status = status; this.details = details; }
 }
 function log(env, event, details = {}, error = false) {
-  console[error ? 'error' : 'log']({ event, traceId: env._traceId, ...details });
+  console[error ? 'error' : 'log']({ event, traceId: env._traceId, ...(env._logPrefix ? { logPrefix: env._logPrefix } : {}), ...details });
 }
 function safeReason(error, env) {
   let message = String(error?.message || 'Unknown error');
@@ -184,7 +184,7 @@ function existingAlbum(snapshot, id, fingerprint) {
   if (album.uploadFingerprint !== fingerprint) fail(409, 'REQUEST_REUSED', '同一个请求编号包含不同内容，请重新新建图集');
   return { status: 'committed', commitSha: snapshot.sha, album };
 }
-async function upload(request, env) {
+async function readUploadForm(request) {
   const contentType = request.headers.get('Content-Type') || '';
   if (!contentType.toLowerCase().startsWith('multipart/form-data;')) fail(415, 'EXPECTED_FORM', '请从图集网站选择图片上传');
   if (Number(request.headers.get('Content-Length')) > LIMITS.bodyBytes) fail(413, 'TOO_LARGE', '单次图片总大小不能超过 30 MB');
@@ -196,14 +196,16 @@ async function upload(request, env) {
     if (error instanceof UploadError) throw error;
     fail(400, 'INVALID_FORM', '无法读取图片，请检查文件大小后重试');
   }
-  const title = field(form, 'title', 120, true);
-  const date = field(form, 'date', 10, true);
-  const description = field(form, 'description', 1000);
+  return form;
+}
+function uploadRequestId(form) {
   const requestId = field(form, 'requestId', 36, true).toLowerCase();
-  if (!validDate(date)) fail(400, 'INVALID_DATE', '请选择有效的归档日期');
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(requestId)) fail(400, 'INVALID_REQUEST_ID', '请求编号格式不正确');
+  return requestId;
+}
+async function inspectFiles(form, allowEmpty = false) {
   const files = form.getAll('images');
-  if (!files.length || files.length > LIMITS.files) fail(400, 'FILE_COUNT', '每个图集需要 1–30 张图片');
+  if ((!allowEmpty && !files.length) || files.length > LIMITS.files) fail(400, 'FILE_COUNT', '每个图集需要 1–30 张图片');
   let total = 0;
   const info = [];
   for (const file of files) {
@@ -221,13 +223,27 @@ async function upload(request, env) {
     }
     info.push(item);
   }
-  const fingerprint = await hash(encoder.encode(JSON.stringify([title, date, description, info.map(item => item.hash)])));
+  return { files, info };
+}
+async function upload(request, env) {
+  const form = await readUploadForm(request);
+  const title = field(form, 'title', 120, true);
+  const seriesId = field(form, 'seriesId', 100);
+  const date = seriesId ? '' : field(form, 'date', 10, true);
+  const description = field(form, 'description', 1000);
+  const requestId = uploadRequestId(form);
+  if (!seriesId && !validDate(date)) fail(400, 'INVALID_DATE', '请选择有效的归档日期');
+  if (seriesId && !/^[a-zA-Z0-9_-]{1,100}$/.test(seriesId)) fail(400, 'INVALID_SERIES', '所属系列格式不正确');
+  const { files, info } = await inspectFiles(form);
+  // Preserve fingerprints of existing monthly drafts for safe retries across upgrades.
+  const fingerprint = await hash(encoder.encode(JSON.stringify([title, date, description, info.map(item => item.hash), ...(seriesId ? [seriesId] : [])])));
   const id = `album-${requestId}`;
-  const directory = `images/${date.slice(0, 4)}/${date.slice(5, 7)}/${id}`;
+  const directory = imageDirectory({ id, date, seriesId });
   let snapshot = await readHead(env);
   const existing = existingAlbum(snapshot, id, fingerprint);
   if (existing) return existing;
-  const album = { id, title, date, description, tags: [], uploadFingerprint: fingerprint, images: [] };
+  if (seriesId && !(snapshot.manifest.series || []).some(item => item.id === seriesId)) fail(400, 'INVALID_SERIES', '所属系列不存在，请重新载入目录');
+  const album = { id, title, ...(seriesId ? { seriesId } : { date }), description, tags: [], uploadFingerprint: fingerprint, images: [] };
   const imageEntries = [];
   // Sequential binary uploads bound memory and outbound connections.
   for (let index = 0; index < files.length; index++) {
@@ -244,7 +260,8 @@ async function upload(request, env) {
     if (attempt > 0) snapshot = await readHead(env);
     const duplicate = existingAlbum(snapshot, id, fingerprint);
     if (duplicate) return duplicate;
-    const manifest = { ...snapshot.manifest, albums: [album, ...snapshot.manifest.albums] };
+    if (seriesId && !(snapshot.manifest.series || []).some(item => item.id === seriesId)) fail(409, 'INVALID_SERIES', '所属系列已变更，请重新载入目录');
+    const manifest = { ...snapshot.manifest, albums: seriesId ? [...snapshot.manifest.albums, album] : [album, ...snapshot.manifest.albums] };
     const tree = await github(env, '/git/trees', { method: 'POST', body: { base_tree: snapshot.tree,
       tree: [...imageEntries, { path: MANIFEST, mode: '100644', type: 'blob', content: JSON.stringify(manifest, null, 2) + '\n' }] } });
     const commit = await github(env, '/git/commits', { method: 'POST', body: {
@@ -260,25 +277,233 @@ async function upload(request, env) {
   fail(409, 'CONFLICT', '图集目录正在更新，请保留当前图片并重试');
 }
 
+function editableAlbum(snapshot, id) {
+  const album = snapshot.manifest.albums.find(item => item.id === id);
+  if (!album) fail(404, 'ALBUM_NOT_FOUND', '图集不存在，请刷新首页检查');
+  if ((album.seriesId ? !(snapshot.manifest.series || []).some(item => item.id === album.seriesId) : !validDate(album.date)) || !Array.isArray(album.images) || !album.images.length ||
+      album.images.some(image => typeof image !== 'string' && (!image || typeof image.src !== 'string'))) {
+    fail(500, 'INVALID_MANIFEST', '图集内容格式不正确，已停止编辑');
+  }
+  return album;
+}
+function imageDirectory(album) {
+  return album.seriesId ? `images/series/${album.id}` : `images/${album.date.slice(0, 4)}/${album.date.slice(5, 7)}/${album.id}`;
+}
+async function albumRevision(album) {
+  return hash(encoder.encode(JSON.stringify(album)));
+}
+function validateOrder(order, album, fileCount) {
+  if (!Array.isArray(order) || !order.length || order.length > LIMITS.files) fail(400, 'FILE_COUNT', '编辑后的图集需要 1–30 张图片');
+  const originals = new Set(), uploads = new Set();
+  for (const entry of order) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) fail(400, 'INVALID_ORDER', '图片顺序格式不正确');
+    const hasFile = Object.hasOwn(entry, 'file');
+    const hasExisting = Object.hasOwn(entry, 'existing');
+    const hasReplacement = Object.hasOwn(entry, 'replaces');
+    const allowed = hasFile ? ['file', 'replaces'] : ['existing'];
+    if (Object.keys(entry).some(key => !allowed.includes(key)) || (!hasFile && !hasExisting)) fail(400, 'INVALID_ORDER', '图片条目格式不正确');
+    if (hasFile) {
+      if (!Number.isInteger(entry.file) || entry.file < 0 || entry.file >= fileCount || uploads.has(entry.file)) fail(400, 'INVALID_ORDER', '上传图片编号缺失或重复');
+      uploads.add(entry.file);
+    }
+    if (hasExisting || hasReplacement) {
+      const index = hasExisting ? entry.existing : entry.replaces;
+      if (!Number.isInteger(index) || index < 0 || index >= album.images.length || originals.has(index)) fail(400, 'INVALID_ORDER', '原图片编号缺失或重复');
+      originals.add(index);
+    }
+  }
+  if (originals.size !== album.images.length || uploads.size !== fileCount) fail(400, 'INVALID_ORDER', '每张原图必须保留或替换，新增图片必须全部使用');
+}
+async function editAlbum(request, env, id) {
+  const logPrefix = `[editAlbum 编辑图集][albumId=${id}]`;
+  env = { ...env, _logPrefix: logPrefix };
+  log(env, 'edit.start');
+  const form = await readUploadForm(request);
+  const requestId = uploadRequestId(form);
+  const revision = field(form, 'revision', 64, true);
+  if (!/^[a-f0-9]{64}$/.test(revision)) fail(400, 'INVALID_REVISION', '图集版本格式不正确');
+  let order;
+  try { order = JSON.parse(field(form, 'order', 10000, true)); }
+  catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_ORDER', '图片顺序格式不正确'); }
+  const { files, info } = await inspectFiles(form, true);
+  const fingerprint = await hash(encoder.encode(JSON.stringify([id, revision, order, info.map(item => item.hash)])));
+  let snapshot = await readHead(env);
+  const inspectSnapshot = async () => {
+    const album = editableAlbum(snapshot, id);
+    const receipt = (album.editHistory || []).find(item => item.requestId === requestId);
+    if (receipt) {
+      if (receipt.fingerprint !== fingerprint) fail(409, 'REQUEST_REUSED', '同一个请求编号包含不同内容，请重新载入图集');
+      return { album, duplicate: true };
+    }
+    if (await albumRevision(album) !== revision) fail(409, 'ALBUM_CHANGED', '图集已有新的变更。当前草稿已保留，请重新载入最新图集后再编辑');
+    validateOrder(order, album, files.length);
+    return { album, duplicate: false };
+  };
+  let checked = await inspectSnapshot();
+  if (checked.duplicate) return { status: 'committed', commitSha: snapshot.sha, album: checked.album };
+  if (!files.length && order.every((entry, index) => entry.existing === index)) {
+    return { status: 'unchanged', album: checked.album };
+  }
+  const imageEntries = [], newImages = [];
+  const directory = imageDirectory(checked.album);
+  for (let index = 0; index < files.length; index++) {
+    const bytes = new Uint8Array(await files[index].arrayBuffer());
+    const blob = await github(env, '/git/blobs', { method: 'POST', stage: `保存第 ${index + 1}/${files.length} 张新图片`, body: { content: base64(bytes), encoding: 'base64' } });
+    // New paths keep old images intact and avoid stale cached replacements.
+    const path = `${directory}/${requestId}-${String(index + 1).padStart(3, '0')}.${info[index].extension}`;
+    imageEntries.push({ path, mode: '100644', type: 'blob', sha: blob.sha });
+    newImages.push({ src: `./${path}`, ...(info[index].width ? { width: info[index].width, height: info[index].height } : {}) });
+  }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) { snapshot = await readHead(env); checked = await inspectSnapshot(); }
+    if (checked.duplicate) return { status: 'committed', commitSha: snapshot.sha, album: checked.album };
+    const album = { ...checked.album,
+      images: order.map((entry, index) => {
+        if (Object.hasOwn(entry, 'existing')) return checked.album.images[entry.existing];
+        const original = checked.album.images[entry.replaces];
+        return { ...newImages[entry.file], alt: original?.alt || `${checked.album.title} · 第 ${index + 1} 页` };
+      }),
+      editHistory: [...(checked.album.editHistory || []).slice(-49), { requestId, fingerprint }],
+    };
+    const manifest = { ...snapshot.manifest, albums: snapshot.manifest.albums.map(item => item.id === id ? album : item) };
+    const tree = await github(env, '/git/trees', { method: 'POST', body: { base_tree: snapshot.tree,
+      tree: [...imageEntries, { path: MANIFEST, mode: '100644', type: 'blob', content: JSON.stringify(manifest, null, 2) + '\n' }] } });
+    const commit = await github(env, '/git/commits', { method: 'POST', body: {
+      message: `feat: 更新图集图片 ${checked.album.title.replace(/[\r\n]/g, ' ')}`, tree: tree.sha, parents: [snapshot.sha],
+    } });
+    try {
+      await github(env, `/git/refs/heads/${BRANCH}`, { method: 'PATCH', body: { sha: commit.sha, force: false } });
+      log(env, 'edit.success', { commitSha: commit.sha, imageCount: album.images.length });
+      return { status: 'committed', commitSha: commit.sha, album };
+    } catch (error) {
+      if (!(error instanceof GitHubError) || ![409, 422].includes(error.status)) throw error;
+    }
+  }
+  fail(409, 'CONFLICT', '仓库正在更新，当前草稿已保留，请重试保存');
+}
+
+function libraryStructure(manifest) {
+  return { series: manifest.series || [], placements: manifest.albums.map(album => ({
+    id: album.id, seriesId: album.seriesId || '', date: album.date || '',
+  })) };
+}
+async function libraryRevision(manifest) {
+  return hash(encoder.encode(JSON.stringify(libraryStructure(manifest))));
+}
+function validateLibrary(series, placements, manifest) {
+  if (!Array.isArray(series) || series.length > 200 || !Array.isArray(placements)) fail(400, 'INVALID_LIBRARY', '目录格式不正确，最多支持 200 个系列');
+  const ids = new Set();
+  const normalized = series.map(item => {
+    if (!item || typeof item.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(item.id) || ids.has(item.id) ||
+        typeof item.title !== 'string' || !item.title.trim() || item.title.trim().length > 120 ||
+        (item.parentId != null && typeof item.parentId !== 'string')) fail(400, 'INVALID_SERIES', '系列编号、名称或上级系列格式不正确');
+    ids.add(item.id);
+    return { id: item.id, title: item.title.trim(), parentId: item.parentId || '' };
+  });
+  if ((manifest.series || []).some(item => !ids.has(item.id))) fail(400, 'INVALID_SERIES', '已有系列必须保留，可调整名称、层级和顺序');
+  const parents = new Map(normalized.map(item => [item.id, item.parentId]));
+  for (const item of normalized) {
+    const visited = new Set([item.id]);
+    for (let parent = item.parentId; parent; parent = parents.get(parent)) {
+      if (!parents.has(parent) || visited.has(parent)) fail(400, 'INVALID_SERIES', '系列不能放入自身或下级系列，上级系列必须存在');
+      visited.add(parent);
+    }
+  }
+  const albums = new Map(manifest.albums.map(album => [album.id, album])), seen = new Set();
+  const nextAlbums = placements.map(item => {
+    if (!item || !albums.has(item.id) || seen.has(item.id) || typeof item.seriesId !== 'string' ||
+        (item.seriesId ? !ids.has(item.seriesId) : !validDate(item.date))) fail(400, 'INVALID_PLACEMENT', '图集归属、日期或顺序格式不正确');
+    seen.add(item.id);
+    const album = { ...albums.get(item.id) };
+    if (item.seriesId) {
+      album.seriesId = item.seriesId;
+      // Existing dates are retained only for a later move back to the archive.
+    } else {
+      delete album.seriesId; album.date = item.date;
+    }
+    return album;
+  });
+  if (seen.size !== albums.size) fail(400, 'INVALID_PLACEMENT', '目录必须保留每个已有图集');
+  return { series: normalized, albums: nextAlbums };
+}
+async function editLibrary(request, env) {
+  const logPrefix = `[editLibrary 整理系列目录][traceId=${env._traceId}]`;
+  env = { ...env, _logPrefix: logPrefix };
+  log(env, 'library.start');
+  const form = await readUploadForm(request);
+  const requestId = uploadRequestId(form), revision = field(form, 'revision', 64, true);
+  if (!/^[a-f0-9]{64}$/.test(revision)) fail(400, 'INVALID_REVISION', '目录版本格式不正确');
+  let series, placements;
+  try { series = JSON.parse(field(form, 'series', 100000, true)); placements = JSON.parse(field(form, 'placements', 1000000, true)); }
+  catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_LIBRARY', '目录格式不正确'); }
+  if (form.getAll('images').length) fail(400, 'INVALID_LIBRARY', '整理目录不需要上传图片');
+  const fingerprint = await hash(encoder.encode(JSON.stringify([revision, series, placements])));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const snapshot = await readHead(env);
+    const receipt = (snapshot.manifest.libraryHistory || []).find(item => item.requestId === requestId);
+    if (receipt) {
+      if (receipt.fingerprint !== fingerprint) fail(409, 'REQUEST_REUSED', '同一个请求编号包含不同内容，请重新载入目录');
+      return { status: 'committed', commitSha: snapshot.sha, manifest: snapshot.manifest };
+    }
+    if (await libraryRevision(snapshot.manifest) !== revision) fail(409, 'LIBRARY_CHANGED', '目录已有新的变更。当前草稿已保留，请重新载入后再整理');
+    const next = validateLibrary(series, placements, snapshot.manifest);
+    const manifest = { ...snapshot.manifest, ...next };
+    if (await libraryRevision(manifest) === revision) return { status: 'unchanged', manifest };
+    manifest.libraryHistory = [...(snapshot.manifest.libraryHistory || []).slice(-49), { requestId, fingerprint }];
+    const tree = await github(env, '/git/trees', { method: 'POST', body: { base_tree: snapshot.tree,
+      tree: [{ path: MANIFEST, mode: '100644', type: 'blob', content: JSON.stringify(manifest, null, 2) + '\n' }] } });
+    const commit = await github(env, '/git/commits', { method: 'POST', body: {
+      message: 'feat: 整理系列层级和图集顺序', tree: tree.sha, parents: [snapshot.sha],
+    } });
+    try {
+      await github(env, `/git/refs/heads/${BRANCH}`, { method: 'PATCH', body: { sha: commit.sha, force: false } });
+      log(env, 'library.success', { commitSha: commit.sha, seriesCount: next.series.length });
+      return { status: 'committed', commitSha: commit.sha, manifest };
+    } catch (error) {
+      if (!(error instanceof GitHubError) || ![409, 422].includes(error.status)) throw error;
+    }
+  }
+  fail(409, 'CONFLICT', '仓库正在更新，当前草稿已保留，请重试保存');
+}
+
 export default {
   async fetch(request, env) {
     env = { ...env, _traceId: crypto.randomUUID() };
     const started = Date.now();
     try {
       const path = new URL(request.url).pathname;
+      const albumMatch = path.match(/^\/albums\/([a-zA-Z0-9_-]{1,100})$/);
+      if (albumMatch) env._logPrefix = `[${request.method === 'GET' ? 'readAlbum 读取图集' : 'editAlbum 编辑图集'}][albumId=${albumMatch[1]}]`;
+      const isLibrary = path === '/library';
+      if (isLibrary) env._logPrefix = `[${request.method === 'GET' ? 'readLibrary 读取系列目录' : 'editLibrary 整理系列目录'}][traceId=${env._traceId}]`;
       const origin = request.headers.get('Origin');
       if (origin && origin !== ORIGIN) fail(403, 'ORIGIN_DENIED', '请从你的图集网站发起上传');
-      if (!['/', '/albums', '/health', '/check'].includes(path)) fail(404, 'NOT_FOUND', '接口不存在');
+      if (!albumMatch && !isLibrary && !['/', '/albums', '/health', '/check'].includes(path)) fail(404, 'NOT_FOUND', '接口不存在');
       if (request.method === 'OPTIONS') return reply(request, null, 204);
-      if (request.method === 'GET') return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
+      if (request.method === 'GET' && !albumMatch && !isLibrary) return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
         ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
         message: '请在图集网站中上传图片。', endpoint: '/albums' });
-      if (request.method !== 'POST' || path === '/health') fail(405, 'METHOD_NOT_ALLOWED', '请使用 POST /albums');
+      if ((request.method !== 'POST' && !((albumMatch || isLibrary) && request.method === 'GET')) || path === '/health') fail(405, 'METHOD_NOT_ALLOWED', '请求方法不支持');
       if (!env.GITHUB_TOKEN || typeof env.UPLOAD_PASSWORD !== 'string' || env.UPLOAD_PASSWORD.length < 8) fail(503, 'NOT_CONFIGURED', '请先在 Cloudflare 添加 GITHUB_TOKEN 和至少 8 位的 UPLOAD_PASSWORD Secret');
       throttle(request);
       const authorization = request.headers.get('Authorization') || '';
       if (authorization.length > 1024 || !authorization.startsWith('Bearer ') || !await passwordMatches(authorization.slice(7), env.UPLOAD_PASSWORD)) fail(401, 'UNAUTHORIZED', '上传口令不正确');
       log(env, 'request.start', { path, method: request.method });
+      if (isLibrary) {
+        if (request.method === 'GET') {
+          const { manifest } = await readHead(env);
+          return reply(request, { manifest, revision: await libraryRevision(manifest) });
+        }
+        return reply(request, await editLibrary(request, env));
+      }
+      if (albumMatch) {
+        if (request.method === 'GET') {
+          const snapshot = await readHead(env), album = editableAlbum(snapshot, albumMatch[1]);
+          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album) });
+        }
+        const result = await editAlbum(request, env, albumMatch[1]);
+        return reply(request, result);
+      }
       if (path === '/check') {
         const snapshot = await readHead(env);
         log(env, 'check.success', { elapsedMs: Date.now() - started });

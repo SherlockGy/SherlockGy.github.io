@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="SherlockGy 的图集，按月归档与阅读。">
+  <meta name="description" content="SherlockGy 的知识图集，按月份或系列整理与阅读。">
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/style.css?v=20260915-personal-3">
-  <script type="module" src="./assets/app.js?v=20260915-personal-3"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=20260917-1">
+  <script type="module" src="./assets/app.js?v=20260917-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
@@ -19,21 +19,24 @@
         <span>SherlockGy</span>
       </a>
       <div class="sidebar-body">
-        <button class="nav-all active" id="all-months" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#grid"/></svg><span>全部图集</span><span class="nav-count" id="nav-count">0</span></button>
+        <button class="nav-all active" id="all-months" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#grid"/></svg><span>按月归档</span><span class="nav-count" id="nav-count">0</span></button>
         <p class="archive-label">归档</p>
         <nav id="month-nav" aria-label="月份"></nav>
+        <div class="series-nav-section"><div class="series-nav-heading"><button class="text-button" id="all-series">全部系列</button><button class="text-button" id="manage-series">管理</button></div><nav id="series-nav" aria-label="系列"></nav></div>
       </div>
       <a class="repository-link" href="https://github.com/SherlockGy/SherlockGy.github.io" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#github"/></svg><span>GitHub</span><svg class="icon external-icon" aria-hidden="true"><use href="./assets/icons.svg#external"/></svg></a>
     </aside>
     <main id="main" tabindex="-1">
+      <nav id="series-breadcrumbs" class="breadcrumbs" aria-label="当前位置" hidden></nav>
       <header class="collection-header">
-        <div class="collection-heading"><h1 id="page-title">全部图集</h1><p class="collection-count"><span id="album-count">0</span> 个图集<span class="count-divider">·</span><span id="image-count">0</span> 张图片</p></div>
+        <div class="collection-heading"><h1 id="page-title">按月归档</h1><p class="collection-count"><span id="album-count">0</span> 个图集<span class="count-divider">·</span><span id="image-count">0</span> 张图片<small id="series-count-note" hidden>（含子系列）</small></p></div>
         <div class="header-actions">
           <label class="search"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#search"/></svg><input type="search" id="search" placeholder="搜索名称或说明" aria-label="搜索图集名称、关键词"><kbd>/</kbd></label>
           <button class="primary-button new-button" id="new-album"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#plus"/></svg><span>添加图集</span></button>
         </div>
       </header>
       <div class="collection-toolbar"><div class="tabs" role="group" aria-label="图集类型"><button class="tab active" data-type="all" aria-pressed="true">全部</button><button class="tab" data-type="multiple" aria-pressed="false">多图</button><button class="tab" data-type="single" aria-pressed="false">单图</button></div><div id="result-summary" class="result-summary" aria-live="polite"></div></div>
+      <p id="publish-notice" class="publish-notice" role="status" hidden>修改已保存，网站发布需要一点时间。稍后刷新可查看最新图片。</p>
       <div id="collection" aria-busy="true"><div class="loading-state">正在读取图集…</div></div>
     </main>
   </div>
@@ -41,7 +44,7 @@
     <header class="reader-header">
       <button id="reader-close" class="icon-button reader-back" aria-label="返回图集" title="返回图集"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#arrow-left"/></svg></button>
       <div class="reader-heading"><h2 id="reader-title"></h2><p id="reader-meta"></p></div>
-      <div class="reader-actions"><button id="copy-link" class="icon-button" aria-label="复制图集链接" title="复制图集链接"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#link"/></svg></button><button id="fullscreen" class="icon-button" aria-label="网页全屏" aria-pressed="false" title="网页全屏"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#expand"/></svg></button></div>
+      <div class="reader-actions"><button id="edit-images" class="text-button">编辑图片</button><button id="copy-link" class="icon-button" aria-label="复制图集链接" title="复制图集链接"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#link"/></svg></button><button id="fullscreen" class="icon-button" aria-label="网页全屏" aria-pressed="false" title="网页全屏"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#expand"/></svg></button></div>
     </header>
     <div class="reader-toolbar">
       <div class="segmented" role="group" aria-label="阅读模式"><button id="mode-page" class="active" aria-label="逐页阅读" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#image"/></svg><span>逐页</span></button><button id="mode-scroll" aria-label="连续阅读" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#scroll"/></svg><span>连续</span></button></div>
@@ -49,6 +52,18 @@
     </div>
     <div id="reader-stage" class="reader-stage" tabindex="0" aria-label="图片阅读区域"></div>
     <footer class="reader-footer"><button id="prev-page" class="secondary-button" aria-label="上一页"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg><span>上一页</span></button><div class="page-control"><input id="page-number" type="number" min="1" value="1" aria-label="跳转到页码"><span id="page-total"></span></div><button id="next-page" class="secondary-button" aria-label="下一页"><span>下一页</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></footer>
+    <div id="slideshow" class="slideshow" hidden>
+      <aside class="slideshow-sidebar" aria-label="放映目录">
+        <div class="slideshow-heading"><button id="slideshow-exit" class="icon-button" aria-label="退出网页全屏" title="退出网页全屏（Esc）"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#collapse"/></svg></button><h2 id="slideshow-title"></h2></div>
+        <nav class="slideshow-list" aria-label="图片目录"></nav>
+        <div class="slideshow-controls">
+          <div class="slideshow-page-controls"><button id="slideshow-prev" class="icon-button" aria-label="上一张" title="上一张"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg></button><span id="slideshow-count" role="status" aria-live="polite"></span><button id="slideshow-next" class="icon-button" aria-label="下一张" title="下一张"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></div>
+          <div class="slideshow-tools"><button id="slideshow-hand" class="icon-button" aria-label="开启拖动与滚轮缩放" title="开启拖动与滚轮缩放" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg?v=20260917-1#hand"/></svg></button><button id="slideshow-fit" class="text-button" aria-label="恢复适屏大小与居中位置" title="恢复适屏大小与居中位置">适屏</button></div>
+          <p id="slideshow-hint">滚轮翻页 · 点击目录跳转</p>
+        </div>
+      </aside>
+      <div class="slideshow-canvas" tabindex="0" aria-label="放映图片" aria-describedby="slideshow-hint"><div id="slideshow-status" class="slideshow-status" role="status" hidden></div></div>
+    </div>
   </dialog>
   <dialog id="upload-dialog" class="upload-dialog" aria-labelledby="upload-title">
     <form id="upload-form">
@@ -56,7 +71,8 @@
       <div class="dialog-content">
         <p id="upload-hint" class="form-hint"></p>
         <label class="field-label" for="album-title">图集名称</label><input class="form-input" id="album-title" maxlength="120" placeholder="填写名称" required>
-        <div class="form-row"><div><label class="field-label" for="album-date">归档日期</label><input class="form-input" id="album-date" type="date" required></div><p class="date-help">按此日期归档到月份</p></div>
+        <label class="field-label" for="album-series">图集归属</label><select class="form-input" id="album-series"><option value="">按月归档</option></select>
+        <div class="form-row" id="album-date-row"><div><label class="field-label" for="album-date">归档日期</label><input class="form-input" id="album-date" type="date" required></div><p class="date-help">按此日期归档到月份</p></div>
         <label class="field-label" for="album-description">说明 <span class="optional">选填</span></label><textarea class="form-input" id="album-description" maxlength="1000" rows="2" placeholder="主题、出处或备注"></textarea>
         <label class="drop-zone" id="drop-zone" for="file-input"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#images"/></svg><strong>选择图片</strong><span>或拖到这里，可一次添加多张</span><small>JPG / PNG / WebP / GIF / AVIF · 最多 30 张</small></label>
         <input id="file-input" class="visually-hidden" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif">

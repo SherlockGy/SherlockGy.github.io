@@ -1,12 +1,27 @@
 import config from '../config.js';
-import { normalizeManifest, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js';
+import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-1';
+import { createSlideshow } from './slideshow.js?v=20260917-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const state = { albums: [], query: '', month: '', type: 'all', expanded: false,
+const state = { albums: [], series: [], view: 'archive', seriesId: '', query: '', month: '', type: 'all', expanded: false,
   album: null, page: 0, mode: 'page', zoom: 1, preview: null, files: [], urls: [], requestId: null, busy: false, loadError: false, scrollY: 0 };
 const reader = $('#reader');
 const uploadDialog = $('#upload-dialog');
+const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
+const imageEditor = createImageEditor(updateBodyLock, data => {
+  if (data.status === 'committed') $('#publish-notice').hidden = false;
+  closeReader();
+});
+const seriesManager = createSeriesManager(updateBodyLock, data => {
+  if (data.manifest) {
+    state.series = normalizeSeries(data.manifest);
+    state.albums = normalizeManifest(data.manifest, document.baseURI);
+    renderCatalog();
+  }
+  if (data.status === 'committed') $('#publish-notice').hidden = false;
+});
 let pageObserver;
 let lastFocused;
 let toastTimer;
@@ -36,7 +51,14 @@ function toast(message) {
   node.textContent = message; node.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { node.hidden = true; }, 3000);
 }
-function updateBodyLock() { document.body.classList.toggle('modal-open', reader.open || uploadDialog.open); }
+function updateBodyLock() { document.body.classList.toggle('modal-open', !!document.querySelector('dialog[open]')); }
+function collectionHash() { return state.view === 'series' ? `#/series${state.seriesId ? `/${state.seriesId}` : ''}` : ''; }
+function openCollection(view, seriesId = '', month = '') {
+  state.view = view; state.seriesId = seriesId; state.month = month;
+  state.query = ''; $('#search').value = ''; state.type = 'all';
+  history.replaceState(null, '', location.pathname + location.search + collectionHash());
+  renderCatalog();
+}
 function localDate() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -53,7 +75,9 @@ async function loadAlbums() {
   try {
     const response = await fetch(config.manifestUrl, { cache: 'no-cache' });
     if (!response.ok) throw new Error(`目录加载失败（${response.status}）`);
-    state.albums = normalizeManifest(await response.json(), document.baseURI);
+    const data = await response.json();
+    state.series = normalizeSeries(data);
+    state.albums = normalizeManifest(data, document.baseURI);
     state.loadError = false;
   } catch (error) {
     state.loadError = true;
@@ -74,17 +98,25 @@ function renderNav() {
       year = month.slice(0, 4); yearGroup = el('div', 'year-group');
       yearGroup.append(el('p', 'year-title', year)); nav.append(yearGroup);
     }
-    const link = button('', `month-link${state.month === month ? ' active' : ''}`, () => {
-      state.month = month; renderCatalog();
-    });
+    const link = button('', `month-link${state.view === 'archive' && state.month === month ? ' active' : ''}`, () => openCollection('archive', '', month));
     link.setAttribute('aria-label', `${year} 年 ${Number(month.slice(5))} 月，${albums.length} 个图集`);
     if (state.month === month) link.setAttribute('aria-current', 'true');
     link.append(el('span', '', `${Number(month.slice(5))} 月`), el('span', '', String(albums.length)));
     yearGroup.append(link);
   }
-  $('#all-months').classList.toggle('active', !state.month);
-  $('#all-months').setAttribute('aria-pressed', String(!state.month));
-  $('#nav-count').textContent = state.albums.length;
+  $('#all-months').classList.toggle('active', state.view === 'archive' && !state.month);
+  $('#all-months').setAttribute('aria-pressed', String(state.view === 'archive' && !state.month));
+  $('#nav-count').textContent = state.albums.filter(album => !album.seriesId).length;
+  const seriesNav = $('#series-nav'); seriesNav.replaceChildren();
+  $('#all-series').classList.toggle('active', state.view === 'series' && !state.seriesId);
+  for (const item of flattenSeries(state.series)) {
+    const link = button(item.title, `series-link${state.view === 'series' && state.seriesId === item.id ? ' active' : ''}`, () => openCollection('series', item.id));
+    link.style.setProperty('--depth', Math.min(item.depth, 6));
+    link.title = seriesTrail(state.series, item.id).map(entry => entry.title).join(' / ');
+    if (state.view === 'series' && state.seriesId === item.id) link.setAttribute('aria-current', 'page');
+    seriesNav.append(link);
+  }
+  if (!state.series.length) seriesNav.append(el('p', 'series-nav-empty', '按主题建立长期学习目录'));
 }
 
 function emptyState(kind) {
@@ -104,11 +136,24 @@ function emptyState(kind) {
 
 function renderCatalog() {
   renderNav();
-  const filtered = filterAlbums(state.albums, state);
-  $('#album-count').textContent = filtered.length;
-  $('#image-count').textContent = filtered.reduce((count, album) => count + album.images.length, 0);
-  const title = state.month ? `${state.month.slice(0, 4)} 年 ${Number(state.month.slice(5))} 月` : '全部图集';
+  const seriesIds = new Set(state.series.filter(item => !state.seriesId || seriesTrail(state.series, item.id).some(parent => parent.id === state.seriesId)).map(item => item.id));
+  const seriesAlbums = state.albums.filter(album => seriesIds.has(album.seriesId));
+  const filtered = state.view === 'series' && state.query
+    ? filterAlbums(seriesAlbums, { query: state.query, type: state.type }) : filterAlbums(state.albums, state);
+  const counted = state.view === 'series' ? filterAlbums(seriesAlbums, { query: state.query, type: state.type }) : filtered;
+  $('#album-count').textContent = counted.length;
+  $('#image-count').textContent = counted.reduce((count, album) => count + album.images.length, 0);
+  $('#series-count-note').hidden = state.view !== 'series';
+  const currentSeries = state.series.find(item => item.id === state.seriesId);
+  const title = state.view === 'series' ? currentSeries?.title || '全部系列' : state.month ? `${state.month.slice(0, 4)} 年 ${Number(state.month.slice(5))} 月` : '按月归档';
   $('#page-title').textContent = title;
+  const crumbs = $('#series-breadcrumbs'); crumbs.replaceChildren(); crumbs.hidden = state.view !== 'series';
+  if (state.view === 'series') {
+    crumbs.append(button('全部系列', 'text-button', () => openCollection('series')));
+    for (const item of seriesTrail(state.series, state.seriesId)) {
+      crumbs.append(el('span', '', '/'), button(item.title, 'text-button', () => openCollection('series', item.id)));
+    }
+  }
   $$('.tab').forEach(tab => {
     const active = tab.dataset.type === state.type;
     tab.classList.toggle('active', active); tab.setAttribute('aria-pressed', String(active));
@@ -116,7 +161,29 @@ function renderCatalog() {
   $('#result-summary').textContent = state.query ? `“${state.query}” · 找到 ${filtered.length} 个图集` : '';
   const container = $('#collection'); container.replaceChildren();
   if (state.loadError) { container.append(emptyState('error')); return; }
-  if (!filtered.length) { container.append(emptyState(state.albums.length ? 'filtered' : 'empty')); return; }
+  if (state.view === 'series') {
+    const children = state.series.filter(item => item.parentId === state.seriesId && (!state.query || item.title.toLocaleLowerCase().includes(state.query.toLocaleLowerCase())));
+    if (children.length) {
+      const grid = el('div', 'series-grid');
+      for (const item of children) {
+        const card = button('', 'series-card', () => openCollection('series', item.id));
+        const descendants = new Set(state.series.filter(entry => seriesTrail(state.series, entry.id).some(parent => parent.id === item.id)).map(entry => entry.id));
+        const count = state.albums.filter(album => descendants.has(album.seriesId)).length;
+        card.append(icon('folio'), el('h2', '', item.title), el('p', '', `${state.series.filter(entry => entry.parentId === item.id).length} 个子系列 · ${count} 个图集`)); grid.append(card);
+      }
+      container.append(grid);
+    }
+    if (filtered.length) { const grid = el('div', 'album-grid series-albums'); renderCards(grid, filtered); container.append(grid); }
+    if (!children.length && !filtered.length) {
+      const empty = el('section', 'empty-state');
+      empty.append(el('h2', '', state.query || state.type !== 'all' ? '没有找到相符的内容' : '开始整理这个系列'),
+        el('p', '', '可以建立下级系列，也可以添加图集。'),
+        button('管理系列', 'secondary-button', () => seriesManager.open(state.seriesId)), button('添加图集', 'primary-button', openUpload));
+      container.append(empty);
+    }
+    return;
+  }
+  if (!filtered.length) { container.append(emptyState(state.albums.some(album => !album.seriesId) ? 'filtered' : 'empty')); return; }
   for (const [month, albums] of groupByMonth(filtered)) {
     const section = el('section', 'month-section'); section.dataset.month = month;
     const header = el('div', 'month-heading');
@@ -125,7 +192,13 @@ function renderCatalog() {
     const year = el('time', 'month-year', month.slice(0, 4)); year.dateTime = month;
     header.append(number, year);
     const grid = el('div', 'album-grid');
-    for (const album of albums) {
+    renderCards(grid, albums);
+    section.append(header, grid); container.append(section);
+  }
+}
+
+function renderCards(grid, albums) {
+  for (const album of albums) {
       const card = el('a', `album-card${album.images.length > 1 ? ' multiple' : ''}`);
       card.href = `#/album/${encodeURIComponent(album.id)}/1`;
       card.setAttribute('aria-label', `阅读 ${album.title}，${album.images.length} 张图片`);
@@ -137,21 +210,29 @@ function renderCatalog() {
       const info = el('div', 'card-info'); info.append(el('h3', '', album.title));
       if (album.description) info.append(el('p', 'card-description', album.description));
       const meta = el('div', 'card-meta');
-      const date = el('time', '', album.date.replaceAll('-', '.')); date.dateTime = album.date; meta.append(date);
+      if (album.seriesId) meta.append(el('span', 'card-series', state.series.find(item => item.id === album.seriesId)?.title || '系列图集'));
+      else { const date = el('time', '', album.date.replaceAll('-', '.')); date.dateTime = album.date; meta.append(date); }
       if (album.tags[0]) meta.append(el('span', 'tag', album.tags[0]));
       meta.append(badge); info.append(meta); card.append(cover, info); grid.append(card);
-    }
-    section.append(header, grid); container.append(section);
   }
 }
 
 function route() {
+  const seriesRoute = location.hash.match(/^#\/series(?:\/([a-zA-Z0-9_-]+))?$/);
+  if (seriesRoute) {
+    closeReader(false);
+    state.view = 'series'; state.seriesId = state.series.some(item => item.id === seriesRoute[1]) ? seriesRoute[1] : ''; state.month = '';
+    renderCatalog(); return;
+  }
   const match = location.hash.match(/^#\/album\/([a-zA-Z0-9_-]+)(?:\/(\d+))?$/);
   if (!match) { closeReader(false); return; }
   const album = state.albums.find(item => item.id === match[1]) || (state.preview?.id === match[1] ? state.preview : null);
   if (!album) {
     history.replaceState(null, '', location.pathname + location.search); closeReader(false);
     toast('找不到这份图集，可能已移除或尚未发布。'); return;
+  }
+  if (!reader.open && album.seriesId && !album.local) {
+    state.view = 'series'; state.seriesId = album.seriesId; state.month = ''; renderCatalog();
   }
   const changed = state.album?.id !== album.id;
   state.album = album;
@@ -162,13 +243,16 @@ function route() {
     reader.showModal(); updateBodyLock(); $('#reader-close').focus();
   }
   $('#reader-title').textContent = album.title;
-  $('#reader-meta').textContent = `${album.date.replaceAll('-', '.')}  ·  ${album.images.length} 张图片${album.local ? '  ·  本地预览，尚未保存' : ''}`;
+  const locationLabel = album.seriesId ? seriesTrail(state.series, album.seriesId).map(item => item.title).join(' / ') : album.date.replaceAll('-', '.');
+  $('#reader-meta').textContent = `${locationLabel}  ·  ${album.images.length} 张图片${album.local ? '  ·  本地预览，尚未保存' : ''}`;
   $('#copy-link').disabled = !!album.local;
+  $('#edit-images').hidden = !!album.local || !config.uploadEndpoint;
   document.title = `${album.title} · 图集`;
   renderReader();
 }
 
 function setExpanded(expanded) {
+  if (state.expanded === expanded) return;
   state.expanded = expanded;
   reader.classList.toggle('expanded', expanded);
   const control = $('#fullscreen');
@@ -176,7 +260,12 @@ function setExpanded(expanded) {
   control.setAttribute('aria-pressed', String(expanded));
   control.setAttribute('aria-label', label); control.title = label;
   control.replaceChildren(icon(expanded ? 'collapse' : 'expand'));
-  if (reader.open && state.album) applyZoom();
+  pageObserver?.disconnect();
+  if (expanded && reader.open && state.album) slideshow.open(state.album, state.page);
+  else {
+    slideshow.close();
+    if (reader.open && state.album) { renderReader(); control.focus({ preventScroll: true }); }
+  }
 }
 
 function closeReader(changeRoute = true) {
@@ -189,7 +278,7 @@ function closeReader(changeRoute = true) {
   }
   state.album = null;
   document.title = '图集 · SherlockGy';
-  if (changeRoute) history.replaceState(null, '', location.pathname + location.search);
+  if (changeRoute) history.replaceState(null, '', location.pathname + location.search + collectionHash());
 }
 
 function syncReaderControls() {
@@ -211,6 +300,7 @@ function syncReaderControls() {
 
 function renderReader() {
   pageObserver?.disconnect();
+  if (state.expanded) { slideshow.show(state.album, state.page); syncReaderControls(); return; }
   const stage = $('#reader-stage'); stage.replaceChildren();
   const images = state.mode === 'scroll' ? state.album.images.map((image, index) => [image, index]) : [[state.album.images[state.page], state.page]];
   for (const [image, index] of images) {
@@ -229,7 +319,7 @@ function renderReader() {
     const current = $(`[data-index="${state.page}"]`, stage);
     current?.scrollIntoView({ block: 'start' });
     pageObserver = new IntersectionObserver(entries => {
-      if (!state.album || state.mode !== 'scroll') return;
+      if (!state.album || state.expanded || state.mode !== 'scroll') return;
       const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => Math.abs(a.boundingClientRect.top - stage.getBoundingClientRect().top) - Math.abs(b.boundingClientRect.top - stage.getBoundingClientRect().top));
       if (visible[0]) {
         state.page = Number(visible[0].target.dataset.index); syncReaderControls();
@@ -243,9 +333,10 @@ function renderReader() {
 
 function applyZoom() {
   if (!state.album || !reader.open) return;
+  if (state.expanded) { slideshow.resize(); return; }
   const stage = $('#reader-stage'), style = getComputedStyle(stage);
   const available = Math.max(1, stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
-  const width = Math.round((state.expanded ? available : Math.min(1120, available)) * state.zoom);
+  const width = Math.round(Math.min(1120, available) * state.zoom);
   $$('.reader-page').forEach(figure => {
     figure.style.width = `${width}px`;
     figure.classList.toggle('zoomed', width > available);
@@ -257,7 +348,8 @@ function goPage(page) {
   const target = Number.isFinite(page) ? Math.trunc(page) : 0;
   state.page = Math.max(0, Math.min(state.album.images.length - 1, target));
   history.replaceState(null, '', `#/album/${state.album.id}/${state.page + 1}`);
-  if (state.mode === 'scroll') {
+  if (state.expanded) renderReader();
+  else if (state.mode === 'scroll') {
     $(`[data-index="${state.page}"]`, $('#reader-stage'))?.scrollIntoView({ block: 'start' }); syncReaderControls();
   } else renderReader();
 }
@@ -270,6 +362,9 @@ function resetDraft() {
 }
 function openUpload() {
   resetDraft();
+  const select = $('#album-series'); select.replaceChildren(new Option('按月归档', ''));
+  for (const item of flattenSeries(state.series)) select.append(new Option(seriesTrail(state.series, item.id).map(entry => entry.title).join(' / '), item.id));
+  select.value = state.view === 'series' ? state.seriesId : ''; syncAlbumLocation();
   $('#upload-hint').textContent = config.uploadEndpoint
     ? '第一张图片作为封面，添加后可调整顺序。'
     : '上传服务尚未连接。你可以先命名、排序并预览图片；本地预览不会保存，关闭或刷新页面后失效。';
@@ -277,6 +372,11 @@ function openUpload() {
   $('#access-code-field').hidden = !config.uploadEndpoint;
   $('#access-code').required = !!config.uploadEndpoint;
   uploadDialog.showModal(); updateBodyLock(); $('#album-title').focus();
+}
+function syncAlbumLocation() {
+  const isSeries = !!$('#album-series').value;
+  $('#album-date-row').hidden = isSeries; $('#album-date').required = !isSeries;
+  state.requestId = null;
 }
 function closeUpload() {
   if (state.busy) return;
@@ -338,7 +438,7 @@ async function checkConnection() {
     const code = $('#access-code').value.trim();
     if (!code) throw new Error('请先输入上传口令，再测试连接');
     state.busy = true;
-    $$('#upload-form input, #upload-form textarea, #upload-form button').forEach(node => node.disabled = true);
+    $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = true);
     status.textContent = '正在检查连接和图集目录，请稍候…';
     const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 75000);
     let response, data;
@@ -356,7 +456,7 @@ async function checkConnection() {
       : error instanceof TypeError ? '无法连接上传服务，请检查网络或服务配置。当前图片已保留。' : error.message;
   } finally {
     state.busy = false;
-    $$('#upload-form input, #upload-form textarea, #upload-form button').forEach(node => node.disabled = false);
+    $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = false);
     renderFiles();
   }
 }
@@ -366,12 +466,12 @@ async function submitAlbum(event) {
   const status = $('#upload-status'); status.className = 'upload-status';
   try {
     validateFiles(state.files, config);
-    const title = $('#album-title').value.trim(), date = $('#album-date').value;
+    const title = $('#album-title').value.trim(), seriesId = $('#album-series').value, date = seriesId ? '' : $('#album-date').value;
     if (!title) throw new Error('请填写图集名称');
-    if (!validDate(date)) throw new Error('请选择有效的归档日期');
+    if (!seriesId && !validDate(date)) throw new Error('请选择有效的归档日期');
     const description = $('#album-description').value.trim();
     if (!config.uploadEndpoint) {
-      state.preview = { id: `preview-${Date.now()}`, title, date, description, tags: [], local: true,
+      state.preview = { id: `preview-${Date.now()}`, title, date, seriesId, description, tags: [], local: true,
         images: state.urls.map((src, index) => ({ src, alt: `${title} · 第 ${index + 1} 页` })) };
       closeUpload(); location.hash = `#/album/${state.preview.id}/1`; return;
     }
@@ -380,11 +480,12 @@ async function submitAlbum(event) {
     const code = $('#access-code').value.trim();
     if (!code) throw new Error('请输入上传口令');
     state.busy = true;
-    $$('#upload-form input, #upload-form textarea, #upload-form button').forEach(node => node.disabled = true);
+    $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = true);
     status.textContent = '正在上传并保存，请保持页面打开…';
     const body = new FormData();
     const requestId = state.requestId ||= crypto.randomUUID();
     body.append('requestId', requestId); body.append('title', title); body.append('date', date); body.append('description', description);
+    if (seriesId) body.append('seriesId', seriesId);
     state.files.forEach(file => body.append('images', file, file.name));
     const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 120000);
     let response, data;
@@ -394,7 +495,7 @@ async function submitAlbum(event) {
     } finally { clearTimeout(timer); }
     if (!response.ok) throw serviceError(data, { 401: '上传口令不正确', 403: '没有上传权限', 413: '图片总大小超过上传服务限制', 409: '目录已更新，请刷新检查后重试' }[response.status] || `上传失败（${response.status}）`);
     if (data?.status !== 'committed' || typeof data.commitSha !== 'string') throw new Error('上传服务未返回保存凭据，请先检查图集目录再重试');
-    normalizeManifest({ schemaVersion: 1, albums: [data.album] }, document.baseURI);
+    normalizeManifest({ schemaVersion: 1, albums: [data.album], series: state.series }, document.baseURI);
     status.className = 'upload-status success';
     status.textContent = '图集已保存。网站发布需要一点时间，稍后刷新首页即可查看。';
     $('#access-code').value = '';
@@ -404,12 +505,16 @@ async function submitAlbum(event) {
     status.textContent = error.name === 'AbortError' ? '等待上传服务超时。图片可能已保存，请先刷新检查，避免重复上传。' : error instanceof TypeError ? '无法连接上传服务。请检查网络或服务配置后重试。' : error.message;
   } finally {
     state.busy = false;
-    $$('#upload-form input, #upload-form textarea, #upload-form button').forEach(node => node.disabled = false);
+    $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = false);
     renderFiles();
   }
 }
 
-$('#all-months').addEventListener('click', () => { state.month = ''; renderCatalog(); });
+$('#all-months').addEventListener('click', () => openCollection('archive'));
+$('#all-series').addEventListener('click', () => openCollection('series'));
+$('#manage-series').addEventListener('click', () => seriesManager.open(state.seriesId));
+$('#edit-images').addEventListener('click', () => { if (state.album && !state.album.local) imageEditor.open(state.album.id); });
+$('#album-series').addEventListener('change', syncAlbumLocation);
 $$('.tab').forEach(tab => tab.addEventListener('click', () => { state.type = tab.dataset.type; renderCatalog(); }));
 $('#search').addEventListener('input', event => { state.query = event.target.value; renderCatalog(); });
 $('#new-album').addEventListener('click', openUpload);
@@ -440,8 +545,11 @@ drop.addEventListener('drop', event => addFiles([...event.dataTransfer.files]));
 window.addEventListener('hashchange', route);
 window.addEventListener('resize', () => { if (reader.open) applyZoom(); });
 document.addEventListener('keydown', event => {
+  if ($('#image-editor').open || $('#series-manager').open) return;
   if (event.target.closest('input, textarea, select, [contenteditable]') || event.ctrlKey || event.metaKey || event.altKey) return;
   if (reader.open) {
+    if (state.expanded && ['ArrowUp', 'PageUp'].includes(event.key)) { event.preventDefault(); goPage(state.page - 1); }
+    if (state.expanded && ['ArrowDown', 'PageDown'].includes(event.key)) { event.preventDefault(); goPage(state.page + 1); }
     if (event.key === 'ArrowLeft') { event.preventDefault(); goPage(state.page - 1); }
     if (event.key === 'ArrowRight') { event.preventDefault(); goPage(state.page + 1); }
     if (event.key === 'Home') { event.preventDefault(); goPage(0); }

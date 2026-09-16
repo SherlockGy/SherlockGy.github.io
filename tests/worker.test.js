@@ -19,9 +19,9 @@ function request({ id = crypto.randomUUID(), title = '知识图集', count = 1, 
   for (let i = 0; i < count; i++) form.append('images', new File([bytes], '../../unsafe.png', { type }));
   return new Request('https://worker.test/albums', { method: 'POST', headers: { Origin: source, Authorization: `Bearer ${password}`, 'CF-Connecting-IP': `192.0.2.${++ip}` }, body: form });
 }
-function fakeGit({ conflicts = 0, loseResponse = false } = {}) {
+function fakeGit({ conflicts = 0, loseResponse = false, initialManifest, concurrentChange } = {}) {
   let head = 'initial', serial = 0;
-  const commits = new Map([['initial', { tree: 'initial-tree', manifest: { schemaVersion: 1, albums: [], custom: 'preserve' } }]]);
+  const commits = new Map([['initial', { tree: 'initial-tree', manifest: initialManifest || { schemaVersion: 1, albums: [], custom: 'preserve' } }]]);
   const trees = new Map();
   const calls = [];
   const fetch = async (url, options) => {
@@ -51,7 +51,7 @@ function fakeGit({ conflicts = 0, loseResponse = false } = {}) {
       assert.equal(body.force, false);
       if (conflicts-- > 0) {
         const previous = commits.get(head); head = `concurrent-${++serial}`;
-        commits.set(head, { tree: head + '-tree', manifest: { ...previous.manifest, albums: [...previous.manifest.albums, { id: head, title: 'Another upload' }] } });
+        commits.set(head, { tree: head + '-tree', manifest: concurrentChange ? concurrentChange(structuredClone(previous.manifest)) : { ...previous.manifest, albums: [...previous.manifest.albums, { id: head, title: 'Another upload' }] } });
         return Response.json({ message: 'not a fast forward' }, { status: 422 });
       }
       head = body.sha;
@@ -122,7 +122,7 @@ test('connection check authenticates, reads the current manifest and never write
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
-  assert.equal(result.version, '2026-09-15-diagnostics-2'); assert.ok(result.traceId);
+  assert.equal(result.version, '2026-09-16-series-edit-1'); assert.ok(result.traceId);
   assert.equal(fake.calls.length, 3); assert.ok(fake.calls.every(call => call.method === 'GET'));
   assert.equal(fake.manifest().albums.length, 0);
 });
@@ -190,4 +190,166 @@ test('GitHub redirects stop at the first response without forwarding credentials
     assert.ok(!JSON.stringify(result).includes(env.GITHUB_TOKEN));
     assert.ok(!JSON.stringify(result).includes('untrusted.example'));
   }
+});
+
+const editFixture = () => ({ schemaVersion: 1, custom: 'keep', series: [], albums: [{
+  id: 'notes', title: '知识图集', date: '2026-09-15', tags: ['学习'], uploadFingerprint: 'original',
+  images: [{ src: './images/test-a.png', alt: '原图说明', width: 1, height: 1 }, { src: './images/test-b.png', alt: '第二张' }],
+}] });
+function managementRequest(path, body, password = env.UPLOAD_PASSWORD) {
+  return new Request(`https://worker.test${path}`, { method: body ? 'POST' : 'GET', body,
+    headers: { Origin: origin, Authorization: `Bearer ${password}`, 'CF-Connecting-IP': `192.0.2.${++ip}` } });
+}
+async function readManagement(path) {
+  const response = await worker.fetch(managementRequest(path), env); assert.equal(response.status, 200); return response.json();
+}
+function editForm(revision, order, count = 0, id = crypto.randomUUID()) {
+  const form = new FormData(); form.set('requestId', id); form.set('revision', revision); form.set('order', JSON.stringify(order));
+  for (let index = 0; index < count; index++) form.append('images', new File([png], 'new.png', { type: 'image/png' }));
+  return form;
+}
+function libraryForm(revision, series, placements, id = crypto.randomUUID()) {
+  const form = new FormData(); form.set('requestId', id); form.set('revision', revision);
+  form.set('series', JSON.stringify(series)); form.set('placements', JSON.stringify(placements)); return form;
+}
+test('management reads authenticate and do not write; pure reorder uploads no image blobs', async t => {
+  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', undefined, 'wrong'), env)).status, 401);
+  assert.equal((await worker.fetch(managementRequest('/library', undefined, 'wrong'), env)).status, 401);
+  assert.equal(fake.calls.length, 0);
+  const current = await readManagement('/albums/notes'); assert.match(current.revision, /^[a-f0-9]{64}$/);
+  assert.ok(fake.calls.every(call => call.method === 'GET'));
+  const response = await worker.fetch(managementRequest('/albums/notes', editForm(current.revision, [{ existing: 1 }, { existing: 0 }])), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(fake.manifest().albums[0].images, editFixture().albums[0].images.toReversed());
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 0);
+  assert.equal(fake.manifest().custom, 'keep'); assert.equal(fake.manifest().albums[0].uploadFingerprint, 'original');
+});
+test('append and replacement commit together using new paths while retaining all other metadata', async t => {
+  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/albums/notes');
+  const response = await worker.fetch(managementRequest('/albums/notes', editForm(revision, [{ file: 0, replaces: 1 }, { existing: 0 }, { file: 1 }], 2)), env);
+  assert.equal(response.status, 200);
+  const album = fake.manifest().albums[0]; assert.equal(album.images.length, 3);
+  assert.equal(album.images[1].src, './images/test-a.png'); assert.equal(album.images[0].alt, '第二张');
+  assert.notEqual(album.images[0].src, './images/test-b.png'); assert.notEqual(album.images[0].src, album.images[2].src);
+  assert.deepEqual(album.tags, ['学习']); assert.equal(album.date, '2026-09-15');
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 2);
+  assert.ok(fake.calls.filter(call => call.path === '/git/trees').every(call => call.body.tree.every(entry => entry.sha !== null)));
+});
+test('invalid edits and stale revisions never write; unchanged drafts do not create commits', async t => {
+  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/albums/notes');
+  for (const [order, count] of [[[{ existing: 0 }], 0], [[{ existing: 0 }, { existing: 0 }], 0],
+    [[{ existing: 0 }, { existing: 9 }], 0], [[{ existing: 0 }, { file: 0, replaces: 1 }, { file: 0 }], 1],
+    [[{ existing: 0 }, { existing: 1 }], 1], [[{ existing: 0 }, { file: 0, replaces: 1, src: '../bad' }], 1]]) {
+    assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, order, count)), env)).status, 400);
+  }
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm('0'.repeat(64), [{ existing: 1 }, { existing: 0 }])), env)).status, 409);
+  const unchanged = await worker.fetch(managementRequest('/albums/notes', editForm(revision, [{ existing: 0 }, { existing: 1 }])), env);
+  assert.equal((await unchanged.json()).status, 'unchanged');
+  assert.ok(fake.calls.every(call => call.method === 'GET'));
+});
+test('lost edit responses can be retried even after a later edit without duplicating images', async t => {
+  const fake = fakeGit({ initialManifest: editFixture(), loseResponse: true }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/albums/notes'), id = crypto.randomUUID();
+  const order = [{ existing: 0 }, { existing: 1 }, { file: 0 }];
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, order, 1, id)), env)).status, 502);
+  const next = await readManagement('/albums/notes');
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(next.revision, [{ existing: 2 }, { existing: 0 }, { existing: 1 }])), env)).status, 200);
+  const before = fake.calls.filter(call => call.method === 'POST').length;
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, order, 1, id)), env)).status, 200);
+  assert.equal(fake.manifest().albums[0].images.length, 3);
+  assert.equal(fake.calls.filter(call => call.method === 'POST').length, before);
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, [{ existing: 1 }, { existing: 0 }, { file: 0 }], 1, id)), env)).status, 409);
+});
+test('concurrent edits to the same album are rejected; unrelated commits are preserved', async t => {
+  for (const sameAlbum of [true, false]) {
+    const fake = fakeGit({ initialManifest: editFixture(), conflicts: 1, concurrentChange: manifest => {
+      if (sameAlbum) manifest.albums[0].images.reverse(); else manifest.other = 'concurrent change'; return manifest;
+    } }); t.mock.method(globalThis, 'fetch', fake.fetch);
+    const { revision } = await readManagement('/albums/notes');
+    const response = await worker.fetch(managementRequest('/albums/notes', editForm(revision, [{ existing: 0 }, { existing: 1 }, { file: 0 }], 1)), env);
+    assert.equal(response.status, sameAlbum ? 409 : 200);
+    if (sameAlbum) { assert.equal((await response.json()).error.code, 'ALBUM_CHANGED'); assert.equal(fake.manifest().albums[0].images.length, 2); }
+    else { assert.equal(fake.manifest().other, 'concurrent change'); assert.equal(fake.manifest().albums[0].images.length, 3); }
+  }
+});
+const nestedSeries = () => [{ id: 'economics', title: '经济学', parentId: '' }, { id: 'macro', title: '宏观经济学', parentId: 'economics' }, { id: 'policy', title: '货币政策', parentId: 'macro' }];
+test('nested series, album placement and sibling ordering save without reuploading pictures', async t => {
+  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/library');
+  const response = await worker.fetch(managementRequest('/library', libraryForm(revision, nestedSeries(), [{ id: 'notes', seriesId: 'policy', date: '2026-09-15' }])), env);
+  assert.equal(response.status, 200); assert.deepEqual(fake.manifest().series, nestedSeries());
+  assert.equal(fake.manifest().albums[0].seriesId, 'policy'); assert.equal(fake.manifest().albums[0].date, '2026-09-15');
+  assert.deepEqual(fake.manifest().albums[0].images, editFixture().albums[0].images);
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 0);
+  const next = await readManagement('/library');
+  assert.equal((await worker.fetch(managementRequest('/library', libraryForm(next.revision, nestedSeries(), [{ id: 'notes', seriesId: '', date: '2026-08-12' }])), env)).status, 200);
+  assert.equal(fake.manifest().albums[0].seriesId, undefined); assert.equal(fake.manifest().albums[0].date, '2026-08-12');
+});
+test('cycles, dangling parents, dropped albums, invalid dates and stale library changes are rejected', async t => {
+  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/library');
+  const placement = [{ id: 'notes', seriesId: '', date: '2026-09-15' }];
+  for (const [series, placements] of [
+    [[{ id: 'a', title: 'A', parentId: 'a' }], placement],
+    [[{ id: 'a', title: 'A', parentId: 'b' }, { id: 'b', title: 'B', parentId: 'a' }], placement],
+    [[{ id: 'a', title: 'A', parentId: 'missing' }], placement],
+    [[], []], [[], [{ ...placement[0], seriesId: 'missing' }]], [[], [{ ...placement[0], date: '' }]],
+  ]) assert.equal((await worker.fetch(managementRequest('/library', libraryForm(revision, series, placements)), env)).status, 400);
+  assert.equal((await worker.fetch(managementRequest('/library', libraryForm('0'.repeat(64), [], placement)), env)).status, 409);
+  assert.ok(fake.calls.every(call => call.method === 'GET'));
+});
+test('library retries preserve concurrent image edits and lost responses are idempotent', async t => {
+  const fake = fakeGit({ initialManifest: editFixture(), conflicts: 1, loseResponse: true, concurrentChange: manifest => {
+    manifest.albums[0].images.reverse(); return manifest;
+  } }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/library'), id = crypto.randomUUID();
+  const placements = [{ id: 'notes', seriesId: 'policy', date: '2026-09-15' }];
+  assert.equal((await worker.fetch(managementRequest('/library', libraryForm(revision, nestedSeries(), placements, id)), env)).status, 502);
+  assert.deepEqual(fake.manifest().albums[0].images, editFixture().albums[0].images.toReversed());
+  const count = fake.calls.length;
+  assert.equal((await worker.fetch(managementRequest('/library', libraryForm(revision, nestedSeries(), placements, id)), env)).status, 200);
+  assert.ok(fake.calls.slice(count).every(call => call.method === 'GET'));
+});
+test('new series albums need no date and can subsequently append images', async t => {
+  const initial = editFixture(); initial.series = nestedSeries();
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const form = new FormData(); form.set('title', '货币政策笔记'); form.set('seriesId', 'policy'); form.set('requestId', crypto.randomUUID());
+  form.append('images', new File([png], 'note.png', { type: 'image/png' }));
+  const response = await worker.fetch(managementRequest('/albums', form), env); assert.equal(response.status, 201);
+  const { album } = await response.json(); assert.equal(album.date, undefined); assert.equal(album.seriesId, 'policy');
+  assert.match(album.images[0].src, /^\.\/images\/series\//);
+  const { revision } = await readManagement(`/albums/${album.id}`);
+  assert.equal((await worker.fetch(managementRequest(`/albums/${album.id}`, editForm(revision, [{ existing: 0 }, { file: 0 }], 1)), env)).status, 200);
+});
+
+test('manual order and parent changes persist without changing image order or dropping sibling series', async t => {
+  const initial = editFixture(); initial.series = nestedSeries();
+  initial.series.push({ id: 'micro', title: '微观经济学', parentId: 'economics' });
+  initial.albums.push({ ...structuredClone(initial.albums[0]), id: 'second', seriesId: 'macro' });
+  initial.albums[0].seriesId = 'macro';
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/library');
+  const series = [initial.series[0], initial.series[3], initial.series[1], { ...initial.series[2], parentId: 'micro' }];
+  const placements = [{ id: 'second', seriesId: 'macro', date: '2026-09-15' }, { id: 'notes', seriesId: 'macro', date: '2026-09-15' }];
+  assert.equal((await worker.fetch(managementRequest('/library', libraryForm(revision, series, placements)), env)).status, 200);
+  assert.deepEqual(fake.manifest().albums.map(item => item.id), ['second', 'notes']);
+  assert.deepEqual(fake.manifest().series.filter(item => item.parentId === 'economics').map(item => item.id), ['micro', 'macro']);
+  assert.equal(fake.manifest().series.find(item => item.id === 'policy').parentId, 'micro');
+  assert.deepEqual(fake.manifest().albums[0].images, initial.albums[0].images);
+  const next = await readManagement('/library');
+  assert.equal((await worker.fetch(managementRequest('/library', libraryForm(next.revision, series.slice(1), placements)), env)).status, 400);
+});
+test('editing cannot exceed 30 images and series destinations must exist', async t => {
+  const initial = editFixture(); initial.albums[0].images = Array.from({ length: 30 }, () => ({ ...initial.albums[0].images[0] }));
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/albums/notes');
+  const order = [...Array.from({ length: 30 }, (_, existing) => ({ existing })), { file: 0 }];
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, order, 1)), env)).status, 400);
+  const form = new FormData(); form.set('title', '图集'); form.set('seriesId', 'missing'); form.set('requestId', crypto.randomUUID());
+  form.append('images', new File([png], 'note.png', { type: 'image/png' }));
+  assert.equal((await worker.fetch(managementRequest('/albums', form), env)).status, 400);
+  assert.ok(fake.calls.every(call => call.method === 'GET'));
 });
