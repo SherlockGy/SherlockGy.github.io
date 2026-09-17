@@ -90,7 +90,7 @@ export function createUploadClient({ fetch: fetcher = (...args) => globalThis.fe
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
     const progress = () => {
       const doneBytes = [...current.receipts.keys()].reduce((sum, index) => sum + files[index].size, 0);
-      onProgress(`图片已保存 ${current.receipts.size} / ${files.length} 张 · ${(doneBytes / MIB).toFixed(1)} / ${(totalBytes / MIB).toFixed(1)} MB`);
+      onProgress(`图片已上传 ${current.receipts.size} / ${files.length} 张 · ${(doneBytes / MIB).toFixed(1)} / ${(totalBytes / MIB).toFixed(1)} MB`);
     };
     if (files.length) progress();
     try {
@@ -135,7 +135,7 @@ export function createUploadClient({ fetch: fetcher = (...args) => globalThis.fe
       }
     } catch (error) {
       if (error.status === 429 || error.retryAfterSeconds) current.retryAt = Date.now() + Math.max(60, Number(error.retryAfterSeconds) || 60) * 1000;
-      if (files.length && current.receipts.size < files.length) error.message += `（已保存 ${current.receipts.size}/${files.length} 张，原样重试会复用；请勿刷新）`;
+      if (files.length && current.receipts.size < files.length) error.message += `（已上传 ${current.receipts.size}/${files.length} 张，原样重试会复用；请勿刷新）`;
       throw error;
     }
   }
