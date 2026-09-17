@@ -64,7 +64,7 @@ function managerDialog(id, title, description, onOpenChange) {
   const model = { dialog, workspace: $('.manager-workspace'), busy: false, dirty: false, loaded: false, saved: false, requestId: null, revision: null };
   model.status = (message, success = false) => { $('.upload-status').textContent = message; $('.upload-status').className = `upload-status${success ? ' success' : ''}`; };
   model.sync = () => {
-    dialog.querySelectorAll('input, select, button').forEach(control => { control.disabled = model.busy || model.saved; });
+    dialog.querySelectorAll('input, textarea, select, button').forEach(control => { control.disabled = model.busy || model.saved; });
     $('.manager-close').disabled = model.busy;
     $('.manager-save').disabled = model.busy || (!model.saved && (!model.loaded || !model.dirty));
     $('.manager-save').textContent = model.saved ? '完成' : '保存修改';
@@ -81,7 +81,8 @@ function managerDialog(id, title, description, onOpenChange) {
     model.dispose?.(); Object.assign(model, { busy: false, dirty: false, loaded: false, saved: false, requestId: null, revision: null });
     model.workspace.replaceChildren(); model.workspace.hidden = true;
     $('.manager-password').value = ''; $('.manager-load').textContent = '载入最新内容';
-    model.status(''); model.summary('请先载入最新内容'); model.sync(); dialog.showModal(); onOpenChange(); $('.manager-password').focus();
+    model.status(''); model.summary('请先载入最新内容'); model.sync(); dialog.showModal(); onOpenChange();
+    $('.dialog-content').scrollTop = 0; $('.manager-password').focus();
   };
   model.load = async () => {
     if (model.busy || model.saved || (model.dirty && !confirm('重新载入会放弃当前修改，继续吗？'))) return;
@@ -134,8 +135,8 @@ export function buildImageOrder(items) {
 }
 
 export function createImageEditor(onOpenChange, onSaved) {
-  const ui = managerDialog('image-editor', '编辑图集', '修改图集名称、添加图片、调整阅读顺序或替换原图。第一张作为封面；分享链接仍按页码定位。', onOpenChange);
-  let album, items = [], pickerTarget, draftTitle = '', canRename = false, series = [];
+  const ui = managerDialog('image-editor', '编辑图集', '修改名称与说明，或调整图片。第一张作为封面；分享链接仍按页码定位。', onOpenChange);
+  let album, items = [], pickerTarget, draftTitle = '', draftDescription = '', canRename = false, canEditDescription = false, series = [];
   const revoke = item => { if (item.file) URL.revokeObjectURL(item.src); };
   ui.dispose = () => { items.forEach(revoke); items = []; };
   ui.onSaved = data => onSaved({ ...data, series });
@@ -149,6 +150,18 @@ export function createImageEditor(onOpenChange, onSaved) {
     });
     ui.workspace.append(title.wrapper);
     if (!canRename) ui.workspace.append(node('p', 'field-note', '当前上传服务暂不支持修改名称，图片编辑仍可使用。'));
+    const descriptionField = node('label', 'manager-field editor-description');
+    const descriptionLabel = node('span', 'field-label', '说明');
+    descriptionLabel.append(node('span', 'optional', '选填，最多 1000 字'));
+    const description = node('textarea', 'form-input');
+    description.value = draftDescription; description.maxLength = 1000; description.rows = 3;
+    description.placeholder = '主题、出处或备注'; description.readOnly = !canEditDescription;
+    description.addEventListener('input', () => {
+      if (!canEditDescription || ui.busy || ui.saved) return;
+      draftDescription = description.value; ui.changed();
+    });
+    descriptionField.append(descriptionLabel, description); ui.workspace.append(descriptionField);
+    if (!canEditDescription) ui.workspace.append(node('p', 'field-note', '当前上传服务暂不支持修改说明，更新服务后即可编辑。'));
     const picker = node('input', 'visually-hidden'); picker.type = 'file'; picker.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
     const choose = target => { pickerTarget = target; picker.multiple = target === undefined; picker.value = ''; picker.click(); };
     const applyFiles = incoming => {
@@ -199,7 +212,8 @@ export function createImageEditor(onOpenChange, onSaved) {
   const listFocus = (index, text) => ui.workspace.querySelectorAll('.editor-item')[index]?.querySelector(`[aria-label="${text}第 ${index + 1} 张"]`)?.focus();
   ui.receive = data => {
     const next = normalizeManifest({ schemaVersion: 1, albums: [data.album], series: data.series }, document.baseURI)[0];
-    ui.dispose(); album = next; draftTitle = album.title; canRename = data.capabilities?.editTitle === true; series = data.series || [];
+    ui.dispose(); album = next; draftTitle = album.title; draftDescription = album.description;
+    canRename = data.capabilities?.editTitle === true; canEditDescription = data.capabilities?.editDescription === true; series = data.series || [];
     items = album.images.map((image, existing) => ({ existing, src: image.src })); render();
   };
   ui.payload = () => {
@@ -210,6 +224,12 @@ export function createImageEditor(onOpenChange, onSaved) {
     if (title !== album.title) {
       if (!canRename) throw new Error('当前上传服务暂不支持修改图集名称');
       body.set('title', title);
+    }
+    if (draftDescription !== album.description) {
+      if (!canEditDescription) throw new Error('当前上传服务暂不支持修改图集说明');
+      const description = draftDescription.trim();
+      if (description.length > 1000) throw new Error('图集说明最多 1000 字');
+      body.set('description', description);
     }
     files.forEach(file => body.append('images', file, file.name)); return body;
   };

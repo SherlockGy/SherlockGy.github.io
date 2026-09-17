@@ -6,7 +6,7 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-17-album-titles-1';
+const VERSION = '2026-09-17-album-details-1';
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
 const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
@@ -461,13 +461,15 @@ async function editAlbum(request, env, id) {
   const revision = field(form, 'revision', 64, true);
   if (!/^[a-f0-9]{64}$/.test(revision)) fail(400, 'INVALID_REVISION', '图集版本格式不正确');
   const title = form.has('title') ? field(form, 'title', 120, true) : undefined;
+  const description = form.has('description') ? field(form, 'description', 1000) : undefined;
   let order;
   try { order = JSON.parse(field(form, 'order', 10000, true)); }
   catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_ORDER', '图片顺序格式不正确'); }
   const { files, info } = await preparedFiles(form, env, `/albums/${id}`, true);
   const fingerprintParts = [id, revision, order, info.map(item => item.hash)];
-  // Keep legacy request fingerprints unchanged when no title was submitted.
+  // Omitted fields keep existing fingerprints compatible across Worker upgrades.
   if (title !== undefined) fingerprintParts.push({ title });
+  if (description !== undefined) fingerprintParts.push({ description });
   const fingerprint = await hash(encoder.encode(JSON.stringify(fingerprintParts)));
   let snapshot = await preparedHead(form, env, `/albums/${id}`);
   const inspectSnapshot = async () => {
@@ -483,7 +485,9 @@ async function editAlbum(request, env, id) {
   };
   let checked = await inspectSnapshot();
   if (checked.duplicate) return { status: 'committed', commitSha: snapshot.sha, album: checked.album };
-  if (!files.length && order.every((entry, index) => entry.existing === index) && (title === undefined || title === checked.album.title)) {
+  if (!files.length && order.every((entry, index) => entry.existing === index) &&
+      (title === undefined || title === checked.album.title) &&
+      (description === undefined || description === (checked.album.description || ''))) {
     return { status: 'unchanged', album: checked.album };
   }
   const imageEntries = [], newImages = [];
@@ -505,6 +509,7 @@ async function editAlbum(request, env, id) {
     const nextTitle = title ?? checked.album.title;
     const renamed = nextTitle !== checked.album.title;
     const album = { ...checked.album, title: nextTitle,
+      ...(description === undefined ? {} : { description }),
       images: order.map((entry, index) => {
         if (Object.hasOwn(entry, 'existing')) {
           const image = checked.album.images[entry.existing];
@@ -638,7 +643,7 @@ export default {
       if (request.method === 'OPTIONS') return reply(request, null, 204);
       if (request.method === 'GET' && ['/', '/albums', '/health', '/check'].includes(path)) return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
         ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
-        message: '请在图集网站中上传图片。', endpoint: '/albums', capabilities: { editTitle: true }, upload: { protocol: UPLOAD_PROTOCOL,
+        message: '请在图集网站中上传图片。', endpoint: '/albums', capabilities: { editTitle: true, editDescription: true }, upload: { protocol: UPLOAD_PROTOCOL,
           concurrency: ['1', '2', '3'].includes(String(env.UPLOAD_CONCURRENCY)) ? Number(env.UPLOAD_CONCURRENCY) : 2,
           maxInFlightBytes: 12 * MIB, receiptTtlMs: RECEIPT_TTL_MS } });
       if ((request.method !== 'POST' && !((albumMatch || isLibrary || isUploadStatus) && request.method === 'GET')) || path === '/health' || (isUploadStatus && request.method !== 'GET')) fail(405, 'METHOD_NOT_ALLOWED', '请求方法不支持');
@@ -660,7 +665,7 @@ export default {
       if (albumMatch) {
         if (request.method === 'GET') {
           const snapshot = await readHead(env), album = editableAlbum(snapshot, albumMatch[1]);
-          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album), capabilities: { editTitle: true } });
+          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album), capabilities: { editTitle: true, editDescription: true } });
         }
         const result = await editAlbum(request, env, albumMatch[1]);
         return reply(request, result);
