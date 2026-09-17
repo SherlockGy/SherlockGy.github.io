@@ -47,11 +47,13 @@ export function createImagePreview(onOpenChange) {
     stage.scrollTop = 0; stage.scrollLeft = 0;
   };
   const render = () => {
+    const focused = document.activeElement;
     resetZoom(); zoom.disabled = true;
     const current = images[index];
     title.textContent = `第 ${index + 1} / ${images.length} 张${index === 0 ? ' · 封面' : ''}`;
     filename.textContent = current.name || current.alt || ''; filename.title = filename.textContent;
     previous.disabled = index === 0; next.disabled = index === images.length - 1;
+    if (stage.contains(focused) || ([previous, zoom, next].includes(focused) && focused.disabled)) stage.focus({ preventScroll: true });
     const status = node('p', 'image-preview-status', '正在加载大图…'); status.setAttribute('role', 'status');
     const image = node('img'); image.alt = current.alt || `第 ${index + 1} 张图片`; image.decoding = 'async';
     image.hidden = true;
@@ -61,7 +63,10 @@ export function createImagePreview(onOpenChange) {
     });
     image.addEventListener('error', () => {
       if (!dialog.open || !stage.contains(image)) return;
-      status.textContent = '大图暂时无法加载，请关闭后重试。';
+      status.textContent = '大图暂时无法加载。';
+      const retry = node('button', 'secondary-button', '重新加载'); retry.type = 'button';
+      retry.addEventListener('click', () => { stage.focus({ preventScroll: true }); render(); });
+      status.append(retry);
     });
     stage.replaceChildren(status, image); image.src = current.src;
   };

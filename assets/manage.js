@@ -1,6 +1,7 @@
 import config from '../config.js';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
-import { createPreviewButton } from './previews.js?v=20260917-previews-1';
+import { createPreviewButton } from './previews.js?v=20260917-interaction-1';
+import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-thumbs-1';
 
 function node(tag, className, text) {
@@ -63,12 +64,14 @@ function managerDialog(id, title, description, onOpenChange) {
   const $ = selector => dialog.querySelector(selector);
   $('h2').textContent = title; $('.manager-description').textContent = description;
   const model = { dialog, workspace: $('.manager-workspace'), busy: false, dirty: false, loaded: false, saved: false, requestId: null, revision: null };
-  model.status = (message, success = false) => { $('.upload-status').textContent = message; $('.upload-status').className = `upload-status${success ? ' success' : ''}`; };
+  let opener;
+  model.status = (message, kind = 'info') => setFeedback($('.upload-status'), message, kind);
   model.sync = () => {
     dialog.querySelectorAll('input, textarea, select, button').forEach(control => { control.disabled = model.busy || model.saved; });
     $('.manager-close').disabled = model.busy;
     $('.manager-save').disabled = model.busy || (!model.saved && (!model.loaded || !model.dirty));
     $('.manager-save').textContent = model.saved ? '完成' : '保存修改';
+    model.workspace.querySelectorAll('.image-preview-button').forEach(control => { control.disabled = model.busy; });
     model.workspace.querySelectorAll('[data-boundary="true"]').forEach(control => { control.disabled = true; });
   };
   model.changed = () => { model.dirty = true; model.requestId = null; model.status(''); model.sync(); };
@@ -76,8 +79,10 @@ function managerDialog(id, title, description, onOpenChange) {
   model.close = () => {
     if (model.busy || (model.dirty && !confirm('还有未保存的修改，确定放弃并关闭吗？'))) return;
     uploadClient.reset(); model.dispose?.(); $('.manager-password').value = ''; dialog.close(); onOpenChange();
+    (opener?.isConnected && opener.getClientRects().length ? opener : document.querySelector('#main'))?.focus({ preventScroll: true });
   };
   model.open = () => {
+    opener = document.activeElement;
     uploadClient.reset();
     model.dispose?.(); Object.assign(model, { busy: false, dirty: false, loaded: false, saved: false, requestId: null, revision: null });
     model.workspace.replaceChildren(); model.workspace.hidden = true;
@@ -94,10 +99,16 @@ function managerDialog(id, title, description, onOpenChange) {
       model.receive(data); model.revision = data.revision; uploadClient.reset();
       model.loaded = true; model.dirty = false; model.requestId = null;
       model.workspace.hidden = false; $('.manager-load').textContent = '重新载入'; model.status('');
-    } catch (error) { model.status(error.message); }
-    finally { model.busy = false; model.sync(); }
+    } catch (error) { model.status(error.message, 'error'); }
+    finally {
+      model.busy = false; model.sync();
+      ($('.upload-status').textContent ? $('.upload-status') : model.workspace.querySelector('input, select, textarea'))?.focus({ preventScroll: true });
+    }
   };
   $('.manager-load').addEventListener('click', model.load);
+  $('.manager-password').addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.isComposing && !model.loaded) { event.preventDefault(); model.load(); }
+  });
   $('.manager-close').addEventListener('click', model.close);
   dialog.addEventListener('cancel', event => { event.preventDefault(); model.close(); });
   $('form').addEventListener('submit', async event => {
@@ -116,10 +127,14 @@ function managerDialog(id, title, description, onOpenChange) {
       if (!['committed', 'unchanged'].includes(data?.status) || (data.status === 'committed' && typeof data.commitSha !== 'string')) throw new Error('服务未返回保存凭据，请保留草稿并原样重试');
       model.saved = true; model.dirty = false; $('.manager-password').value = ''; $('.manager-password').required = false;
       uploadClient.reset();
-      model.status(data.status === 'unchanged' ? '内容没有变化。' : '已保存。网站发布需要一点时间，稍后刷新查看。', true);
-      model.onSaved?.(data);
-    } catch (error) { model.status(error.message); }
-    finally { model.busy = false; model.sync(); }
+      model.status(data.status === 'unchanged' ? '内容没有变化。' : '已保存。网站发布需要一点时间，稍后刷新查看。', 'success');
+      try { model.onSaved?.(data); }
+      catch { model.status('保存已完成，但页面内容未能同步。请关闭窗口，稍后刷新查看。'); }
+    } catch (error) { model.status(error.message, 'error'); }
+    finally {
+      model.busy = false; model.sync();
+      (model.saved ? $('.manager-save') : $('.upload-status')).focus({ preventScroll: true });
+    }
   });
   dialog.addEventListener('close', () => { $('.manager-password').required = true; });
   return model;
@@ -146,7 +161,7 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
   });
   const revoke = item => { if (item.file) URL.revokeObjectURL(item.src); };
   ui.dispose = () => { items.forEach(revoke); items = []; };
-  ui.onSaved = data => onSaved({ ...data, series });
+  ui.onSaved = data => { render(); onSaved({ ...data, series }); };
   const render = () => {
     ui.workspace.replaceChildren();
     const title = input('图集名称', draftTitle);
@@ -170,18 +185,20 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     descriptionField.append(descriptionLabel, description); ui.workspace.append(descriptionField);
     if (!canEditDescription) ui.workspace.append(node('p', 'field-note', '当前上传服务暂不支持修改说明，更新服务后即可编辑。'));
     const picker = node('input', 'visually-hidden'); picker.type = 'file'; picker.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
+    picker.tabIndex = -1; picker.setAttribute('aria-label', '选择新增或替换的图片');
     const choose = target => { pickerTarget = target; picker.multiple = target === undefined; picker.value = ''; picker.click(); };
     const applyFiles = incoming => {
       if (ui.busy || ui.saved || !incoming.length) return;
       try {
+        const focusIndex = pickerTarget ? items.indexOf(pickerTarget) : items.length;
         const current = items.filter(item => item !== pickerTarget && item.file).map(item => item.file);
         validateFiles([...current, ...incoming], config);
         if ((pickerTarget ? items.length : items.length + incoming.length) > config.maxFiles) throw new Error('每个图集最多 30 张图片');
         if (pickerTarget) {
           revoke(pickerTarget); Object.assign(pickerTarget, { file: incoming[0], src: URL.createObjectURL(incoming[0]) });
         } else items.push(...incoming.map(file => ({ file, src: URL.createObjectURL(file) })));
-        ui.changed(); render();
-      } catch (error) { ui.status(error.message); }
+        ui.changed(); render(); listFocus(focusIndex);
+      } catch (error) { ui.status(error.message, 'error'); }
     };
     picker.addEventListener('change', () => applyFiles([...picker.files]));
     const add = action('添加图片', () => choose(undefined), 'primary-button');
@@ -194,9 +211,11 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     items.forEach((item, index) => {
       const row = node('div', 'editor-item');
       const preview = createPreviewButton(previews[index], index, () => imagePreview.open(previewImages(), index));
+      const filename = node('span', 'file-name', item.file ? item.file.name : `原第 ${item.existing + 1} 张`); filename.title = filename.textContent;
+      const rowStatus = ui.saved ? '已保存' : item.file ? item.existing === undefined ? '待新增' : '待替换'
+        : item.existing !== index ? '顺序待保存' : '现有图片';
       const label = node('div', 'editor-label'); label.append(node('strong', '', `${index + 1}${index === 0 ? ' · 封面' : ''}`),
-        node('span', 'file-name', item.file ? item.file.name : `原第 ${item.existing + 1} 张`),
-        node('small', 'field-note', item.file ? item.existing === undefined ? '待新增' : '待替换' : '已保存'));
+        filename, node('small', 'field-note', rowStatus));
       const controls = node('div', 'editor-controls');
       for (const [text, delta] of [['上移', -1], ['下移', 1]]) {
         const move = action(text, () => {
@@ -211,7 +230,7 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
         revoke(item);
         if (item.existing === undefined) items.splice(index, 1);
         else { delete item.file; item.src = album.images[item.existing].src; }
-        ui.changed(); render();
+        ui.changed(); render(); listFocus(Math.min(index, items.length - 1));
       }, 'text-button'));
       row.append(preview, label, controls); list.append(row);
     });
@@ -219,7 +238,7 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
   };
   const listFocus = (index, text) => {
     const row = ui.workspace.querySelectorAll('.editor-item')[index];
-    const move = row?.querySelector(`[aria-label="${text}第 ${index + 1} 张"]`);
+    const move = text ? row?.querySelector(`[aria-label="${text}第 ${index + 1} 张"]`) : null;
     (move && !move.disabled ? move : row?.querySelector('.image-preview-button'))?.focus();
   };
   ui.receive = data => {
@@ -256,16 +275,23 @@ export function createSeriesManager(onOpenChange, onSaved) {
   const ui = managerDialog('series-manager', '管理系列', '调整系列层级、顺序和图集归属。', onOpenChange);
   ui.path = '/library'; ui.onSaved = onSaved;
   let series = [], placements = [], titles = new Map(), selected = '', newTitle = '';
+  const focusLocation = () => ui.workspace.querySelector('.manager-field select')?.focus();
+  const focusRow = (id, delta) => {
+    const row = [...ui.workspace.querySelectorAll('[data-item-id]')].find(row => row.dataset.itemId === id);
+    const button = row?.querySelector(`[data-direction="${delta}"]`);
+    (button && !button.disabled ? button : row?.querySelector('input, select'))?.focus();
+  };
   const moveWithin = (list, item, delta, sameGroup) => {
     const siblings = list.filter(sameGroup), other = siblings[siblings.indexOf(item) + delta];
     if (!other) return;
     const a = list.indexOf(item), b = list.indexOf(other); [list[a], list[b]] = [list[b], list[a]];
-    ui.changed(); render();
+    ui.changed(); render(); focusRow(item.id, delta);
   };
   const orderButtons = (list, item, predicate) => {
     const group = list.filter(predicate), controls = node('div', 'editor-controls');
     for (const [text, delta] of [['上移', -1], ['下移', 1]]) {
       const button = action(text, () => moveWithin(list, item, delta, predicate));
+      button.dataset.direction = String(delta); button.setAttribute('aria-label', `${text}：${item.title || titles.get(item.id)}`);
       button.dataset.boundary = String(!group[group.indexOf(item) + delta]); controls.append(button);
     }
     return controls;
@@ -274,41 +300,46 @@ export function createSeriesManager(onOpenChange, onSaved) {
     ui.workspace.replaceChildren();
     const location = node('label', 'manager-field'); location.append(node('span', 'field-label', '当前整理位置'));
     const select = seriesSelect(series, selected, '顶层系列');
-    select.addEventListener('change', () => { selected = select.value; render(); }); location.append(select); ui.workspace.append(location);
+    select.addEventListener('change', () => { selected = select.value; render(); focusLocation(); }); location.append(select); ui.workspace.append(location);
     const create = node('div', 'manager-create');
     const title = input('新系列名称', newTitle); title.control.placeholder = '例如：经济学';
-    title.control.addEventListener('input', () => { newTitle = title.control.value; });
-    create.append(title.wrapper, action('添加系列', () => {
-      if (!newTitle.trim()) { ui.status('请填写新系列名称'); title.control.focus(); return; }
-      if (series.length >= 200) { ui.status('最多支持 200 个系列'); return; }
-      series.push({ id: `series-${crypto.randomUUID()}`, title: newTitle.trim(), parentId: selected });
-      newTitle = ''; ui.changed(); render();
-    })); ui.workspace.append(create);
+    title.control.addEventListener('input', () => { newTitle = title.control.value; ui.changed(); });
+    const addSeries = action('添加系列', () => {
+      if (!newTitle.trim()) { ui.status('请填写新系列名称', 'error'); title.control.focus(); return; }
+      if (series.length >= 200) { ui.status('最多支持 200 个系列', 'error'); return; }
+      const id = `series-${crypto.randomUUID()}`;
+      series.push({ id, title: newTitle.trim(), parentId: selected });
+      newTitle = ''; ui.changed(); render(); focusRow(id);
+    });
+    title.control.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); addSeries.click(); }
+    });
+    create.append(title.wrapper, addSeries); ui.workspace.append(create);
     ui.workspace.append(node('h3', 'manager-heading', selected ? '下级系列' : '顶层系列'));
     const children = series.filter(item => item.parentId === selected);
     if (!children.length) ui.workspace.append(node('p', 'field-note', selected ? '暂无下级系列' : '暂无系列'));
     for (const item of children) {
-      const row = node('section', 'series-edit-row');
+      const row = node('section', 'series-edit-row'); row.dataset.itemId = item.id;
       const title = input('系列名称', item.title); title.control.setAttribute('aria-label', `系列名称：${item.title}`);
       title.control.addEventListener('input', () => { item.title = title.control.value; ui.changed(); });
       const parentLabel = node('label', 'manager-field'); parentLabel.append(node('span', 'field-label', '上级系列'));
       const parent = seriesSelect(series, item.parentId, '顶层', item.id);
-      parent.addEventListener('change', () => { item.parentId = parent.value; ui.changed(); render(); }); parentLabel.append(parent);
+      parent.addEventListener('change', () => { item.parentId = parent.value; ui.changed(); render(); focusLocation(); }); parentLabel.append(parent);
       const controls = orderButtons(series, item, entry => entry.parentId === item.parentId);
-      controls.prepend(action('进入系列', () => { selected = item.id; render(); }));
+      controls.prepend(action('进入系列', () => { selected = item.id; render(); focusLocation(); }));
       row.append(title.wrapper, parentLabel, controls); ui.workspace.append(row);
     }
     ui.workspace.append(node('h3', 'manager-heading', selected ? '本系列的图集' : '月份图集'));
     const albums = placements.filter(item => item.seriesId === selected);
     if (!albums.length) ui.workspace.append(node('p', 'field-note', '暂无图集'));
     for (const item of albums) {
-      const row = node('section', 'series-edit-row'); row.append(node('h4', 'manager-album-title', titles.get(item.id)));
+      const row = node('section', 'series-edit-row'); row.dataset.itemId = item.id; row.append(node('h4', 'manager-album-title', titles.get(item.id)));
       const destination = node('label', 'manager-field'); destination.append(node('span', 'field-label', '图集归属'));
       const select = seriesSelect(series, item.seriesId, '月份图集');
       select.addEventListener('change', () => {
         item.seriesId = select.value;
         if (!item.seriesId && !validDate(item.date)) selected = '';
-        ui.changed(); render();
+        ui.changed(); render(); focusLocation();
       }); destination.append(select); row.append(destination);
       if (!item.seriesId) {
         const dateField = input('归档日期', item.date, 'date'); dateField.control.required = true;
@@ -328,6 +359,7 @@ export function createSeriesManager(onOpenChange, onSaved) {
     newTitle = ''; render();
   };
   ui.payload = () => {
+    if (newTitle.trim()) throw new Error('新系列名称尚未添加，请先点击“添加系列”，或清空名称后保存');
     normalizeSeries({ series });
     if (placements.some(item => !item.seriesId && !validDate(item.date))) throw new Error('移入月份图集时需要填写有效日期');
     const body = new FormData(); body.set('series', JSON.stringify(series)); body.set('placements', JSON.stringify(placements)); return body;
