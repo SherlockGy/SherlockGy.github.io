@@ -40,7 +40,7 @@
           "alt": "新兴多智能体系统中的模式与问题 · 第 5 页"
         },
         {
-          "src": "./images/2026/09/album-fffca834-0731-446f-8387-a6470420e467/f759f5f1-7414-4f0a-9d15-f5e8e30e173d-001.png",
+          "src": "./images/2026/09/album-fffca834-0731-446f-8387-a6470420e467/a0380829-58fb-463e-97f0-3ef883b50436-001.png",
           "width": 1448,
           "height": 1086,
           "alt": "新兴多智能体系统中的模式与问题 · 第 6 页"
@@ -54,6 +54,10 @@
         {
           "requestId": "f759f5f1-7414-4f0a-9d15-f5e8e30e173d",
           "fingerprint": "b3a660edf3e62c74b48a06fe62fbf4a9089f3542b922fd44c15a7874d7767481"
+        },
+        {
+          "requestId": "a0380829-58fb-463e-97f0-3ef883b50436",
+          "fingerprint": "14f71400a3272ce73c41f7e1449ef73d5ea71ea3f54c8d57c79d73ec9440a06f"
         }
       ]
     },
