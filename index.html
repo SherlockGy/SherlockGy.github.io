@@ -7,8 +7,8 @@
   <meta name="description" content="SherlockGy 的月份图集与系列图集。">
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/style.css?v=20260917-details-1">
-  <script type="module" src="./assets/app.js?v=20260917-details-1"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=20260917-progress-1">
+  <script type="module" src="./assets/app.js?v=20260917-progress-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
@@ -78,9 +78,8 @@
         <input id="file-input" class="visually-hidden" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif">
         <div id="file-list" class="file-list"></div>
         <div id="access-code-field" hidden><label class="field-label" for="access-code">上传口令</label><div class="access-code-row"><input class="form-input" id="access-code" type="password" autocomplete="off" placeholder="输入口令"><button class="secondary-button" id="check-connection" type="button">测试连接</button></div><p class="field-note">关闭窗口后清除口令</p></div>
-        <p id="upload-status" class="upload-status" role="status" aria-live="polite"></p>
       </div>
-      <footer class="dialog-footer"><span id="file-summary">尚未选择图片</span><button class="primary-button" id="upload-submit" type="submit">保存图集</button></footer>
+      <footer class="dialog-footer"><p id="upload-status" class="upload-status" role="status" aria-live="polite" aria-atomic="true" tabindex="0"></p><span id="file-summary">尚未选择图片</span><button class="primary-button" id="upload-submit" type="submit">保存图集</button></footer>
     </form>
   </dialog>
   <div class="toast" id="toast" role="status" hidden></div>

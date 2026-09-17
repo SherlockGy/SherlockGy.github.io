@@ -1,6 +1,6 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-thumbs-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-details-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-progress-1';
 import { configureCoverImage } from './covers.js?v=20260917-thumbs-1';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
 import { createSlideshow } from './slideshow.js?v=20260917-1';
