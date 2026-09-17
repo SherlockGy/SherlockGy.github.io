@@ -5,7 +5,7 @@
       "id": "album-fa964c43-d968-4ee2-860e-c2be1d67f851",
       "title": "Google-智能体系统何时以及为何有效",
       "date": "2026-09-17",
-      "description": "",
+      "description": "https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/",
       "tags": [],
       "uploadFingerprint": "9f9db7ab671dd8ad6cdfe505829698e6db1b075fe6a7bf6edabffd983be06b9a",
       "images": [
@@ -44,6 +44,10 @@
         {
           "requestId": "73df3976-5310-4aee-a130-c95b991687e0",
           "fingerprint": "7b291a8b7b0a20ff833367b6fd5d4d4df566d77939ab1ed4c94b6c5556bd3b21"
+        },
+        {
+          "requestId": "87d5e927-172d-4fa5-a78a-53cbafa4f49a",
+          "fingerprint": "ee5a749446a83ce260fdf6d148083cae2ecaf1ed0b07d3e81eb27a38b6b1b86f"
         }
       ]
     },
