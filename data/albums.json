@@ -2,6 +2,171 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-d6e59127-5538-4cc0-b194-964b02780b26",
+      "title": "李博杰-深入理解 AI Agent",
+      "date": "2026-09-17",
+      "description": "https://github.com/bojieli/ai-agent-book",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/001.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 1 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/002.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 2 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/003.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 3 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/004.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 4 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/005.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 5 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/006.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 6 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/007.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 7 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/008.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 8 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/009.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 9 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/010.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 10 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/011.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 11 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/012.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 12 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/013.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 13 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/014.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 14 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/015.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 15 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/016.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 16 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/017.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 17 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/018.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 18 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/019.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 19 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/020.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 20 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/021.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 21 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/022.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 22 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/023.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 23 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/024.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 24 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/025.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 25 页",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/2026/09/album-d6e59127-5538-4cc0-b194-964b02780b26/026.png",
+          "alt": "李博杰-深入理解 AI Agent · 第 26 页",
+          "width": 1536,
+          "height": 1024
+        }
+      ]
+    },
+    {
       "id": "album-fa964c43-d968-4ee2-860e-c2be1d67f851",
       "title": "Google-智能体系统何时以及为何有效",
       "date": "2026-09-17",
