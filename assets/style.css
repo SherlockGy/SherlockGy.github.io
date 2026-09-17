@@ -188,8 +188,11 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .upload-status { margin-top: 16px; color: #904f3e; font-size: var(--text-ui); line-height: 1.8; overflow-wrap: anywhere; }
 .upload-status:empty { display: none; }
 .upload-status.success { color: #41735d; }
-.dialog-footer { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 15px; padding: 16px 28px; border-top: 1px solid var(--line); background: var(--paper); }
+.dialog-footer { display: grid; flex-shrink: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 15px; padding: 16px 28px; border-top: 1px solid var(--line); background: var(--paper); }
+.dialog-footer > .upload-status { grid-column: 1 / -1; margin: 0; max-height: min(8em, 24dvh); overflow-y: auto; overscroll-behavior-y: contain; }
+.dialog-footer > .upload-status:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .dialog-footer > span { min-width: 0; overflow-wrap: anywhere; color: var(--muted); font-size: var(--text-meta); }
+.dialog-footer > button { justify-self: end; white-space: nowrap; }
 .toast { position: fixed; z-index: 200; bottom: 24px; left: 50%; max-width: calc(100% - 32px); transform: translateX(-50%); padding: 12px 18px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); box-shadow: 0 8px 28px color-mix(in srgb, var(--ink) 12%, transparent); font-size: var(--text-ui); text-align: center; pointer-events: none; }
 .image-error { padding: 60px 20px; border: 1px solid var(--line); background: var(--paper); color: var(--muted); font-size: var(--text-ui); text-align: center; }
 .image-error button { margin-top: 12px; }

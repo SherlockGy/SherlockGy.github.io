@@ -56,8 +56,8 @@ function managerDialog(id, title, description, onOpenChange) {
   dialog.innerHTML = `<form><header class="dialog-header"><h2 id="${id}-title"></h2><button type="button" class="icon-button manager-close" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#close"/></svg></button></header>
     <div class="dialog-content"><p class="form-hint manager-description"></p>
     <label class="field-label" for="${id}-password">上传口令</label><div class="access-code-row"><input id="${id}-password" class="form-input manager-password" type="password" autocomplete="off" placeholder="输入口令" required><button type="button" class="secondary-button manager-load">载入最新内容</button></div>
-    <p class="field-note">关闭窗口后清除口令；修改后点击保存才会生效。</p><div class="manager-workspace" hidden></div><p class="upload-status" role="status" aria-live="polite"></p></div>
-    <footer class="dialog-footer"><span class="manager-summary">请先载入最新内容</span><button type="submit" class="primary-button manager-save" disabled>保存修改</button></footer></form>`;
+    <p class="field-note">关闭窗口后清除口令；修改后点击保存才会生效。</p><div class="manager-workspace" hidden></div></div>
+    <footer class="dialog-footer"><p class="upload-status" role="status" aria-live="polite" aria-atomic="true" tabindex="0"></p><span class="manager-summary">请先载入最新内容</span><button type="submit" class="primary-button manager-save" disabled>保存修改</button></footer></form>`;
   document.body.append(dialog);
   const $ = selector => dialog.querySelector(selector);
   $('h2').textContent = title; $('.manager-description').textContent = description;
