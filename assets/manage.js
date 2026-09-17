@@ -1,6 +1,6 @@
 import config from '../config.js';
 import { createUploadClient } from './upload.js?v=20260917-review-2';
-import { createPreviewButton } from './previews.js?v=20260917-interaction-1';
+import { createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-thumbs-1';
 

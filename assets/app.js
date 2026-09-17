@@ -1,12 +1,12 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-thumbs-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-review-2';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-space-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
-import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-interaction-1';
+import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { createUploadClient } from './upload.js?v=20260917-review-2';
-import { createSlideshow } from './slideshow.js?v=20260917-interaction-1';
-import { createImageReader, createScrollReader } from './reader.js?v=20260917-hand-1';
+import { createSlideshow } from './slideshow.js?v=20260917-space-1';
+import { createImageReader, createScrollReader } from './reader.js?v=20260917-space-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -337,7 +337,8 @@ function syncReaderControls() {
   $('#prev-page').disabled = state.page === 0;
   $('#next-page').disabled = state.page === total - 1;
   $('#original-image').href = state.album.images[state.page].src;
-  $('#zoom-reset').textContent = state.zoom === 1 ? '适屏' : `${Math.round(state.zoom * 100)}%`;
+  const fitLabel = `恢复整图适配阅读框（当前缩放 ${Math.round(state.zoom * 100)}%）`;
+  $('#zoom-reset').title = fitLabel; $('#zoom-reset').setAttribute('aria-label', fitLabel);
   $('#reader-hand').hidden = state.mode !== 'page';
   $('#reader-hand').setAttribute('aria-pressed', String(state.hand));
   const handLabel = state.hand ? '关闭拖动，恢复适屏' : '开启拖动与缩放（滚轮 / 双指）';
@@ -358,9 +359,11 @@ function renderReader() {
   if (state.expanded) { slideshow.show(state.album, state.page); syncReaderControls(); return; }
   syncReaderControls();
   const stage = $('#reader-stage'); stage.replaceChildren();
+  stage.classList.toggle('is-continuous', state.mode === 'scroll');
   const images = state.mode === 'scroll' ? state.album.images.map((image, index) => [image, index]) : [[state.album.images[state.page], state.page]];
   for (const [image, index] of images) {
     const figure = el('figure', 'reader-page'); figure.dataset.index = index;
+    figure.setAttribute('aria-label', `第 ${index + 1} 张，共 ${state.album.images.length} 张`);
     const frame = el('div', 'reader-image-frame');
     const img = imageNode(image, state.mode === 'scroll' && Math.abs(index - state.page) > 1);
     img.addEventListener('error', () => {
@@ -369,7 +372,7 @@ function renderReader() {
       error.append(button('重新加载图片', 'text-button', () => { stage.focus({ preventScroll: true }); error.remove(); img.hidden = false; img.src = image.src; })); frame.append(error);
     });
     frame.append(img);
-    figure.append(frame, el('figcaption', '', `${String(index + 1).padStart(2, '0')} / ${String(state.album.images.length).padStart(2, '0')}`));
+    figure.append(frame);
     stage.append(figure);
   }
   layoutReader(); stage.scrollTop = 0; stage.scrollLeft = 0;
@@ -403,12 +406,10 @@ function layoutReader() {
   const availableWidth = Math.max(1, Math.min(stage.clientWidth, bounds.width) - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
   const availableHeight = Math.max(1, Math.min(stage.clientHeight, bounds.height) - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
   const width = Math.max(1, Math.floor(availableWidth));
+  const height = Math.max(1, Math.floor(availableHeight));
+  // Pagination lives in the fixed footer. Every image uses the whole frame,
+  // including the space previously reserved for a duplicate page caption.
   $$('.reader-page', stage).forEach(figure => {
-    const caption = $('figcaption', figure), captionStyle = getComputedStyle(caption);
-    const captionSpace = caption.getBoundingClientRect().height + parseFloat(captionStyle.marginTop);
-    // The image owns only the space left after the caption. CSS contain fits
-    // either orientation without waiting for original dimensions or decoding.
-    const height = Math.max(1, Math.floor(availableHeight - captionSpace));
     figure.style.width = `${width}px`;
     $('.reader-image-frame', figure).style.height = `${height}px`;
   });
