@@ -1,6 +1,6 @@
 import config from '../config.js';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
-import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-review-1';
+import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-thumbs-1';
 
 function node(tag, className, text) {
   const value = document.createElement(tag);
@@ -134,14 +134,21 @@ export function buildImageOrder(items) {
 }
 
 export function createImageEditor(onOpenChange, onSaved) {
-  const ui = managerDialog('image-editor', '编辑图片', '添加图片、调整阅读顺序或替换原图。第一张作为封面；分享链接仍按页码定位。', onOpenChange);
-  let album, items = [], pickerTarget;
+  const ui = managerDialog('image-editor', '编辑图集', '修改图集名称、添加图片、调整阅读顺序或替换原图。第一张作为封面；分享链接仍按页码定位。', onOpenChange);
+  let album, items = [], pickerTarget, draftTitle = '', canRename = false, series = [];
   const revoke = item => { if (item.file) URL.revokeObjectURL(item.src); };
   ui.dispose = () => { items.forEach(revoke); items = []; };
-  ui.onSaved = onSaved;
+  ui.onSaved = data => onSaved({ ...data, series });
   const render = () => {
     ui.workspace.replaceChildren();
-    ui.workspace.append(node('h3', 'manager-heading', album.title));
+    const title = input('图集名称', draftTitle);
+    title.control.required = true; title.control.readOnly = !canRename;
+    title.control.addEventListener('input', () => {
+      if (!canRename || ui.busy || ui.saved) return;
+      draftTitle = title.control.value; ui.changed();
+    });
+    ui.workspace.append(title.wrapper);
+    if (!canRename) ui.workspace.append(node('p', 'field-note', '当前上传服务暂不支持修改名称，图片编辑仍可使用。'));
     const picker = node('input', 'visually-hidden'); picker.type = 'file'; picker.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
     const choose = target => { pickerTarget = target; picker.multiple = target === undefined; picker.value = ''; picker.click(); };
     const applyFiles = incoming => {
@@ -192,11 +199,18 @@ export function createImageEditor(onOpenChange, onSaved) {
   const listFocus = (index, text) => ui.workspace.querySelectorAll('.editor-item')[index]?.querySelector(`[aria-label="${text}第 ${index + 1} 张"]`)?.focus();
   ui.receive = data => {
     const next = normalizeManifest({ schemaVersion: 1, albums: [data.album], series: data.series }, document.baseURI)[0];
-    ui.dispose(); album = next; items = album.images.map((image, existing) => ({ existing, src: image.src })); render();
+    ui.dispose(); album = next; draftTitle = album.title; canRename = data.capabilities?.editTitle === true; series = data.series || [];
+    items = album.images.map((image, existing) => ({ existing, src: image.src })); render();
   };
   ui.payload = () => {
     const { files, order } = buildImageOrder(items); if (files.length) validateFiles(files, config);
     const body = new FormData(); body.set('order', JSON.stringify(order));
+    const title = draftTitle.trim();
+    if (!title || title.length > 120) throw new Error('图集名称须为 1–120 字');
+    if (title !== album.title) {
+      if (!canRename) throw new Error('当前上传服务暂不支持修改图集名称');
+      body.set('title', title);
+    }
     files.forEach(file => body.append('images', file, file.name)); return body;
   };
   return { open(id) { ui.path = `/albums/${encodeURIComponent(id)}`; ui.open(); } };

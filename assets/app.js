@@ -1,6 +1,7 @@
 import config from '../config.js';
-import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-review-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-upload-1';
+import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-thumbs-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-titles-1';
+import { configureCoverImage } from './covers.js?v=20260917-thumbs-1';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
 import { createSlideshow } from './slideshow.js?v=20260917-1';
 import { createScrollReader } from './reader.js?v=20260917-review-1';
@@ -14,13 +15,24 @@ const uploadDialog = $('#upload-dialog');
 const uploadClient = createUploadClient();
 const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
 const imageEditor = createImageEditor(updateBodyLock, data => {
+  if (data.album) {
+    const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
+    state.series = normalizeSeries(data);
+    const updated = normalizeManifest({ schemaVersion: 1, albums: [data.album], series: state.series }, document.baseURI)[0];
+    updated.images[0].thumbnails ||= knownThumbnails.get(updated.images[0].src);
+    state.albums = state.albums.map(album => album.id === updated.id ? updated : album);
+  }
   if (data.status === 'committed') $('#publish-notice').hidden = false;
   closeReader();
+  renderCatalog();
 });
 const seriesManager = createSeriesManager(updateBodyLock, data => {
   if (data.manifest) {
+    const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
     state.series = normalizeSeries(data.manifest);
     state.albums = normalizeManifest(data.manifest, document.baseURI);
+    // Worker responses contain source metadata; retain already published covers by original URL.
+    for (const album of state.albums) album.images[0].thumbnails ||= knownThumbnails.get(album.images[0].src);
     renderCatalog();
   }
   if (data.status === 'committed') $('#publish-notice').hidden = false;
@@ -68,9 +80,10 @@ function localDate() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 function imageNode(image, lazy = true) {
-  const img = el('img'); img.src = image.src; img.alt = image.alt;
+  const img = el('img'); img.alt = image.alt;
   img.loading = lazy ? 'lazy' : 'eager'; img.decoding = 'async';
   if (image.width && image.height) { img.width = image.width; img.height = image.height; }
+  img.src = image.src;
   return img;
 }
 
@@ -193,6 +206,7 @@ function renderCatalog() {
     return;
   }
   if (!filtered.length) { container.append(emptyState(state.albums.some(album => !album.seriesId) ? 'filtered' : 'empty')); return; }
+  let renderedCards = 0;
   for (const [month, albums] of groupByMonth(filtered)) {
     const section = el('section', 'month-section'); section.dataset.month = month;
     const header = el('div', 'month-heading');
@@ -201,19 +215,22 @@ function renderCatalog() {
     const year = el('time', 'month-year', month.slice(0, 4)); year.dateTime = month;
     header.append(number, year);
     const grid = el('div', 'album-grid');
-    renderCards(grid, albums);
+    renderCards(grid, albums, renderedCards); renderedCards += albums.length;
     section.append(header, grid); container.append(section);
   }
 }
 
-function renderCards(grid, albums) {
-  for (const album of albums) {
+function renderCards(grid, albums, offset = 0) {
+  const eagerCount = matchMedia('(max-width: 540px)').matches ? 1 : matchMedia('(min-width: 1800px)').matches ? 3 : 2;
+  for (const [index, album] of albums.entries()) {
       const card = el('a', `album-card${album.images.length > 1 ? ' multiple' : ''}`);
       card.href = `#/album/${encodeURIComponent(album.id)}/1`;
       card.setAttribute('aria-label', `阅读 ${album.title}，${album.images.length} 张图片`);
       const cover = el('div', 'cover');
-      const coverImage = imageNode({ ...album.images[0], alt: '' });
-      coverImage.addEventListener('error', () => { coverImage.hidden = true; cover.prepend(el('span', 'card-description', '封面暂时无法显示')); }, { once: true });
+      const coverImage = configureCoverImage(el('img'), { ...album.images[0], alt: '' }, {
+        eager: offset + index < eagerCount, priority: offset + index === 0, series: state.view === 'series',
+        onError: () => { coverImage.hidden = true; cover.prepend(el('span', 'card-description', '封面暂时无法显示')); },
+      });
       const badge = el('span', 'image-badge'); badge.append(icon(album.images.length > 1 ? 'images' : 'image'));
       badge.append(document.createTextNode(`${album.images.length} 张`)); cover.append(coverImage);
       const open = el('span', 'card-open'); open.setAttribute('aria-hidden', 'true'); open.append(icon('expand')); cover.append(open);

@@ -69,7 +69,7 @@
 
 ## 编辑已有图集
 
-`GET /albums/{id}` 需要上传口令，读取 GitHub 当前分支，返回 `{ album, series, revision }`。`revision` 是该图集完整记录的 SHA-256，用来检测并发编辑。响应不缓存。
+`GET /albums/{id}` 需要上传口令，读取 GitHub 当前分支，返回 `{ album, series, revision, capabilities: { editTitle: true } }`。`revision` 是该图集完整记录的 SHA-256，用来检测并发编辑。响应不缓存。前端仅在服务明确返回 `editTitle: true` 时启用名称修改，旧服务仍可编辑图片。
 
 `POST /albums/{id}` 同样使用口令和 `multipart/form-data`：
 
@@ -77,6 +77,7 @@
 | --- | --- |
 | `requestId` | UUID v4，同一草稿的原样重试复用 |
 | `revision` | 载入图集时取得的版本 |
+| `title` | 选填，去除首尾空白后 1–120 字；不传时保留原名称 |
 | `order` | JSON 数组，表示最终图片顺序 |
 | `images` | 本次新增或替换的文件，可为零张；仅排序时不传 |
 
@@ -87,6 +88,8 @@
 - `{ "file": 1, "replaces": 0 }`：用本次上传的第 2 个文件替换原列表第 1 张。
 
 每张原图必须恰好保留或替换一次，每个上传文件必须恰好引用一次。编辑后仍为 1–30 张。客户端不能指定文件路径；Worker 自行生成包含请求编号的新地址，旧文件不删除。
+
+单独改名时仍提交原图片顺序，不传图片文件；也可同时提交名称、排序和新图。改名保持图集 ID、原图地址、日期、系列、标签及分享链接。自动生成的图片说明会随名称更新，自定义说明保留。名称变化参与版本冲突与请求指纹校验；未携带 `title` 的旧请求保留原指纹格式，兼容旧草稿重试。
 
 成功返回 HTTP 200，格式为 `{ status: "committed", commitSha, album }`。没有变化时返回 `{ status: "unchanged", album }`，不创建 Git 提交。同一图集版本发生变化返回 HTTP 409 / `ALBUM_CHANGED`，保留草稿后由用户选择重新载入。其他仓库文件的并发更新会有限重试并保留。
 
@@ -124,7 +127,7 @@ GitHub 请求错误额外返回 `stage` 和耗时 `elapsedMs`，若已收到 HTT
 ```json
 {
   "status": "readable",
-  "version": "2026-09-17-upload-pipeline-1",
+  "version": "2026-09-17-album-titles-1",
   "traceId": "<request UUID>",
   "elapsedMs": 500,
   "albumCount": 0,

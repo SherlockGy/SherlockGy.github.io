@@ -33,12 +33,24 @@ export function normalizeManifest(data, base) {
         if (!item || typeof item !== 'object') throw new Error('图片条目格式不正确');
         return { src: safeImageUrl(item.src, base), alt: typeof item.alt === 'string' ? item.alt : `${album.title} · 第 ${index + 1} 页`,
           width: Number.isFinite(item.width) && item.width > 0 ? item.width : undefined,
-          height: Number.isFinite(item.height) && item.height > 0 ? item.height : undefined };
+          height: Number.isFinite(item.height) && item.height > 0 ? item.height : undefined,
+          thumbnails: normalizeThumbnails(item.thumbnails, base) };
       }),
     };
   }).sort((a, b) => a.seriesId || b.seriesId
     ? Number(!!a.seriesId) - Number(!!b.seriesId)
     : b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
+}
+
+function normalizeThumbnails(value, base) {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.length > 4) throw new Error('缩略图格式不正确');
+  const widths = new Set();
+  return value.map(item => {
+    if (!item || !Number.isInteger(item.width) || item.width <= 0 || !Number.isInteger(item.height) || item.height <= 0 || widths.has(item.width)) throw new Error('缩略图尺寸不正确');
+    widths.add(item.width);
+    return { src: safeImageUrl(item.src, base), width: item.width, height: item.height };
+  }).sort((a, b) => a.width - b.width);
 }
 
 export function normalizeSeries(data) {

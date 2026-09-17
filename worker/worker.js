@@ -6,7 +6,7 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-17-upload-pipeline-1';
+const VERSION = '2026-09-17-album-titles-1';
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
 const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
@@ -421,6 +421,11 @@ function editableAlbum(snapshot, id) {
 function imageDirectory(album) {
   return album.seriesId ? `images/series/${album.id}` : `images/${album.date.slice(0, 4)}/${album.date.slice(5, 7)}/${album.id}`;
 }
+function generatedImageAlt(alt, title) {
+  const prefix = `${title} · 第 `;
+  // Reordering previously preserved labels, so their page number may differ from today's index.
+  return typeof alt === 'string' && alt.startsWith(prefix) && /^[1-9]\d* 页$/.test(alt.slice(prefix.length));
+}
 async function albumRevision(album) {
   return hash(encoder.encode(JSON.stringify(album)));
 }
@@ -455,11 +460,15 @@ async function editAlbum(request, env, id) {
   env._requestId = requestId;
   const revision = field(form, 'revision', 64, true);
   if (!/^[a-f0-9]{64}$/.test(revision)) fail(400, 'INVALID_REVISION', '图集版本格式不正确');
+  const title = form.has('title') ? field(form, 'title', 120, true) : undefined;
   let order;
   try { order = JSON.parse(field(form, 'order', 10000, true)); }
   catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_ORDER', '图片顺序格式不正确'); }
   const { files, info } = await preparedFiles(form, env, `/albums/${id}`, true);
-  const fingerprint = await hash(encoder.encode(JSON.stringify([id, revision, order, info.map(item => item.hash)])));
+  const fingerprintParts = [id, revision, order, info.map(item => item.hash)];
+  // Keep legacy request fingerprints unchanged when no title was submitted.
+  if (title !== undefined) fingerprintParts.push({ title });
+  const fingerprint = await hash(encoder.encode(JSON.stringify(fingerprintParts)));
   let snapshot = await preparedHead(form, env, `/albums/${id}`);
   const inspectSnapshot = async () => {
     const album = editableAlbum(snapshot, id);
@@ -474,7 +483,7 @@ async function editAlbum(request, env, id) {
   };
   let checked = await inspectSnapshot();
   if (checked.duplicate) return { status: 'committed', commitSha: snapshot.sha, album: checked.album };
-  if (!files.length && order.every((entry, index) => entry.existing === index)) {
+  if (!files.length && order.every((entry, index) => entry.existing === index) && (title === undefined || title === checked.album.title)) {
     return { status: 'unchanged', album: checked.album };
   }
   const imageEntries = [], newImages = [];
@@ -493,11 +502,19 @@ async function editAlbum(request, env, id) {
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt > 0) { snapshot = await readHead(env); checked = await inspectSnapshot(); }
     if (checked.duplicate) return { status: 'committed', commitSha: snapshot.sha, album: checked.album };
-    const album = { ...checked.album,
+    const nextTitle = title ?? checked.album.title;
+    const renamed = nextTitle !== checked.album.title;
+    const album = { ...checked.album, title: nextTitle,
       images: order.map((entry, index) => {
-        if (Object.hasOwn(entry, 'existing')) return checked.album.images[entry.existing];
+        if (Object.hasOwn(entry, 'existing')) {
+          const image = checked.album.images[entry.existing];
+          // Preserve custom descriptions; update only the known generated label on rename.
+          return renamed && generatedImageAlt(image?.alt, checked.album.title)
+            ? { ...image, alt: `${nextTitle} · 第 ${index + 1} 页` } : image;
+        }
         const original = checked.album.images[entry.replaces];
-        return { ...newImages[entry.file], alt: original?.alt || `${checked.album.title} · 第 ${index + 1} 页` };
+        const customAlt = original?.alt && !generatedImageAlt(original.alt, checked.album.title);
+        return { ...newImages[entry.file], alt: customAlt ? original.alt : `${nextTitle} · 第 ${index + 1} 页` };
       }),
       editHistory: [...(checked.album.editHistory || []).slice(-49), { requestId, fingerprint }],
     };
@@ -505,7 +522,7 @@ async function editAlbum(request, env, id) {
     const tree = await github(env, '/git/trees', { method: 'POST', body: { base_tree: snapshot.tree,
       tree: [...imageEntries, { path: MANIFEST, mode: '100644', type: 'blob', content: JSON.stringify(manifest, null, 2) + '\n' }] } });
     const commit = await github(env, '/git/commits', { method: 'POST', body: {
-      message: `feat: 更新图集图片 ${checked.album.title.replace(/[\r\n]/g, ' ')}`, tree: tree.sha, parents: [snapshot.sha],
+      message: `feat: 更新图集 ${nextTitle.replace(/[\r\n]/g, ' ')}`, tree: tree.sha, parents: [snapshot.sha],
     } });
     try {
       await github(env, `/git/refs/heads/${BRANCH}`, { method: 'PATCH', body: { sha: commit.sha, force: false } });
@@ -621,7 +638,7 @@ export default {
       if (request.method === 'OPTIONS') return reply(request, null, 204);
       if (request.method === 'GET' && ['/', '/albums', '/health', '/check'].includes(path)) return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
         ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
-        message: '请在图集网站中上传图片。', endpoint: '/albums', upload: { protocol: UPLOAD_PROTOCOL,
+        message: '请在图集网站中上传图片。', endpoint: '/albums', capabilities: { editTitle: true }, upload: { protocol: UPLOAD_PROTOCOL,
           concurrency: ['1', '2', '3'].includes(String(env.UPLOAD_CONCURRENCY)) ? Number(env.UPLOAD_CONCURRENCY) : 2,
           maxInFlightBytes: 12 * MIB, receiptTtlMs: RECEIPT_TTL_MS } });
       if ((request.method !== 'POST' && !((albumMatch || isLibrary || isUploadStatus) && request.method === 'GET')) || path === '/health' || (isUploadStatus && request.method !== 'GET')) fail(405, 'METHOD_NOT_ALLOWED', '请求方法不支持');
@@ -643,7 +660,7 @@ export default {
       if (albumMatch) {
         if (request.method === 'GET') {
           const snapshot = await readHead(env), album = editableAlbum(snapshot, albumMatch[1]);
-          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album) });
+          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album), capabilities: { editTitle: true } });
         }
         const result = await editAlbum(request, env, albumMatch[1]);
         return reply(request, result);

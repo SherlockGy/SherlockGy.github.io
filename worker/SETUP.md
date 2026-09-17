@@ -14,12 +14,12 @@
 
 ## 升级系列与编辑功能
 
-推荐先将本目录 `worker.js` 的完整代码部署到现有 Worker，再发布新版前端。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-09-17-upload-pipeline-1`。
+推荐先将本目录 `worker.js` 的完整代码部署到现有 Worker，再发布新版前端。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-09-17-album-titles-1`。
 
 - 侧栏“管理”进入系列管理，输入现有上传口令并载入最新内容。支持多层系列、同级排序、重命名和调整上级。
 - 可将已有图集移入系列或移回月份归档；无日期的图集移回月份归档时需要选择日期。
 - 新建图集时选择系列即可，不需要填写归档日期。
-- 阅读窗口“编辑图片”支持新增、排序和换图。编辑后的图集最多 30 张；只对本次新文件执行上传，换图使用新的文件地址。
+- 阅读窗口“编辑图集”支持修改名称、新增、排序和换图。编辑后的图集最多 30 张；只对本次新文件执行上传，换图使用新的文件地址。
 - 保存时会检查版本。遇到冲突，当前草稿保留，需自行选择“重新载入”后再编辑。重新载入会提示放弃当前修改。
 - 旧图文件保留，换图不等于删除历史图片；同一页码链接在排序后可能显示另一张图片。
 
@@ -52,9 +52,15 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 完整取舍、提交边界与测试方法见 [上传提速方案](../docs/upload-performance.md)。
 
+## 启用图集改名
+
+部署本目录最新代码后，`GET /health` 的版本应为 `2026-09-17-album-titles-1`，并返回 `capabilities.editTitle: true`。已有的两个 Secret 不变，流水上传协议仍为 `signed-blobs-v1`。
+
+在阅读窗口点击“编辑图集”，输入口令并载入最新内容，即可修改名称。可以只改名，也可以与排序、换图一起保存；名称不能为空，最多 120 字。改名保持图集编号、图片路径、原图和分享链接。旧版 Worker 下名称只读，图片编辑照常使用。
+
 ## 超时和连接诊断
 
-- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-17-upload-pipeline-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
+- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-17-album-titles-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
 - 若旧版提示 `Invalid redirect value`，属于 Worker 运行环境不支持 `redirect: 'error'` 的兼容性错误，请部署新版。新版使用 `manual` 并检查重定向状态，不会跟随跳转转发 Token；无需为此修改上传口令或重新生成 Token。
 - 打开 Cloudflare → Workers & Pages → `github-image-upload` → **Logs → Live**，开始查看实时日志，再回网站点击 **测试连接**或重试上传。
 - 日志中的 `github.start`、`github.success`、`github.error` 标记每一步，`stage` 表示读取主分支、读取图集目录、保存第几张图片或发布图集。`elapsedMs` 是耗时，`httpStatus` 是 GitHub 返回的 HTTP 状态，`traceId` 与页面错误中的请求编号对应。
