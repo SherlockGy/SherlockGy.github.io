@@ -2,6 +2,46 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-fa964c43-d968-4ee2-860e-c2be1d67f851",
+      "title": "Google-智能体系统何时以及为何有效",
+      "date": "2026-09-17",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "9f9db7ab671dd8ad6cdfe505829698e6db1b075fe6a7bf6edabffd983be06b9a",
+      "images": [
+        {
+          "src": "./images/2026/09/album-fa964c43-d968-4ee2-860e-c2be1d67f851/001.png",
+          "alt": "Google-智能体系统何时以及为何有效 · 第 1 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-fa964c43-d968-4ee2-860e-c2be1d67f851/002.png",
+          "alt": "Google-智能体系统何时以及为何有效 · 第 2 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-fa964c43-d968-4ee2-860e-c2be1d67f851/003.png",
+          "alt": "Google-智能体系统何时以及为何有效 · 第 3 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-fa964c43-d968-4ee2-860e-c2be1d67f851/004.png",
+          "alt": "Google-智能体系统何时以及为何有效 · 第 4 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-fa964c43-d968-4ee2-860e-c2be1d67f851/005.png",
+          "alt": "Google-智能体系统何时以及为何有效 · 第 5 页",
+          "width": 1448,
+          "height": 1086
+        }
+      ]
+    },
+    {
       "id": "album-fffca834-0731-446f-8387-a6470420e467",
       "title": "Anthropic-新兴多智能体系统中的模式与问题",
       "date": "2026-09-17",
