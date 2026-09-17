@@ -6,7 +6,7 @@ import { createImagePreview, createPreviewButton } from './previews.js?v=2026091
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
 import { createSlideshow } from './slideshow.js?v=20260917-interaction-1';
-import { createScrollReader } from './reader.js?v=20260917-review-1';
+import { createScrollReader } from './reader.js?v=20260917-fit-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -334,7 +334,7 @@ function syncReaderControls() {
   $('#prev-page').disabled = state.page === 0;
   $('#next-page').disabled = state.page === total - 1;
   $('#original-image').href = state.album.images[state.page].src;
-  $('#zoom-reset').textContent = state.zoom === 1 ? '适宽' : `${Math.round(state.zoom * 100)}%`;
+  $('#zoom-reset').textContent = state.zoom === 1 ? '适屏' : `${Math.round(state.zoom * 100)}%`;
   $('#zoom-out').disabled = state.zoom <= .5; $('#zoom-in').disabled = state.zoom >= 3;
   if (!state.expanded && reader.contains(focused) && focused.disabled) $('#reader-stage').focus({ preventScroll: true });
   for (const mode of ['page', 'scroll']) {
@@ -346,20 +346,23 @@ function syncReaderControls() {
 function renderReader() {
   scrollReader?.disconnect();
   if (state.expanded) { slideshow.show(state.album, state.page); syncReaderControls(); return; }
+  syncReaderControls();
   const stage = $('#reader-stage'); stage.replaceChildren();
   const images = state.mode === 'scroll' ? state.album.images.map((image, index) => [image, index]) : [[state.album.images[state.page], state.page]];
   for (const [image, index] of images) {
     const figure = el('figure', 'reader-page'); figure.dataset.index = index;
+    const frame = el('div', 'reader-image-frame');
     const img = imageNode(image, state.mode === 'scroll' && Math.abs(index - state.page) > 1);
     img.addEventListener('error', () => {
       img.hidden = true;
       const error = el('div', 'image-error'); error.append(el('p', '', '这张图片暂时无法加载'));
-      error.append(button('重新加载图片', 'text-button', () => { stage.focus({ preventScroll: true }); error.remove(); img.hidden = false; img.src = image.src; })); figure.prepend(error);
+      error.append(button('重新加载图片', 'text-button', () => { stage.focus({ preventScroll: true }); error.remove(); img.hidden = false; img.src = image.src; })); frame.append(error);
     });
-    figure.append(img, el('figcaption', '', `${String(index + 1).padStart(2, '0')} / ${String(state.album.images.length).padStart(2, '0')}`));
+    frame.append(img);
+    figure.append(frame, el('figcaption', '', `${String(index + 1).padStart(2, '0')} / ${String(state.album.images.length).padStart(2, '0')}`));
     stage.append(figure);
   }
-  applyZoom(); stage.scrollTop = 0; stage.scrollLeft = 0;
+  applyZoom(false); stage.scrollTop = 0; stage.scrollLeft = 0;
   if (state.mode === 'scroll') {
     scrollReader = createScrollReader(stage, page => {
       if (!state.album || state.expanded || state.mode !== 'scroll') return;
@@ -367,23 +370,35 @@ function renderReader() {
         state.page = page; syncReaderControls();
         history.replaceState(null, '', `#/album/${state.album.id}/${state.page + 1}`);
       }
-    });
+    }, { fixedLayout: true });
     scrollReader.goTo(state.page);
   }
   syncReaderControls();
 }
 
-function applyZoom() {
+function applyZoom(alignPage = true) {
   if (!state.album || !reader.open) return;
   if (state.expanded) { slideshow.resize(); return; }
   const stage = $('#reader-stage'), style = getComputedStyle(stage);
-  const available = Math.max(1, stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
-  const width = Math.round(Math.min(1120, available) * state.zoom);
-  $$('.reader-page').forEach(figure => {
+  const availableWidth = Math.max(1, stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+  const availableHeight = Math.max(1, stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
+  const width = Math.floor(availableWidth * state.zoom);
+  $$('.reader-page', stage).forEach(figure => {
+    const caption = $('figcaption', figure), captionStyle = getComputedStyle(caption);
+    const captionSpace = caption.getBoundingClientRect().height + parseFloat(captionStyle.marginTop);
+    // The image owns only the space left after the caption. CSS contain fits
+    // either orientation without waiting for original dimensions or decoding.
+    const height = Math.max(1, Math.floor((availableHeight - captionSpace) * state.zoom));
     figure.style.width = `${width}px`;
-    figure.classList.toggle('zoomed', width > available);
+    $('.reader-image-frame', figure).style.height = `${height}px`;
+    figure.classList.toggle('zoomed', width > availableWidth);
   });
   syncReaderControls();
+  if (alignPage) {
+    stage.scrollLeft = 0;
+    if (state.mode === 'scroll') scrollReader?.goTo(state.page);
+    else stage.scrollTop = 0;
+  }
 }
 function goPage(page) {
   if (!state.album) return;
@@ -606,7 +621,9 @@ for (const name of ['dragenter', 'dragover']) drop.addEventListener(name, event 
 for (const name of ['dragleave', 'drop']) drop.addEventListener(name, event => { event.preventDefault(); drop.classList.remove('dragover'); });
 drop.addEventListener('drop', event => addFiles([...event.dataTransfer.files]));
 window.addEventListener('hashchange', route);
-window.addEventListener('resize', () => { if (reader.open) applyZoom(); });
+// Observe the actual reading area: wrapping controls, rotation and viewport
+// changes can alter its height without changing the image dimensions.
+new ResizeObserver(() => { if (reader.open) applyZoom(); }).observe($('#reader-stage'));
 document.addEventListener('keydown', event => {
   if ($('#image-preview').open || uploadDialog.open) return;
   if ($('#image-editor').open || $('#series-manager').open) return;
