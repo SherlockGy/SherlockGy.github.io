@@ -2,7 +2,29 @@
 
 前端和 [Worker 实现](../worker/worker.js) 均已提供。按 [部署说明](../worker/SETUP.md) 在 Cloudflare 编辑器粘贴代码、设置两个 Secret 即可连接。`config.js` 的 `uploadEndpoint` 为空时，仅启用本地预览，不发出上传请求。
 
-## 请求
+## 流水上传协议
+
+`GET /health` 的 `upload.protocol` 为 `signed-blobs-v1` 时使用本协议；没有该能力时继续使用下文的 multipart 接口。
+
+| 接口 | 输入 | 成功响应 |
+| --- | --- | --- |
+| `POST /uploads/prepare` | multipart：`requestId`、`scope` | `{ status: "prepared", snapshot }` |
+| `POST /uploads/{requestId}/{index}?scope=...` | 原始图片二进制，索引从零开始 | HTTP 201，`{ status: "staged", receipt }` |
+| `POST /albums` 或 `POST /albums/{id}` | 原元数据及 `receipts` JSON 数组、可选 `snapshot` JSON；不传 `images` | 原有 committed/unchanged 响应 |
+| `GET /uploads/status?requestId=...&scope=...` | 请求编号与目标路径 | `{ status: "committed", commitSha, album }` 或 `{ status: "not_committed" }` |
+
+这些接口均使用原有上传口令、来源校验。`scope` 是 `/albums` 或 `/albums/{id}`，不允许客户端指定仓库文件路径。
+
+- 快照准备与图片上传并行。`snapshot` 是服务端签名的同一提交快照，5 分钟有效；过期后重新读取。最终分支更新失败仍按原冲突规则重读，不强制覆盖。
+- 每张图片的 `receipt` 包含已签名的请求编号、目标、索引、SHA、哈希、字节数、类型和可用尺寸，24 小时有效；不得修改或交换顺序。
+- 前端按 `/health` 返回的 `upload.concurrency` 调度（默认 2，最多 3），同时遵守 `upload.maxInFlightBytes`（12 MiB）。服务端验证单图、签名及最终合计大小。
+- `receipts` 与 `images` 互斥。排序无新文件时可以发送空凭据数组。最后一次提交保持原有图片顺序、版本检查与请求指纹语义。
+- 对图片请求独立采用每 IP、每 isolate 90 次/分钟的节流；其他鉴权操作保持 12 次/分钟。它们都不是全局配额。
+- 最终提交结果不明时先查 `/uploads/status`；状态查询不能用来跳过服务端内容指纹校验，也不承担部分 Blob 的持久进度存储。
+- 已传图片凭据保存在页面内存中；关闭或刷新页面会失去草稿。签名同时依赖仅服务端持有的 GitHub Token 和上传口令；更换任一项都会使已有签名失效。
+- 新增错误：`INVALID_RECEIPT`、`RECEIPT_EXPIRED`、`INVALID_SNAPSHOT`、`GITHUB_GRAPHQL_ERROR`；GitHub 限流会返回 429 / `GITHUB_RATE_LIMITED` 和 `retryAfterSeconds`。
+
+## 原有 multipart 请求
 
 `POST <uploadEndpoint>`，`multipart/form-data`。让浏览器生成 Content-Type 和 boundary。
 
@@ -91,18 +113,18 @@ HTTP 400 / 401 / 403 / 409 / 413 / 429 / 500 / 502 / 503 / 504，JSON：
 { "error": { "code": "INVALID_FILE", "message": "仅支持 JPG、PNG、WebP、GIF、AVIF 图片", "traceId": "<request UUID>" } }
 ```
 
-不要返回堆栈、GitHub Token、完整上游鉴权头或其他内部凭据。客户端 120 秒超时不等于服务端失败，超时后应先检查目录，避免重复提交。
+不要返回堆栈、GitHub Token、完整上游鉴权头或其他内部凭据。新版前端的单图上传和最终提交各等待 90 秒，旧协议整批等待 120 秒。超时不等于服务端失败，新版会按请求编号查询状态，避免重复提交。
 
 GitHub 请求错误额外返回 `stage` 和耗时 `elapsedMs`，若已收到 HTTP 响应则包含 `httpStatus`。真正超时为 HTTP 504 / `GITHUB_TIMEOUT`（单步限时 20 秒）；其他请求异常为 HTTP 502 / `GITHUB_CONNECTION_ERROR`，附带过滤凭据后的 `reason`；HTTP 拒绝为 `GITHUB_ERROR`。这些错误的 `traceId` 与 Worker 实时日志相同。
 
 ## 只读连接检查
 
-`POST /check`，发送与上传相同的 `Authorization`，无需请求正文，也无需图片或名称。与上传共用 CORS、口令验证和频率限制；仅依次读取主分支、当前提交及图集目录，绝不写入仓库。成功返回 HTTP 200：
+`POST /check`，发送与上传相同的 `Authorization`，无需请求正文，也无需图片或名称。与上传共用 CORS、口令验证和频率限制；默认通过一次 GraphQL 查询读取同一个 Commit 下的版本、Tree 和图集目录，不写入仓库。`GITHUB_READ_MODE=rest` 时使用三次 REST 读取，HEAD 取得后并行读取 commit 与目录。成功返回 HTTP 200：
 
 ```json
 {
   "status": "readable",
-  "version": "2026-09-16-series-edit-1",
+  "version": "2026-09-17-upload-pipeline-1",
   "traceId": "<request UUID>",
   "elapsedMs": 500,
   "albumCount": 0,
