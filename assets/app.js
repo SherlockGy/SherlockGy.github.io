@@ -6,12 +6,12 @@ import { createImagePreview, createPreviewButton } from './previews.js?v=2026091
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { createUploadClient } from './upload.js?v=20260917-review-2';
 import { createSlideshow } from './slideshow.js?v=20260917-interaction-1';
-import { createScrollReader } from './reader.js?v=20260917-fit-1';
+import { createImageReader, createScrollReader } from './reader.js?v=20260917-hand-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const state = { albums: [], series: [], view: 'archive', seriesId: '', query: '', month: '', type: 'all', expanded: false,
-  album: null, page: 0, mode: 'page', zoom: 1, preview: null, files: [], urls: [], requestId: null, busy: false,
+  album: null, page: 0, mode: 'page', zoom: 1, hand: false, preview: null, files: [], urls: [], requestId: null, busy: false,
   uploadDirty: false, uploadSaved: false, loadError: false, scrollY: 0 };
 const reader = $('#reader');
 const uploadDialog = $('#upload-dialog');
@@ -42,6 +42,7 @@ const seriesManager = createSeriesManager(updateBodyLock, data => {
   if (data.status === 'committed') $('#publish-notice').hidden = false;
 });
 let scrollReader;
+let imageReader;
 let lastFocused;
 let toastTimer;
 function icon(name) {
@@ -276,7 +277,7 @@ function route() {
   const changed = state.album?.id !== album.id;
   state.album = album;
   state.page = Math.max(0, Math.min(album.images.length - 1, Number(match[2] || 1) - 1));
-  if (changed) { state.zoom = 1; state.mode = 'page'; }
+  if (changed) { state.zoom = 1; state.hand = false; state.mode = 'page'; }
   if (!reader.open) {
     state.scrollY = window.scrollY; lastFocused = document.activeElement;
     reader.showModal(); updateBodyLock(); $('#reader-close').focus();
@@ -300,6 +301,7 @@ function setExpanded(expanded) {
   control.setAttribute('aria-label', label); control.title = label;
   control.replaceChildren(icon(expanded ? 'collapse' : 'expand'));
   scrollReader?.disconnect();
+  imageReader?.disconnect(); imageReader = null;
   if (expanded && reader.open && state.album) slideshow.open(state.album, state.page);
   else {
     slideshow.close();
@@ -310,6 +312,7 @@ function setExpanded(expanded) {
 function closeReader(changeRoute = true) {
   setExpanded(false);
   scrollReader?.disconnect();
+  imageReader?.disconnect(); imageReader = null;
   if (reader.open) {
     reader.close(); updateBodyLock();
     if ($('#toast').parentElement === reader) document.body.append($('#toast'));
@@ -335,7 +338,13 @@ function syncReaderControls() {
   $('#next-page').disabled = state.page === total - 1;
   $('#original-image').href = state.album.images[state.page].src;
   $('#zoom-reset').textContent = state.zoom === 1 ? '适屏' : `${Math.round(state.zoom * 100)}%`;
-  $('#zoom-out').disabled = state.zoom <= .5; $('#zoom-in').disabled = state.zoom >= 3;
+  $('#reader-hand').hidden = state.mode !== 'page';
+  $('#reader-hand').setAttribute('aria-pressed', String(state.hand));
+  const handLabel = state.hand ? '关闭拖动，恢复适屏' : '开启拖动与缩放（滚轮 / 双指）';
+  $('#reader-hand').setAttribute('aria-label', handLabel); $('#reader-hand').title = handLabel;
+  $('#zoom-reset').hidden = state.mode !== 'page';
+  $('#reader-tool-divider').hidden = state.mode !== 'page';
+  $('#reader-stage').setAttribute('aria-label', state.hand ? '图片阅读区域：拖动查看，滚轮或双指缩放；加减键缩放，0 键恢复适屏' : '图片阅读区域');
   if (!state.expanded && reader.contains(focused) && focused.disabled) $('#reader-stage').focus({ preventScroll: true });
   for (const mode of ['page', 'scroll']) {
     $(`#mode-${mode}`).classList.toggle('active', state.mode === mode);
@@ -345,6 +354,7 @@ function syncReaderControls() {
 
 function renderReader() {
   scrollReader?.disconnect();
+  imageReader?.disconnect(); imageReader = null; state.zoom = 1;
   if (state.expanded) { slideshow.show(state.album, state.page); syncReaderControls(); return; }
   syncReaderControls();
   const stage = $('#reader-stage'); stage.replaceChildren();
@@ -362,7 +372,7 @@ function renderReader() {
     figure.append(frame, el('figcaption', '', `${String(index + 1).padStart(2, '0')} / ${String(state.album.images.length).padStart(2, '0')}`));
     stage.append(figure);
   }
-  applyZoom(false); stage.scrollTop = 0; stage.scrollLeft = 0;
+  layoutReader(); stage.scrollTop = 0; stage.scrollLeft = 0;
   if (state.mode === 'scroll') {
     scrollReader = createScrollReader(stage, page => {
       if (!state.album || state.expanded || state.mode !== 'scroll') return;
@@ -372,11 +382,17 @@ function renderReader() {
       }
     }, { fixedLayout: true });
     scrollReader.goTo(state.page);
+  } else {
+    imageReader = createImageReader($('.reader-image-frame', stage), {
+      keyTarget: stage,
+      onScaleChange: scale => { state.zoom = scale; syncReaderControls(); },
+    });
+    imageReader.setHand(state.hand);
   }
   syncReaderControls();
 }
 
-function applyZoom(alignPage = true) {
+function layoutReader() {
   if (!state.album || !reader.open) return;
   if (state.expanded) { slideshow.resize(); return; }
   const stage = $('#reader-stage'), style = getComputedStyle(stage);
@@ -386,23 +402,16 @@ function applyZoom(alignPage = true) {
   // bounds as well so fractional viewport sizes do not create a stray scrollbar.
   const availableWidth = Math.max(1, Math.min(stage.clientWidth, bounds.width) - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
   const availableHeight = Math.max(1, Math.min(stage.clientHeight, bounds.height) - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
-  const width = Math.max(1, Math.floor(availableWidth * state.zoom));
+  const width = Math.max(1, Math.floor(availableWidth));
   $$('.reader-page', stage).forEach(figure => {
     const caption = $('figcaption', figure), captionStyle = getComputedStyle(caption);
     const captionSpace = caption.getBoundingClientRect().height + parseFloat(captionStyle.marginTop);
     // The image owns only the space left after the caption. CSS contain fits
     // either orientation without waiting for original dimensions or decoding.
-    const height = Math.max(1, Math.floor((availableHeight - captionSpace) * state.zoom));
+    const height = Math.max(1, Math.floor(availableHeight - captionSpace));
     figure.style.width = `${width}px`;
     $('.reader-image-frame', figure).style.height = `${height}px`;
-    figure.classList.toggle('zoomed', width > availableWidth);
   });
-  syncReaderControls();
-  if (alignPage) {
-    stage.scrollLeft = 0;
-    if (state.mode === 'scroll') scrollReader?.goTo(state.page);
-    else stage.scrollTop = 0;
-  }
 }
 function resizeReader() {
   if (!state.album || !reader.open || state.expanded) return;
@@ -412,10 +421,10 @@ function resizeReader() {
   const before = figure.getBoundingClientRect();
   const vertical = before.height ? (top - before.top) / before.height : 0;
   const horizontal = stage.scrollLeft / Math.max(1, stage.scrollWidth - stage.clientWidth);
-  applyZoom(false);
+  layoutReader();
   const after = figure.getBoundingClientRect();
-  // Preserve the place being read when mobile browser chrome or the window
-  // changes size. Explicit zoom/reset actions still align the current page.
+  // Preserve the place in the continuous list when mobile browser chrome or
+  // the window changes size. The single-image controller preserves its pan.
   stage.scrollTop += after.top - top + vertical * after.height;
   stage.scrollLeft = horizontal * Math.max(0, stage.scrollWidth - stage.clientWidth);
 }
@@ -627,10 +636,19 @@ reader.addEventListener('cancel', event => { event.preventDefault(); if (state.e
 $('#prev-page').addEventListener('click', () => goPage(state.page - 1));
 $('#next-page').addEventListener('click', () => goPage(state.page + 1));
 $('#page-number').addEventListener('change', event => goPage((Number(event.target.value) || 1) - 1));
-for (const mode of ['page', 'scroll']) $(`#mode-${mode}`).addEventListener('click', () => { state.mode = mode; renderReader(); });
-$('#zoom-out').addEventListener('click', () => { state.zoom = Math.max(.5, state.zoom - .25); applyZoom(); });
-$('#zoom-in').addEventListener('click', () => { state.zoom = Math.min(3, state.zoom + .25); applyZoom(); });
-$('#zoom-reset').addEventListener('click', () => { state.zoom = 1; applyZoom(); });
+for (const mode of ['page', 'scroll']) $(`#mode-${mode}`).addEventListener('click', () => {
+  if (state.mode === mode) return;
+  state.mode = mode; state.hand = false; renderReader();
+});
+$('#reader-hand').addEventListener('click', () => {
+  if (state.mode !== 'page' || !imageReader) return;
+  state.hand = !state.hand; imageReader.setHand(state.hand); syncReaderControls();
+  if (state.hand) {
+    $('#reader-stage').focus({ preventScroll: true });
+    toast('拖动查看 · 滚轮或双指缩放 · 点“适屏”复位');
+  }
+});
+$('#zoom-reset').addEventListener('click', () => imageReader?.reset());
 $('#fullscreen').addEventListener('click', () => setExpanded(!state.expanded));
 $('#copy-link').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(location.href); toast('已复制当前阅读链接'); }

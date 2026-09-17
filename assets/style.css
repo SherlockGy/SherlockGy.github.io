@@ -137,6 +137,9 @@ body.modal-open { overflow: hidden; }
 .segmented button.active { background: var(--paper); color: var(--accent); box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 9%, transparent); }
 .zoom-controls { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .zoom-controls .text-button { min-width: 42px; text-align: center; }
+#reader-hand { border-color: var(--line); }
+#reader-hand[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--paper); }
+#zoom-reset { min-width: 54px; font-variant-numeric: tabular-nums; }
 .control-divider { height: 17px; width: 1px; margin: 0 5px; background: var(--line); }
 .original-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 39px; padding: 5px 7px; color: var(--muted); font-size: var(--text-ui); }
 .original-link .icon { width: 15px; height: 15px; }
@@ -146,9 +149,10 @@ body.modal-open { overflow: hidden; }
 .reader-page:last-child { margin-bottom: 0; }
 .reader-image-frame { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
 .reader-image-frame img { width: 100%; height: 100%; object-fit: contain; }
+.reader-image-frame.hand-mode { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.reader-image-frame.dragging { cursor: grabbing; }
 .reader-image-frame .image-error { position: absolute; inset: 0; overflow: auto; }
 .reader-page figcaption { margin-top: 14px; color: var(--muted); font: var(--text-meta)/1.5 var(--mono); text-align: center; white-space: nowrap; }
-.reader-page.zoomed { margin-left: 0; margin-right: 0; }
 .reader-footer { display: flex; align-items: center; justify-content: center; gap: 35px; padding: 10px 20px; border-top: 1px solid var(--line); background: var(--paper); }
 .page-control { white-space: nowrap; display: flex; align-items: center; gap: 8px; color: var(--muted); font: var(--text-ui)/1.5 var(--mono); }
 .page-control input { width: 48px; font-size: var(--text-body); padding: 8px 2px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--ink); text-align: center; appearance: textfield; -moz-appearance: textfield; }
