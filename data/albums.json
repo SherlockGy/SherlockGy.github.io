@@ -10,10 +10,10 @@
       "uploadFingerprint": "9f9db7ab671dd8ad6cdfe505829698e6db1b075fe6a7bf6edabffd983be06b9a",
       "images": [
         {
-          "src": "./images/2026/09/album-fa964c43-d968-4ee2-860e-c2be1d67f851/page-001.png",
-          "alt": "Google-智能体系统何时以及为何有效 · 第 1 页",
+          "src": "./images/2026/09/album-fa964c43-d968-4ee2-860e-c2be1d67f851/d8c1ef2f-f525-48c0-9b0b-398161de4f1a-001.png",
           "width": 1448,
-          "height": 1086
+          "height": 1086,
+          "alt": "Google-智能体系统何时以及为何有效 · 第 1 页"
         },
         {
           "src": "./images/2026/09/album-fa964c43-d968-4ee2-860e-c2be1d67f851/page-002.png",
@@ -48,6 +48,10 @@
         {
           "requestId": "87d5e927-172d-4fa5-a78a-53cbafa4f49a",
           "fingerprint": "ee5a749446a83ce260fdf6d148083cae2ecaf1ed0b07d3e81eb27a38b6b1b86f"
+        },
+        {
+          "requestId": "d8c1ef2f-f525-48c0-9b0b-398161de4f1a",
+          "fingerprint": "679e239644d866a03b3d84004947258b2b8f5604bccf1d8704b660fb7cfe600f"
         }
       ]
     },
