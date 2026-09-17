@@ -52,6 +52,7 @@ export function createImagePreview(onOpenChange) {
     const current = images[index];
     title.textContent = `第 ${index + 1} / ${images.length} 张${index === 0 ? ' · 封面' : ''}`;
     filename.textContent = current.name || current.alt || ''; filename.title = filename.textContent;
+    filename.hidden = !filename.textContent;
     previous.disabled = index === 0; next.disabled = index === images.length - 1;
     if (stage.contains(focused) || ([previous, zoom, next].includes(focused) && focused.disabled)) stage.focus({ preventScroll: true });
     const status = node('p', 'image-preview-status', '正在加载大图…'); status.setAttribute('role', 'status');
@@ -75,7 +76,7 @@ export function createImagePreview(onOpenChange) {
   next.addEventListener('click', () => go(index + 1));
   zoom.addEventListener('click', () => {
     zoomed = !zoomed; stage.classList.toggle('is-zoomed', zoomed);
-    zoom.textContent = zoomed ? '适合窗口' : '原尺寸'; zoom.setAttribute('aria-pressed', String(zoomed));
+    zoom.textContent = zoomed ? '适屏' : '原尺寸'; zoom.setAttribute('aria-pressed', String(zoomed));
     stage.scrollTop = 0; stage.scrollLeft = 0;
   });
   close.addEventListener('click', () => dialog.close());
