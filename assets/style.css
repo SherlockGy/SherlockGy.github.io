@@ -138,6 +138,7 @@ body.modal-open { overflow: hidden; }
 .zoom-controls { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .zoom-controls .text-button { min-width: 42px; text-align: center; }
 .zoom-scale { flex-shrink: 0; min-width: 4ch; color: var(--muted); font: var(--text-meta)/1.5 var(--mono); text-align: center; white-space: nowrap; cursor: default; }
+.zoom-controls .zoom-scale { margin-inline-end: 12px; }
 #reader-hand { border-color: var(--line); }
 #reader-hand[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--paper); }
 .control-divider { height: 17px; width: 1px; margin: 0 5px; background: var(--line); }
@@ -296,6 +297,7 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .slideshow-page-controls, .slideshow-tools { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
 #slideshow-count { white-space: nowrap; font: var(--text-meta)/1.5 var(--mono); color: var(--muted); }
 .slideshow-tools { justify-content: center; gap: 12px; margin-top: 5px; }
+.slideshow-tools .zoom-scale { margin-inline-end: 6px; }
 #slideshow-hand { border-color: var(--line); width: 40px; height: 40px; }
 #slideshow-hand[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--paper); }
 #slideshow-fit { min-width: 43px; font-size: var(--text-meta); }
@@ -404,6 +406,7 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .segmented button { min-height: 30px; padding: 5px 8px; gap: 5px; font-size: var(--text-meta); }
   .segmented .icon { width: 13px; height: 13px; }
   .zoom-controls { gap: 1px; }
+  .zoom-controls .zoom-scale { margin-inline-end: 11px; }
   .zoom-controls .icon-button { width: 29px; height: 32px; padding: 5px; }
   .zoom-controls .text-button { min-width: 35px; font-size: var(--text-meta); }
   .control-divider { margin: 0 4px; }
@@ -447,9 +450,11 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .slideshow-page-controls .icon-button { width: 32px; height: 32px; }
   #slideshow-count { order: -1; width: 100%; margin: 5px 0; text-align: center; }
   .slideshow-tools { flex-direction: column; gap: 0; }
+  .slideshow-tools .zoom-scale { margin-inline-end: 0; margin-block-end: 12px; }
   #slideshow-hint { display: none; }
 }
 @media (max-width: 360px) {
+  .reader-toolbar { padding-inline: 6px; }
   .sidebar { padding-left: 16px; padding-right: 16px; }
   .repository-link { right: 16px; }
   main#main { padding-left: 16px; padding-right: 16px; }
