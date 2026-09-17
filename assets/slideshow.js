@@ -56,8 +56,9 @@ export function createSlideshow(root, { onSelect, onExit }) {
       currentImage.style.width = `${fitted.width}px`; currentImage.style.height = `${fitted.height}px`;
       currentImage.style.transform = `translate(-50%, -50%) translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
     }
-    const fitLabel = `恢复适屏大小与居中位置（当前缩放 ${Math.round(view.scale * 100)}%）`;
-    fitButton.title = fitLabel; fitButton.setAttribute('aria-label', fitLabel);
+    const scale = `${Math.round(view.scale * 100)}%`;
+    $('#slideshow-scale').textContent = scale;
+    $('#slideshow-scale').setAttribute('aria-label', `当前缩放 ${scale}`);
   }
   function resize() {
     if (root.hidden || !currentImage?.naturalWidth) return;

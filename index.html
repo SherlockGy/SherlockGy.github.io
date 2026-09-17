@@ -7,8 +7,8 @@
   <meta name="description" content="SherlockGy 的月份图集与系列图集。">
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/style.css?v=20260917-space-1">
-  <script type="module" src="./assets/app.js?v=20260917-space-1"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=20260917-review-3">
+  <script type="module" src="./assets/app.js?v=20260917-review-3"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
@@ -48,7 +48,13 @@
     </header>
     <div class="reader-toolbar">
       <div class="segmented" role="group" aria-label="阅读模式"><button id="mode-page" class="active" aria-label="逐页阅读" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#image"/></svg><span>逐页</span></button><button id="mode-scroll" aria-label="连续阅读" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#scroll"/></svg><span>连续</span></button></div>
-      <div class="zoom-controls"><button id="reader-hand" class="icon-button" aria-label="开启拖动与缩放（滚轮 / 双指）" title="开启拖动与缩放（滚轮 / 双指）" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg?v=20260917-1#hand"/></svg></button><button id="zoom-reset" class="text-button" aria-label="恢复整图适配阅读框" title="完整显示图片，自动适配阅读框的宽度和高度">适屏</button><span id="reader-tool-divider" class="control-divider"></span><a id="original-image" class="original-link" target="_blank" rel="noopener noreferrer" aria-label="查看原图" title="查看原图"><span>原图</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#external"/></svg></a></div>
+      <div class="zoom-controls">
+        <span id="reader-scale" class="zoom-scale" aria-label="当前缩放 100%" title="当前缩放比例，以适屏大小为 100%">100%</span>
+        <button id="reader-hand" class="icon-button" aria-label="开启拖动与缩放（滚轮 / 双指）" title="开启拖动与缩放（滚轮 / 双指）" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg?v=20260917-1#hand"/></svg></button>
+        <button id="zoom-reset" class="text-button" aria-label="恢复整图适配阅读框" title="完整显示图片，自动适配阅读框的宽度和高度">适屏</button>
+        <span id="reader-tool-divider" class="control-divider"></span>
+        <a id="original-image" class="original-link" target="_blank" rel="noopener noreferrer" aria-label="查看原图" title="查看原图"><span>原图</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#external"/></svg></a>
+      </div>
     </div>
     <div id="reader-stage" class="reader-stage" tabindex="0" aria-label="图片阅读区域"></div>
     <footer class="reader-footer"><button id="prev-page" class="secondary-button" aria-label="上一页"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg><span>上一页</span></button><div class="page-control"><input id="page-number" type="number" min="1" value="1" aria-label="跳转到页码"><span id="page-total"></span></div><button id="next-page" class="secondary-button" aria-label="下一页"><span>下一页</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></footer>
@@ -58,7 +64,7 @@
         <nav class="slideshow-list" aria-label="图片目录"></nav>
         <div class="slideshow-controls">
           <div class="slideshow-page-controls"><button id="slideshow-prev" class="icon-button" aria-label="上一张" title="上一张"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg></button><span id="slideshow-count" role="status" aria-live="polite"></span><button id="slideshow-next" class="icon-button" aria-label="下一张" title="下一张"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></div>
-          <div class="slideshow-tools"><button id="slideshow-hand" class="icon-button" aria-label="开启拖动与滚轮缩放" title="开启拖动与滚轮缩放" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg?v=20260917-1#hand"/></svg></button><button id="slideshow-fit" class="text-button" aria-label="恢复适屏大小与居中位置" title="恢复适屏大小与居中位置">适屏</button></div>
+          <div class="slideshow-tools"><span id="slideshow-scale" class="zoom-scale" aria-label="当前缩放 100%" title="当前缩放比例，以适屏大小为 100%">100%</span><button id="slideshow-hand" class="icon-button" aria-label="开启拖动与滚轮缩放" title="开启拖动与滚轮缩放" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg?v=20260917-1#hand"/></svg></button><button id="slideshow-fit" class="text-button" aria-label="恢复适屏大小与居中位置" title="恢复适屏大小与居中位置">适屏</button></div>
           <p id="slideshow-hint">滚轮翻页 · 点击目录跳转</p>
         </div>
       </aside>
