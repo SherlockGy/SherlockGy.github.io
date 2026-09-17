@@ -137,6 +137,7 @@ body.modal-open { overflow: hidden; }
 .segmented button.active { background: var(--paper); color: var(--accent); box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 9%, transparent); }
 .zoom-controls { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .zoom-controls .text-button { min-width: 42px; text-align: center; }
+.zoom-scale { flex-shrink: 0; min-width: 4ch; color: var(--muted); font: var(--text-meta)/1.5 var(--mono); text-align: center; white-space: nowrap; cursor: default; }
 #reader-hand { border-color: var(--line); }
 #reader-hand[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--paper); }
 .control-divider { height: 17px; width: 1px; margin: 0 5px; background: var(--line); }

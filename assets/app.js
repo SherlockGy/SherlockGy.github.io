@@ -1,12 +1,12 @@
 import config from '../config.js';
-import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-thumbs-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-space-1';
+import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-review-3';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-review-3';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { createUploadClient } from './upload.js?v=20260917-review-2';
-import { createSlideshow } from './slideshow.js?v=20260917-space-1';
-import { createImageReader, createScrollReader } from './reader.js?v=20260917-space-1';
+import { createSlideshow } from './slideshow.js?v=20260917-review-3';
+import { createImageReader, createScrollReader } from './reader.js?v=20260917-review-3';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -337,8 +337,10 @@ function syncReaderControls() {
   $('#prev-page').disabled = state.page === 0;
   $('#next-page').disabled = state.page === total - 1;
   $('#original-image').href = state.album.images[state.page].src;
-  const fitLabel = `恢复整图适配阅读框（当前缩放 ${Math.round(state.zoom * 100)}%）`;
-  $('#zoom-reset').title = fitLabel; $('#zoom-reset').setAttribute('aria-label', fitLabel);
+  const scale = `${Math.round(state.zoom * 100)}%`;
+  $('#reader-scale').textContent = scale;
+  $('#reader-scale').setAttribute('aria-label', `当前缩放 ${scale}`);
+  $('#reader-scale').hidden = state.mode !== 'page';
   $('#reader-hand').hidden = state.mode !== 'page';
   $('#reader-hand').setAttribute('aria-pressed', String(state.hand));
   const handLabel = state.hand ? '关闭拖动，恢复适屏' : '开启拖动与缩放（滚轮 / 双指）';
@@ -432,7 +434,14 @@ function resizeReader() {
 function goPage(page) {
   if (!state.album) return;
   const target = Number.isFinite(page) ? Math.trunc(page) : 0;
-  state.page = Math.max(0, Math.min(state.album.images.length - 1, target));
+  const nextPage = Math.max(0, Math.min(state.album.images.length - 1, target));
+  // Boundary keys and selecting the active thumbnail must not reload the
+  // current original or discard the user's zoom and pan.
+  if (nextPage === state.page) {
+    if (!state.expanded && state.mode === 'scroll') scrollReader?.goTo(state.page);
+    syncReaderControls(); return;
+  }
+  state.page = nextPage;
   history.replaceState(null, '', `#/album/${state.album.id}/${state.page + 1}`);
   if (state.expanded) renderReader();
   else if (state.mode === 'scroll') {

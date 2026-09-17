@@ -31,7 +31,11 @@ export function normalizeManifest(data, base) {
       images: album.images.map((image, index) => {
         const item = typeof image === 'string' ? { src: image } : image;
         if (!item || typeof item !== 'object') throw new Error('图片条目格式不正确');
-        return { src: safeImageUrl(item.src, base), alt: typeof item.alt === 'string' ? item.alt : `${album.title} · 第 ${index + 1} 页`,
+        const prefix = `${album.title} · 第 `;
+        const generatedAlt = typeof item.alt === 'string' && item.alt.startsWith(prefix) && /^[1-9]\d* 页$/.test(item.alt.slice(prefix.length));
+        // Older manifests may retain a generated page label from before a reorder.
+        // The array determines page order; custom image descriptions stay intact.
+        return { src: safeImageUrl(item.src, base), alt: typeof item.alt === 'string' && !generatedAlt ? item.alt : `${album.title} · 第 ${index + 1} 页`,
           width: Number.isFinite(item.width) && item.width > 0 ? item.width : undefined,
           height: Number.isFinite(item.height) && item.height > 0 ? item.height : undefined,
           thumbnails: normalizeThumbnails(item.thumbnails, base) };

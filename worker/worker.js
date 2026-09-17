@@ -6,7 +6,7 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-17-album-details-1';
+const VERSION = '2026-09-17-review-3';
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
 const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
@@ -507,14 +507,14 @@ async function editAlbum(request, env, id) {
     if (attempt > 0) { snapshot = await readHead(env); checked = await inspectSnapshot(); }
     if (checked.duplicate) return { status: 'committed', commitSha: snapshot.sha, album: checked.album };
     const nextTitle = title ?? checked.album.title;
-    const renamed = nextTitle !== checked.album.title;
     const album = { ...checked.album, title: nextTitle,
       ...(description === undefined ? {} : { description }),
       images: order.map((entry, index) => {
         if (Object.hasOwn(entry, 'existing')) {
           const image = checked.album.images[entry.existing];
-          // Preserve custom descriptions; update only the known generated label on rename.
-          return renamed && generatedImageAlt(image?.alt, checked.album.title)
+          // Generated labels follow both the saved order and the current title.
+          // Keep custom descriptions and original image paths unchanged.
+          return generatedImageAlt(image?.alt, checked.album.title)
             ? { ...image, alt: `${nextTitle} · 第 ${index + 1} 页` } : image;
         }
         const original = checked.album.images[entry.replaces];
