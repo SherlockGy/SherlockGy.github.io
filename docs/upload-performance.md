@@ -82,7 +82,7 @@ sequenceDiagram
 1. 推荐先部署 Worker，再合并/发布前端。
    - Worker 继续接受旧版 multipart 上传，旧前端可运行。
    - 新前端发现旧 Worker 没有 `signed-blobs-v1` 能力时，使用旧版上传路径。
-2. 流水上传从 `2026-09-17-upload-pipeline-1` 开始支持；当前 `2026-09-17-album-titles-1` 继续返回同一 `upload.protocol`，并增加改名能力。
+2. 流水上传从 `2026-09-17-upload-pipeline-1` 开始支持；当前 `2026-09-17-album-details-1` 继续返回同一 `upload.protocol`，并支持名称与说明编辑。
 3. `UPLOAD_CONCURRENCY` 可选值 1、2、3，默认 2；按真实限流、吞吐和 CPU/内存指标选择。
 4. `GITHUB_READ_MODE=rest` 可绕开 GraphQL 读取问题，保留文件流水上传。
 5. 改动 GitHub 中的 `worker.js` 不会自动部署 Cloudflare。回退 Worker 后，新前端会在能力缓存最长 60 秒过期后使用旧协议；进行中的草稿可以原样重试。

@@ -150,10 +150,11 @@ body.modal-open { overflow: hidden; }
 .page-control { white-space: nowrap; display: flex; align-items: center; gap: 8px; color: var(--muted); font: var(--text-ui)/1.5 var(--mono); }
 .page-control input { width: 48px; font-size: var(--text-body); padding: 8px 2px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--ink); text-align: center; appearance: textfield; -moz-appearance: textfield; }
 .page-control input::-webkit-inner-spin-button { appearance: none; }
-.upload-dialog { width: min(580px, calc(100vw - 40px)); max-height: calc(100dvh - 48px); border-radius: 14px; overflow: auto; scroll-padding-block: 24px 100px; box-shadow: 0 20px 70px color-mix(in srgb, var(--ink) 18%, transparent); }
-.dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 28px 18px; border-bottom: 1px solid var(--line); }
+.upload-dialog { --dialog-max-height: calc(100dvh - 48px); width: min(580px, calc(100vw - 40px)); max-height: var(--dialog-max-height); border-radius: 14px; overflow: hidden; box-shadow: 0 20px 70px color-mix(in srgb, var(--ink) 18%, transparent); }
+.upload-dialog > form { display: flex; flex-direction: column; max-height: calc(var(--dialog-max-height) - 2px); }
+.dialog-header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; padding: 22px 28px 18px; border-bottom: 1px solid var(--line); background: var(--paper); }
 .dialog-header h2 { font-family: var(--display); font-size: 27px; font-weight: 600; letter-spacing: .03em; }
-.dialog-content { padding: 24px 28px 28px; }
+.dialog-content { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scroll-padding-block: 24px; padding: 24px 28px 28px; }
 .form-hint { margin-bottom: 24px; color: var(--muted); font-size: var(--text-ui); line-height: 1.8; }
 .field-label { display: block; margin-bottom: 8px; font-size: var(--text-body); font-weight: 500; }
 .optional { margin-left: 6px; color: var(--muted); font-size: var(--text-meta); font-weight: 400; }
@@ -187,7 +188,7 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .upload-status { margin-top: 16px; color: #904f3e; font-size: var(--text-ui); line-height: 1.8; overflow-wrap: anywhere; }
 .upload-status:empty { display: none; }
 .upload-status.success { color: #41735d; }
-.dialog-footer { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 16px 28px; border-top: 1px solid var(--line); background: var(--paper); }
+.dialog-footer { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 15px; padding: 16px 28px; border-top: 1px solid var(--line); background: var(--paper); }
 .dialog-footer > span { min-width: 0; overflow-wrap: anywhere; color: var(--muted); font-size: var(--text-meta); }
 .toast { position: fixed; z-index: 200; bottom: 24px; left: 50%; max-width: calc(100% - 32px); transform: translateX(-50%); padding: 12px 18px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); box-shadow: 0 8px 28px color-mix(in srgb, var(--ink) 12%, transparent); font-size: var(--text-ui); text-align: center; pointer-events: none; }
 .image-error { padding: 60px 20px; border: 1px solid var(--line); background: var(--paper); color: var(--muted); font-size: var(--text-ui); text-align: center; }
@@ -221,6 +222,8 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .manager-workspace > .manager-heading:first-child { margin-top: 0; }
 .manager-field { display: block; min-width: 0; }
 .manager-field .field-label { margin-top: 0; }
+.editor-description { margin-top: 20px; margin-bottom: 22px; }
+.editor-description textarea { display: block; }
 .manager-create { display: flex; align-items: flex-end; gap: 12px; margin-top: 18px; }
 .manager-create .manager-field { flex: 1; }
 .manager-create > button { margin-bottom: 1px; }
@@ -379,7 +382,7 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .reader-footer .secondary-button { font-size: var(--text-meta); padding: 7px 8px; gap: 4px; }
   .page-control { gap: 5px; font-size: var(--text-meta); }
   .page-control input { width: 42px; }
-  .upload-dialog, .manager-dialog { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); }
+  .upload-dialog, .manager-dialog { --dialog-max-height: calc(100dvh - 20px); width: calc(100vw - 20px); }
   .dialog-header { padding: 18px 20px 15px; }
   .dialog-header h2 { font-size: 25px; }
   .dialog-content { padding: 20px; }
