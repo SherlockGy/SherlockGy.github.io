@@ -6,12 +6,14 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-16-series-edit-1';
+const VERSION = '2026-09-17-upload-pipeline-1';
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
 const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
 const encoder = new TextEncoder();
 const attempts = new Map(); // Best-effort per-isolate throttling, not a global quota.
+const RECEIPT_TTL_MS = 24 * 60 * 60 * 1000;
+const UPLOAD_PROTOCOL = 'signed-blobs-v1';
 
 class UploadError extends Error {
   constructor(status, code, message, details = {}) { super(message); this.status = status; this.code = code; this.details = details; }
@@ -20,7 +22,7 @@ class GitHubError extends Error {
   constructor(status, details = {}) { super('GitHub request failed'); this.status = status; this.details = details; }
 }
 function log(env, event, details = {}, error = false) {
-  console[error ? 'error' : 'log']({ event, traceId: env._traceId, ...(env._logPrefix ? { logPrefix: env._logPrefix } : {}), ...details });
+  console[error ? 'error' : 'log']({ event, traceId: env._traceId, ...(env._requestId ? { requestId: env._requestId } : {}), ...(env._logPrefix ? { logPrefix: env._logPrefix } : {}), ...details });
 }
 function safeReason(error, env) {
   let message = String(error?.message || 'Unknown error');
@@ -61,14 +63,14 @@ async function passwordMatches(input, expected) {
   for (let i = 0; i < a.length; i++) difference |= a[i] ^ b[i];
   return difference === 0;
 }
-function throttle(request) {
-  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+function throttle(request, imageUpload = false) {
+  const ip = `${imageUpload ? 'image:' : 'operation:'}${request.headers.get('CF-Connecting-IP') || 'unknown'}`;
   const now = Date.now();
   if (attempts.size > 2000) for (const [key, entry] of attempts) if (entry.until < now) attempts.delete(key);
   if (attempts.size > 4000) fail(429, 'BUSY', '上传服务繁忙，请稍后重试');
   let entry = attempts.get(ip);
   if (!entry || entry.until < now) { entry = { count: 0, until: now + 60000 }; attempts.set(ip, entry); }
-  if (++entry.count > 12) fail(429, 'RATE_LIMITED', '操作过于频繁，请一分钟后重试');
+  if (++entry.count > (imageUpload ? 90 : 12)) fail(429, 'RATE_LIMITED', '操作过于频繁，请一分钟后重试');
 }
 async function github(env, path, { method = 'GET', body, raw = false, stage = githubStage(path, method) } = {}) {
   const token = typeof env.GITHUB_TOKEN === 'string' ? env.GITHUB_TOKEN.trim() : '';
@@ -81,7 +83,7 @@ async function github(env, path, { method = 'GET', body, raw = false, stage = gi
   let httpStatus;
   log(env, 'github.start', { stage, method, path: path.split('?')[0] });
   try {
-    const response = await fetch(`https://api.github.com/repos/${REPOSITORY}${path}`, {
+    const response = await fetch(path === '/graphql' ? 'https://api.github.com/graphql' : `https://api.github.com/repos/${REPOSITORY}${path}`, {
       method,
       headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': 'SherlockGy-Atlas-Worker',
         'Accept': raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json',
@@ -92,16 +94,22 @@ async function github(env, path, { method = 'GET', body, raw = false, stage = gi
     });
     httpStatus = response.status;
     if (!response.ok) {
-      const details = { stage, httpStatus, elapsedMs: Date.now() - started };
+      const retryAfter = Number(response.headers.get('Retry-After'));
+      const remaining = response.headers.get('X-RateLimit-Remaining');
+      const reset = Number(response.headers.get('X-RateLimit-Reset'));
+      const rateLimited = httpStatus === 429 || (httpStatus === 403 && (retryAfter > 0 || remaining === '0'));
+      const details = { stage, httpStatus, elapsedMs: Date.now() - started,
+        ...(rateLimited ? { retryAfterSeconds: Math.max(60, retryAfter || 0, remaining === '0' ? Math.ceil(reset - Date.now() / 1000) || 0 : 0) } : {}) };
       await response.body?.cancel().catch(() => {});
       if ([301, 302, 303, 307, 308].includes(httpStatus)) {
         throw new UploadError(502, 'GITHUB_REDIRECT', `${stage}：GitHub 返回重定向（HTTP ${httpStatus}），已停止请求，请检查仓库地址是否变更`, details);
       }
+      if (rateLimited) throw new UploadError(429, 'GITHUB_RATE_LIMITED', `${stage}：GitHub 暂时限流，请稍后原样重试`, details);
       throw new GitHubError(httpStatus, details);
     }
     let result;
     try {
-      result = raw
+      result = raw || path === '/graphql'
         ? await new Response(limitedStream(response.body, 5 * MIB)).json()
         : await response.json();
     } catch (error) {
@@ -172,9 +180,28 @@ function base64(bytes) {
   return btoa(parts.join(''));
 }
 async function readHead(env) {
+  if (env.GITHUB_READ_MODE !== 'rest') {
+    const [owner, name] = REPOSITORY.split('/');
+    const result = await github(env, '/graphql', { method: 'POST', stage: '读取仓库快照', body: {
+      query: `query AtlasSnapshot($owner: String!, $name: String!, $ref: String!, $path: String!) {
+        repository(owner: $owner, name: $name) { ref(qualifiedName: $ref) { target { ... on Commit {
+          oid tree { oid } file(path: $path) { object { ... on Blob { text isTruncated } } }
+        } } } }
+      }`, variables: { owner, name, ref: `refs/heads/${BRANCH}`, path: MANIFEST },
+    } });
+    if (result.errors?.length) fail(502, 'GITHUB_GRAPHQL_ERROR', '读取仓库快照失败，请检查 GitHub 权限；可设置 GITHUB_READ_MODE=rest 使用兼容读取');
+    const commit = result.data?.repository?.ref?.target, blob = commit?.file?.object;
+    if (!commit?.oid || !commit.tree?.oid || blob?.isTruncated || typeof blob?.text !== 'string') fail(502, 'GITHUB_INVALID_RESPONSE', '仓库快照不完整，已停止写入；可设置 GITHUB_READ_MODE=rest 使用兼容读取');
+    let manifest;
+    try { manifest = JSON.parse(blob.text); } catch { fail(500, 'INVALID_MANIFEST', '仓库图集目录格式不正确，已停止写入'); }
+    if (manifest?.schemaVersion !== 1 || !Array.isArray(manifest.albums)) fail(500, 'INVALID_MANIFEST', '仓库图集目录格式不正确，已停止写入');
+    return { sha: commit.oid, tree: commit.tree.oid, manifest };
+  }
   const ref = await github(env, `/git/ref/heads/${BRANCH}`);
-  const commit = await github(env, `/git/commits/${ref.object.sha}`);
-  const manifest = await github(env, `/contents/${MANIFEST}?ref=${ref.object.sha}`, { raw: true });
+  const [commit, manifest] = await Promise.all([
+    github(env, `/git/commits/${ref.object.sha}`),
+    github(env, `/contents/${MANIFEST}?ref=${ref.object.sha}`, { raw: true }),
+  ]);
   if (manifest?.schemaVersion !== 1 || !Array.isArray(manifest.albums)) fail(500, 'INVALID_MANIFEST', '仓库图集目录格式不正确，已停止写入');
   return { sha: ref.object.sha, tree: commit.tree.sha, manifest };
 }
@@ -225,6 +252,107 @@ async function inspectFiles(form, allowEmpty = false) {
   }
   return { files, info };
 }
+function validRequestId(value) {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
+}
+function uploadScope(value) {
+  if (value !== '/albums' && !/^\/albums\/[a-zA-Z0-9_-]{1,100}$/.test(value || '')) fail(400, 'INVALID_SCOPE', '图片上传目标格式不正确');
+  return value;
+}
+async function receiptKey(env) {
+  // Uploaders know UPLOAD_PASSWORD; signing must also depend on a server-only secret.
+  return crypto.subtle.importKey('raw', encoder.encode(`atlas-upload-receipt-v1\n${REPOSITORY}\n${env.GITHUB_TOKEN.trim()}\n${env.UPLOAD_PASSWORD}`),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+}
+async function signReceipt(env, payload) {
+  const data = JSON.stringify(payload);
+  const signature = new Uint8Array(await crypto.subtle.sign('HMAC', await receiptKey(env), encoder.encode(data)));
+  return { data, signature: Array.from(signature, byte => byte.toString(16).padStart(2, '0')).join('') };
+}
+async function prepareUpload(request, env) {
+  const form = await readUploadForm(request);
+  const requestId = uploadRequestId(form), scope = uploadScope(field(form, 'scope', 120, true));
+  env._requestId = requestId;
+  const head = await readHead(env);
+  // A signed snapshot can cross Worker isolates without KV or an unsafe client manifest.
+  return { status: 'prepared', snapshot: await signReceipt(env, {
+    protocol: 'atlas-snapshot-v1', requestId, scope, expiresAt: Date.now() + 5 * 60000, head,
+  }) };
+}
+async function preparedHead(form, env, scope) {
+  if (!form.has('snapshot')) return readHead(env);
+  let receipt, payload;
+  try { receipt = JSON.parse(field(form, 'snapshot', 6 * MIB, true)); }
+  catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_SNAPSHOT', '仓库快照格式不正确，请重试'); }
+  if (typeof receipt?.data !== 'string' || !/^[a-f0-9]{64}$/.test(receipt.signature || '')) fail(400, 'INVALID_SNAPSHOT', '仓库快照凭据不正确，请重试');
+  const signature = Uint8Array.from(receipt.signature.match(/../g), byte => parseInt(byte, 16));
+  if (!await crypto.subtle.verify('HMAC', await receiptKey(env), signature, encoder.encode(receipt.data))) fail(400, 'INVALID_SNAPSHOT', '仓库快照校验失败，请重试');
+  try { payload = JSON.parse(receipt.data); } catch { fail(400, 'INVALID_SNAPSHOT', '仓库快照格式不正确，请重试'); }
+  if (payload.protocol !== 'atlas-snapshot-v1' || payload.scope !== scope || payload.requestId !== uploadRequestId(form)) fail(400, 'INVALID_SNAPSHOT', '仓库快照与当前草稿不匹配');
+  if (!Number.isFinite(payload.expiresAt) || payload.expiresAt < Date.now()) return readHead(env);
+  return payload.head;
+}
+async function verifyReceipt(env, receipt, requestId, scope, index) {
+  if (!receipt || typeof receipt.data !== 'string' || receipt.data.length > 2000 || !/^[a-f0-9]{64}$/.test(receipt.signature || '')) fail(400, 'INVALID_RECEIPT', '图片凭据格式不正确，请重新上传该图片');
+  const signature = Uint8Array.from(receipt.signature.match(/../g), byte => parseInt(byte, 16));
+  if (!await crypto.subtle.verify('HMAC', await receiptKey(env), signature, encoder.encode(receipt.data))) fail(400, 'INVALID_RECEIPT', '图片凭据校验失败，请重新上传');
+  let item;
+  try { item = JSON.parse(receipt.data); } catch { fail(400, 'INVALID_RECEIPT', '图片凭据格式不正确'); }
+  if (item.protocol !== UPLOAD_PROTOCOL || item.requestId !== requestId || item.scope !== scope || item.index !== index ||
+      !/^[a-f0-9]{40}$/.test(item.sha || '') || !/^[a-f0-9]{64}$/.test(item.hash || '') ||
+      !['png', 'jpg', 'webp', 'gif', 'avif'].includes(item.extension) ||
+      !Number.isInteger(item.size) || item.size <= 0 || item.size > LIMITS.fileBytes) fail(400, 'INVALID_RECEIPT', '图片凭据与当前草稿不匹配，请重新上传');
+  if (!Number.isFinite(item.expiresAt) || item.expiresAt <= Date.now()) fail(409, 'RECEIPT_EXPIRED', '图片上传凭据已过期，请原样重试以重新上传');
+  return item;
+}
+async function uploadImage(request, env, requestId, index) {
+  if (!validRequestId(requestId) || !Number.isInteger(index) || index < 0 || index >= LIMITS.files) fail(400, 'INVALID_REQUEST_ID', '图片上传编号不正确');
+  const scope = uploadScope(new URL(request.url).searchParams.get('scope'));
+  env._requestId = requestId;
+  if (!request.body) fail(400, 'INVALID_FILE', '图片为空');
+  if (Number(request.headers.get('Content-Length')) > LIMITS.fileBytes) fail(413, 'TOO_LARGE', '单张图片最多 10 MB');
+  const bytes = new Uint8Array(await new Response(limitedStream(request.body, LIMITS.fileBytes)).arrayBuffer());
+  const extension = imageType(bytes.subarray(0, 64));
+  if (!extension) fail(400, 'INVALID_FILE', '仅支持真实的 JPG、PNG、WebP、GIF 或 AVIF 图片');
+  const item = { protocol: UPLOAD_PROTOCOL, requestId, scope, index, size: bytes.length, extension, hash: await hash(bytes), expiresAt: Date.now() + RECEIPT_TTL_MS };
+  if (extension === 'png' || extension === 'gif') {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    item.width = extension === 'png' ? view.getUint32(16) : view.getUint16(6, true);
+    item.height = extension === 'png' ? view.getUint32(20) : view.getUint16(8, true);
+    if (!item.width || !item.height) fail(400, 'INVALID_FILE', '图片宽高不正确');
+  }
+  const blob = await github(env, '/git/blobs', { method: 'POST', stage: `保存第 ${index + 1} 张图片`, body: { content: base64(bytes), encoding: 'base64' } });
+  if (!/^[a-f0-9]{40}$/.test(blob?.sha || '')) fail(502, 'GITHUB_INVALID_RESPONSE', 'GitHub 未返回有效图片凭据');
+  item.sha = blob.sha;
+  log(env, 'image.staged', { index, bytes: bytes.length });
+  return { status: 'staged', receipt: await signReceipt(env, item) };
+}
+async function preparedFiles(form, env, scope, allowEmpty = false) {
+  if (!form.has('receipts')) return inspectFiles(form, allowEmpty);
+  if (form.has('images')) fail(400, 'INVALID_RECEIPT', '不能混合图片文件与上传凭据');
+  let receipts;
+  try { receipts = JSON.parse(field(form, 'receipts', 100000, true)); }
+  catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_RECEIPT', '图片凭据格式不正确'); }
+  if (!Array.isArray(receipts) || (!allowEmpty && !receipts.length) || receipts.length > LIMITS.files) fail(400, 'FILE_COUNT', '每个图集需要 1–30 张图片');
+  const requestId = uploadRequestId(form), info = [];
+  let total = 0;
+  for (let index = 0; index < receipts.length; index++) {
+    const item = await verifyReceipt(env, receipts[index], requestId, scope, index);
+    if ((total += item.size) > LIMITS.totalBytes) fail(413, 'TOO_LARGE', '单次图片总大小不能超过 30 MB');
+    info.push(item);
+  }
+  // Existing commit construction is shared by legacy files and staged images.
+  return { files: Array(info.length).fill(null), info };
+}
+async function uploadStatus(request, env) {
+  const params = new URL(request.url).searchParams;
+  const requestId = params.get('requestId'), scope = uploadScope(params.get('scope'));
+  if (!validRequestId(requestId)) fail(400, 'INVALID_REQUEST_ID', '请求编号格式不正确');
+  const snapshot = await readHead(env);
+  const album = snapshot.manifest.albums.find(item => item.id === (scope === '/albums' ? `album-${requestId}` : scope.slice('/albums/'.length)));
+  const found = scope === '/albums' ? !!album : album?.editHistory?.some(item => item.requestId === requestId);
+  return found ? { status: 'committed', commitSha: snapshot.sha, album } : { status: 'not_committed' };
+}
 async function upload(request, env) {
   const form = await readUploadForm(request);
   const title = field(form, 'title', 120, true);
@@ -232,14 +360,15 @@ async function upload(request, env) {
   const date = seriesId ? '' : field(form, 'date', 10, true);
   const description = field(form, 'description', 1000);
   const requestId = uploadRequestId(form);
+  env._requestId = requestId;
   if (!seriesId && !validDate(date)) fail(400, 'INVALID_DATE', '请选择有效的归档日期');
   if (seriesId && !/^[a-zA-Z0-9_-]{1,100}$/.test(seriesId)) fail(400, 'INVALID_SERIES', '所属系列格式不正确');
-  const { files, info } = await inspectFiles(form);
+  const { files, info } = await preparedFiles(form, env, '/albums');
   // Preserve fingerprints of existing monthly drafts for safe retries across upgrades.
   const fingerprint = await hash(encoder.encode(JSON.stringify([title, date, description, info.map(item => item.hash), ...(seriesId ? [seriesId] : [])])));
   const id = `album-${requestId}`;
   const directory = imageDirectory({ id, date, seriesId });
-  let snapshot = await readHead(env);
+  let snapshot = await preparedHead(form, env, '/albums');
   const existing = existingAlbum(snapshot, id, fingerprint);
   if (existing) return existing;
   if (seriesId && !(snapshot.manifest.series || []).some(item => item.id === seriesId)) fail(400, 'INVALID_SERIES', '所属系列不存在，请重新载入目录');
@@ -247,10 +376,13 @@ async function upload(request, env) {
   const imageEntries = [];
   // Sequential binary uploads bound memory and outbound connections.
   for (let index = 0; index < files.length; index++) {
-    const bytes = new Uint8Array(await files[index].arrayBuffer());
-    const blob = await github(env, '/git/blobs', { method: 'POST', stage: `保存第 ${index + 1}/${files.length} 张图片`, body: { content: base64(bytes), encoding: 'base64' } });
+    let sha = info[index].sha;
+    if (!sha) {
+      const bytes = new Uint8Array(await files[index].arrayBuffer());
+      sha = (await github(env, '/git/blobs', { method: 'POST', stage: `保存第 ${index + 1}/${files.length} 张图片`, body: { content: base64(bytes), encoding: 'base64' } })).sha;
+    }
     const path = `${directory}/${String(index + 1).padStart(3, '0')}.${info[index].extension}`;
-    imageEntries.push({ path, mode: '100644', type: 'blob', sha: blob.sha });
+    imageEntries.push({ path, mode: '100644', type: 'blob', sha });
     const image = { src: `./${path}`, alt: `${title} · 第 ${index + 1} 页` };
     if (info[index].width) { image.width = info[index].width; image.height = info[index].height; }
     album.images.push(image);
@@ -320,14 +452,15 @@ async function editAlbum(request, env, id) {
   log(env, 'edit.start');
   const form = await readUploadForm(request);
   const requestId = uploadRequestId(form);
+  env._requestId = requestId;
   const revision = field(form, 'revision', 64, true);
   if (!/^[a-f0-9]{64}$/.test(revision)) fail(400, 'INVALID_REVISION', '图集版本格式不正确');
   let order;
   try { order = JSON.parse(field(form, 'order', 10000, true)); }
   catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_ORDER', '图片顺序格式不正确'); }
-  const { files, info } = await inspectFiles(form, true);
+  const { files, info } = await preparedFiles(form, env, `/albums/${id}`, true);
   const fingerprint = await hash(encoder.encode(JSON.stringify([id, revision, order, info.map(item => item.hash)])));
-  let snapshot = await readHead(env);
+  let snapshot = await preparedHead(form, env, `/albums/${id}`);
   const inspectSnapshot = async () => {
     const album = editableAlbum(snapshot, id);
     const receipt = (album.editHistory || []).find(item => item.requestId === requestId);
@@ -347,11 +480,14 @@ async function editAlbum(request, env, id) {
   const imageEntries = [], newImages = [];
   const directory = imageDirectory(checked.album);
   for (let index = 0; index < files.length; index++) {
-    const bytes = new Uint8Array(await files[index].arrayBuffer());
-    const blob = await github(env, '/git/blobs', { method: 'POST', stage: `保存第 ${index + 1}/${files.length} 张新图片`, body: { content: base64(bytes), encoding: 'base64' } });
+    let sha = info[index].sha;
+    if (!sha) {
+      const bytes = new Uint8Array(await files[index].arrayBuffer());
+      sha = (await github(env, '/git/blobs', { method: 'POST', stage: `保存第 ${index + 1}/${files.length} 张新图片`, body: { content: base64(bytes), encoding: 'base64' } })).sha;
+    }
     // New paths keep old images intact and avoid stale cached replacements.
     const path = `${directory}/${requestId}-${String(index + 1).padStart(3, '0')}.${info[index].extension}`;
-    imageEntries.push({ path, mode: '100644', type: 'blob', sha: blob.sha });
+    imageEntries.push({ path, mode: '100644', type: 'blob', sha });
     newImages.push({ src: `./${path}`, ...(info[index].width ? { width: info[index].width, height: info[index].height } : {}) });
   }
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -473,22 +609,30 @@ export default {
     try {
       const path = new URL(request.url).pathname;
       const albumMatch = path.match(/^\/albums\/([a-zA-Z0-9_-]{1,100})$/);
+      const imageMatch = path.match(/^\/uploads\/([a-f0-9-]{36})\/(\d{1,2})$/);
+      const isUploadStatus = path === '/uploads/status';
+      const isPrepare = path === '/uploads/prepare';
       if (albumMatch) env._logPrefix = `[${request.method === 'GET' ? 'readAlbum 读取图集' : 'editAlbum 编辑图集'}][albumId=${albumMatch[1]}]`;
       const isLibrary = path === '/library';
       if (isLibrary) env._logPrefix = `[${request.method === 'GET' ? 'readLibrary 读取系列目录' : 'editLibrary 整理系列目录'}][traceId=${env._traceId}]`;
       const origin = request.headers.get('Origin');
       if (origin && origin !== ORIGIN) fail(403, 'ORIGIN_DENIED', '请从你的图集网站发起上传');
-      if (!albumMatch && !isLibrary && !['/', '/albums', '/health', '/check'].includes(path)) fail(404, 'NOT_FOUND', '接口不存在');
+      if (!albumMatch && !imageMatch && !isUploadStatus && !isPrepare && !isLibrary && !['/', '/albums', '/health', '/check'].includes(path)) fail(404, 'NOT_FOUND', '接口不存在');
       if (request.method === 'OPTIONS') return reply(request, null, 204);
-      if (request.method === 'GET' && !albumMatch && !isLibrary) return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
+      if (request.method === 'GET' && ['/', '/albums', '/health', '/check'].includes(path)) return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
         ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
-        message: '请在图集网站中上传图片。', endpoint: '/albums' });
-      if ((request.method !== 'POST' && !((albumMatch || isLibrary) && request.method === 'GET')) || path === '/health') fail(405, 'METHOD_NOT_ALLOWED', '请求方法不支持');
+        message: '请在图集网站中上传图片。', endpoint: '/albums', upload: { protocol: UPLOAD_PROTOCOL,
+          concurrency: ['1', '2', '3'].includes(String(env.UPLOAD_CONCURRENCY)) ? Number(env.UPLOAD_CONCURRENCY) : 2,
+          maxInFlightBytes: 12 * MIB, receiptTtlMs: RECEIPT_TTL_MS } });
+      if ((request.method !== 'POST' && !((albumMatch || isLibrary || isUploadStatus) && request.method === 'GET')) || path === '/health' || (isUploadStatus && request.method !== 'GET')) fail(405, 'METHOD_NOT_ALLOWED', '请求方法不支持');
       if (!env.GITHUB_TOKEN || typeof env.UPLOAD_PASSWORD !== 'string' || env.UPLOAD_PASSWORD.length < 8) fail(503, 'NOT_CONFIGURED', '请先在 Cloudflare 添加 GITHUB_TOKEN 和至少 8 位的 UPLOAD_PASSWORD Secret');
-      throttle(request);
+      throttle(request, !!imageMatch);
       const authorization = request.headers.get('Authorization') || '';
       if (authorization.length > 1024 || !authorization.startsWith('Bearer ') || !await passwordMatches(authorization.slice(7), env.UPLOAD_PASSWORD)) fail(401, 'UNAUTHORIZED', '上传口令不正确');
       log(env, 'request.start', { path, method: request.method });
+      if (imageMatch) return reply(request, await uploadImage(request, env, imageMatch[1], Number(imageMatch[2])), 201);
+      if (isUploadStatus) return reply(request, await uploadStatus(request, env));
+      if (isPrepare) return reply(request, await prepareUpload(request, env));
       if (isLibrary) {
         if (request.method === 'GET') {
           const { manifest } = await readHead(env);

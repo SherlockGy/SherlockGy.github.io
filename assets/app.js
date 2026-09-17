@@ -1,6 +1,7 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-review-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-review-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-upload-1';
+import { createUploadClient } from './upload.js?v=20260917-upload-1';
 import { createSlideshow } from './slideshow.js?v=20260917-1';
 import { createScrollReader } from './reader.js?v=20260917-review-1';
 
@@ -10,6 +11,7 @@ const state = { albums: [], series: [], view: 'archive', seriesId: '', query: ''
   album: null, page: 0, mode: 'page', zoom: 1, preview: null, files: [], urls: [], requestId: null, busy: false, loadError: false, scrollY: 0 };
 const reader = $('#reader');
 const uploadDialog = $('#upload-dialog');
+const uploadClient = createUploadClient();
 const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
 const imageEditor = createImageEditor(updateBodyLock, data => {
   if (data.status === 'committed') $('#publish-notice').hidden = false;
@@ -368,6 +370,7 @@ function goPage(page) {
 }
 
 function resetDraft() {
+  uploadClient.reset();
   state.urls.forEach(url => URL.revokeObjectURL(url));
   state.files = []; state.urls = []; state.preview = null; state.requestId = null;
   $('#upload-form').reset(); $('#album-date').value = localDate(); $('#upload-status').textContent = '';
@@ -500,22 +503,18 @@ async function submitAlbum(event) {
     body.append('requestId', requestId); body.append('title', title); body.append('date', date); body.append('description', description);
     if (seriesId) body.append('seriesId', seriesId);
     state.files.forEach(file => body.append('images', file, file.name));
-    const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 120000);
-    let response, data;
-    try {
-      response = await fetch(endpoint.href, { method: 'POST', headers: { Authorization: `Bearer ${code}` }, body, signal: controller.signal, redirect: 'error', credentials: 'omit' });
-      data = await response.json().catch(error => { if (controller.signal.aborted) throw error; return null; });
-    } finally { clearTimeout(timer); }
-    if (!response.ok) throw serviceError(data, { 401: '上传口令不正确', 403: '没有上传权限', 413: '图片总大小超过上传服务限制', 409: '目录已更新，请刷新检查后重试' }[response.status] || `上传失败（${response.status}）`);
+    const data = await uploadClient.save({ endpoint: endpoint.href, password: code, body,
+      onProgress: message => { status.textContent = message; } });
     if (data?.status !== 'committed' || typeof data.commitSha !== 'string') throw new Error('上传服务未返回保存凭据，请先检查图集目录再重试');
     normalizeManifest({ schemaVersion: 1, albums: [data.album], series: state.series }, document.baseURI);
     status.className = 'upload-status success';
     status.textContent = '图集已保存。网站发布需要一点时间，稍后刷新首页即可查看。';
     $('#access-code').value = '';
     state.urls.forEach(url => URL.revokeObjectURL(url)); state.urls = []; state.files = []; state.requestId = null;
+    uploadClient.reset();
     $('#album-title').value = ''; $('#album-description').value = '';
   } catch (error) {
-    status.textContent = error.name === 'AbortError' ? '等待上传服务超时。图片可能已保存，请先刷新检查，避免重复上传。' : error instanceof TypeError ? '无法连接上传服务。请检查网络或服务配置后重试。' : error.message;
+    status.textContent = error.name === 'AbortError' ? '等待服务超时，当前草稿已保留，请原样重试；请勿刷新页面。' : error instanceof TypeError ? '无法连接上传服务。请检查网络或服务配置后重试。' : error.message;
   } finally {
     state.busy = false;
     $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = false);

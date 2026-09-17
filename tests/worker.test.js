@@ -1,11 +1,13 @@
 import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker/worker.js';
+import { createUploadClient } from '../assets/upload.js';
 
 const env = { GITHUB_TOKEN: 'test-token-not-a-real-secret', UPLOAD_PASSWORD: 'test-password-not-a-real-secret' };
 const origin = 'https://sherlockgy.github.io';
 const png = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6Z9sAAAAASUVORK5CYII=', 'base64'));
 let ip = 0;
+const isRead = call => call.method === 'GET' || call.path === '/graphql';
 beforeEach(t => {
   t.mock.method(console, 'log', () => {});
   t.mock.method(console, 'error', () => {});
@@ -26,17 +28,24 @@ function fakeGit({ conflicts = 0, loseResponse = false, initialManifest, concurr
   const calls = [];
   const fetch = async (url, options) => {
     const target = new URL(url); assert.equal(target.origin, 'https://api.github.com');
-    assert.ok(target.pathname.startsWith('/repos/SherlockGy/SherlockGy.github.io/'));
+    assert.ok(target.pathname === '/graphql' || target.pathname.startsWith('/repos/SherlockGy/SherlockGy.github.io/'));
     assert.equal(options.headers.Authorization, `Bearer ${env.GITHUB_TOKEN}`);
     assert.equal(options.redirect, 'manual', 'Workers GitHub requests must inspect redirects without following them');
     const path = target.pathname.replace('/repos/SherlockGy/SherlockGy.github.io', '');
     const body = options.body ? JSON.parse(options.body) : null;
     calls.push({ path, method: options.method, body });
     const ok = value => Response.json(value);
+    if (path === '/graphql') {
+      assert.match(body.query, /^query AtlasSnapshot/);
+      assert.deepEqual(body.variables, { owner: 'SherlockGy', name: 'SherlockGy.github.io', ref: 'refs/heads/master', path: 'data/albums.json' });
+      const value = commits.get(head);
+      return ok({ data: { repository: { ref: { target: { oid: head, tree: { oid: value.tree },
+        file: { object: { text: JSON.stringify(value.manifest), isTruncated: false } } } } } } });
+    }
     if (path === '/git/ref/heads/master') return ok({ object: { sha: head } });
     if (path.startsWith('/git/commits/') && options.method === 'GET') return ok({ tree: { sha: commits.get(path.split('/').pop()).tree } });
     if (path === '/contents/data/albums.json') return ok(commits.get(target.searchParams.get('ref')).manifest);
-    if (path === '/git/blobs') { assert.equal(body.encoding, 'base64'); return ok({ sha: `blob-${++serial}` }); }
+    if (path === '/git/blobs') { assert.equal(body.encoding, 'base64'); return ok({ sha: (++serial).toString(16).padStart(40, '0') }); }
     if (path === '/git/trees') {
       assert.equal(body.base_tree, commits.get(head).tree);
       const sha = `tree-${++serial}`;
@@ -100,7 +109,7 @@ test('30 images plus two concurrent updates remain within 50 subrequests and pre
   const response = await worker.fetch(request({ count: 30 }), env);
   assert.equal(response.status, 201);
   assert.equal(fake.manifest().albums.length, 3);
-  assert.equal(fake.calls.length, 48);
+  assert.equal(fake.calls.length, 42);
   assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 30);
 });
 
@@ -122,8 +131,8 @@ test('connection check authenticates, reads the current manifest and never write
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
-  assert.equal(result.version, '2026-09-16-series-edit-1'); assert.ok(result.traceId);
-  assert.equal(fake.calls.length, 3); assert.ok(fake.calls.every(call => call.method === 'GET'));
+  assert.equal(result.version, '2026-09-17-upload-pipeline-1'); assert.ok(result.traceId);
+  assert.equal(fake.calls.length, 1); assert.ok(fake.calls.every(isRead));
   assert.equal(fake.manifest().albums.length, 0);
 });
 
@@ -135,7 +144,7 @@ test('connection errors and timeouts are distinguished, staged, and redacted in 
   assert.equal(response.status, 502);
   const data = await response.json();
   assert.equal(data.error.code, 'GITHUB_CONNECTION_ERROR');
-  assert.equal(data.error.stage, '读取主分支'); assert.equal(data.error.errorName, 'TypeError');
+  assert.equal(data.error.stage, '读取仓库快照'); assert.equal(data.error.errorName, 'TypeError');
   assert.ok(data.error.traceId); assert.equal(typeof data.error.elapsedMs, 'number');
   assert.ok(logs.some(item => item.event === 'github.error' && item.traceId === data.error.traceId && item.timedOut === false));
   for (const secret of [env.GITHUB_TOKEN, env.UPLOAD_PASSWORD, 'github_pat_exampletoken']) {
@@ -146,7 +155,7 @@ test('connection errors and timeouts are distinguished, staged, and redacted in 
   assert.equal(timeout.status, 504);
   const timeoutData = await timeout.json();
   assert.equal(timeoutData.error.code, 'GITHUB_TIMEOUT'); assert.equal(timeoutData.error.timeoutMs, 20000);
-  assert.equal(timeoutData.error.stage, '读取主分支');
+  assert.equal(timeoutData.error.stage, '读取仓库快照');
 });
 
 test('GitHub HTTP errors, invalid JSON and malformed tokens are not reported as timeouts', async t => {
@@ -155,7 +164,7 @@ test('GitHub HTTP errors, invalid JSON and malformed tokens are not reported as 
   assert.equal(denied.status, 502);
   const data = await denied.json();
   assert.equal(data.error.code, 'GITHUB_ERROR'); assert.equal(data.error.httpStatus, 401);
-  assert.equal(data.error.stage, '读取主分支');
+  assert.equal(data.error.stage, '读取仓库快照');
   const invalidUpstream = t.mock.method(globalThis, 'fetch', async () => new Response('<html>Invalid upstream response</html>'));
   const invalid = await worker.fetch(checkRequest(), env);
   assert.equal(invalid.status, 502);
@@ -184,7 +193,7 @@ test('GitHub redirects stop at the first response without forwarding credentials
     assert.equal(response.status, 502);
     const result = await response.json();
     assert.equal(result.error.code, 'GITHUB_REDIRECT');
-    assert.equal(result.error.stage, '读取主分支'); assert.equal(result.error.httpStatus, status);
+    assert.equal(result.error.stage, '读取仓库快照'); assert.equal(result.error.httpStatus, status);
     assert.ok(result.error.traceId);
     assert.equal(upstream.mock.callCount(), before + 1);
     assert.ok(!JSON.stringify(result).includes(env.GITHUB_TOKEN));
@@ -218,7 +227,7 @@ test('management reads authenticate and do not write; pure reorder uploads no im
   assert.equal((await worker.fetch(managementRequest('/library', undefined, 'wrong'), env)).status, 401);
   assert.equal(fake.calls.length, 0);
   const current = await readManagement('/albums/notes'); assert.match(current.revision, /^[a-f0-9]{64}$/);
-  assert.ok(fake.calls.every(call => call.method === 'GET'));
+  assert.ok(fake.calls.every(isRead));
   const response = await worker.fetch(managementRequest('/albums/notes', editForm(current.revision, [{ existing: 1 }, { existing: 0 }])), env);
   assert.equal(response.status, 200);
   assert.deepEqual(fake.manifest().albums[0].images, editFixture().albums[0].images.toReversed());
@@ -248,7 +257,7 @@ test('invalid edits and stale revisions never write; unchanged drafts do not cre
   assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm('0'.repeat(64), [{ existing: 1 }, { existing: 0 }])), env)).status, 409);
   const unchanged = await worker.fetch(managementRequest('/albums/notes', editForm(revision, [{ existing: 0 }, { existing: 1 }])), env);
   assert.equal((await unchanged.json()).status, 'unchanged');
-  assert.ok(fake.calls.every(call => call.method === 'GET'));
+  assert.ok(fake.calls.every(isRead));
 });
 test('lost edit responses can be retried even after a later edit without duplicating images', async t => {
   const fake = fakeGit({ initialManifest: editFixture(), loseResponse: true }); t.mock.method(globalThis, 'fetch', fake.fetch);
@@ -257,10 +266,10 @@ test('lost edit responses can be retried even after a later edit without duplica
   assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, order, 1, id)), env)).status, 502);
   const next = await readManagement('/albums/notes');
   assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(next.revision, [{ existing: 2 }, { existing: 0 }, { existing: 1 }])), env)).status, 200);
-  const before = fake.calls.filter(call => call.method === 'POST').length;
+  const before = fake.calls.filter(call => call.method === 'POST' && !isRead(call)).length;
   assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, order, 1, id)), env)).status, 200);
   assert.equal(fake.manifest().albums[0].images.length, 3);
-  assert.equal(fake.calls.filter(call => call.method === 'POST').length, before);
+  assert.equal(fake.calls.filter(call => call.method === 'POST' && !isRead(call)).length, before);
   assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, [{ existing: 1 }, { existing: 0 }, { file: 0 }], 1, id)), env)).status, 409);
 });
 test('concurrent edits to the same album are rejected; unrelated commits are preserved', async t => {
@@ -299,7 +308,7 @@ test('cycles, dangling parents, dropped albums, invalid dates and stale library 
     [[], []], [[], [{ ...placement[0], seriesId: 'missing' }]], [[], [{ ...placement[0], date: '' }]],
   ]) assert.equal((await worker.fetch(managementRequest('/library', libraryForm(revision, series, placements)), env)).status, 400);
   assert.equal((await worker.fetch(managementRequest('/library', libraryForm('0'.repeat(64), [], placement)), env)).status, 409);
-  assert.ok(fake.calls.every(call => call.method === 'GET'));
+  assert.ok(fake.calls.every(isRead));
 });
 test('library retries preserve concurrent image edits and lost responses are idempotent', async t => {
   const fake = fakeGit({ initialManifest: editFixture(), conflicts: 1, loseResponse: true, concurrentChange: manifest => {
@@ -311,7 +320,7 @@ test('library retries preserve concurrent image edits and lost responses are ide
   assert.deepEqual(fake.manifest().albums[0].images, editFixture().albums[0].images.toReversed());
   const count = fake.calls.length;
   assert.equal((await worker.fetch(managementRequest('/library', libraryForm(revision, nestedSeries(), placements, id)), env)).status, 200);
-  assert.ok(fake.calls.slice(count).every(call => call.method === 'GET'));
+  assert.ok(fake.calls.slice(count).every(isRead));
 });
 test('new series albums need no date and can subsequently append images', async t => {
   const initial = editFixture(); initial.series = nestedSeries();
@@ -351,5 +360,201 @@ test('editing cannot exceed 30 images and series destinations must exist', async
   const form = new FormData(); form.set('title', '图集'); form.set('seriesId', 'missing'); form.set('requestId', crypto.randomUUID());
   form.append('images', new File([png], 'note.png', { type: 'image/png' }));
   assert.equal((await worker.fetch(managementRequest('/albums', form), env)).status, 400);
-  assert.ok(fake.calls.every(call => call.method === 'GET'));
+  assert.ok(fake.calls.every(isRead));
+});
+
+function stagedRequest(id, index, bytes = png, scope = '/albums', address) {
+  return new Request(`https://worker.test/uploads/${id}/${index}?scope=${encodeURIComponent(scope)}`, {
+    method: 'POST', body: bytes, headers: { Origin: origin, Authorization: `Bearer ${env.UPLOAD_PASSWORD}`, 'CF-Connecting-IP': address || `192.0.2.${++ip}` },
+  });
+}
+async function stage(id, index = 0, scope = '/albums', bytes = png) {
+  const response = await worker.fetch(stagedRequest(id, index, bytes, scope), env);
+  assert.equal(response.status, 201); return (await response.json()).receipt;
+}
+function finalForm(id, receipts) {
+  const form = new FormData(); form.set('requestId', id); form.set('title', '流水图集'); form.set('date', '2026-09-17');
+  form.set('receipts', JSON.stringify(receipts)); return form;
+}
+function browserFetch(intercept, runtime = env) {
+  const address = `192.0.2.${++ip}`;
+  return async (url, options) => {
+    const request = new Request(url, { ...options, headers: { ...options.headers, Origin: origin, 'CF-Connecting-IP': address } });
+    return intercept ? intercept(request, () => worker.fetch(request, runtime)) : worker.fetch(request, runtime);
+  };
+}
+function browserForm(id, count = 3) {
+  const form = new FormData(); form.set('requestId', id); form.set('title', '流水图集'); form.set('date', '2026-09-17');
+  for (let index = 0; index < count; index++) form.append('images', new File([png], `${index}.png`, { type: 'image/png', lastModified: 1 }));
+  return form;
+}
+
+test('staged images do not change the branch; signed receipts commit the complete ordered album once', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const id = crypto.randomUUID();
+  const second = await stage(id, 1), first = await stage(id, 0);
+  assert.equal(fake.manifest().albums.length, 0);
+  assert.ok(fake.calls.every(call => call.path === '/git/blobs'));
+  const response = await worker.fetch(managementRequest('/albums', finalForm(id, [first, second])), env);
+  assert.equal(response.status, 201);
+  const entries = fake.calls.find(call => call.path === '/git/trees').body.tree;
+  assert.equal(entries[0].sha, JSON.parse(first.data).sha); assert.equal(entries[1].sha, JSON.parse(second.data).sha);
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 2);
+  assert.equal(fake.calls.filter(call => call.path === '/git/refs/heads/master').length, 1);
+  assert.equal(fake.manifest().albums[0].images.length, 2);
+});
+
+test('tampered, reordered, cross-draft, cross-album, expired and mixed receipts cannot write a branch', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const id = crypto.randomUUID(), receipt = await stage(id), other = await stage(id, 1);
+  const forged = { ...receipt, data: receipt.data.replace('"size":68', '"size":1') + ' ' };
+  const invalidForms = [finalForm(id, [forged]), finalForm(id, [other, receipt]), finalForm(crypto.randomUUID(), [receipt]),
+    finalForm(id, [await stage(id, 0, '/albums/notes')])];
+  const mixed = finalForm(id, [receipt]); mixed.append('images', new File([png], 'extra.png')); invalidForms.push(mixed);
+  for (const form of invalidForms) assert.equal((await worker.fetch(managementRequest('/albums', form), env)).status, 400);
+  t.mock.method(Date, 'now', () => JSON.parse(receipt.data).expiresAt + 1);
+  const expired = await worker.fetch(managementRequest('/albums', finalForm(id, [receipt])), env);
+  assert.equal(expired.status, 409); assert.equal((await expired.json()).error.code, 'RECEIPT_EXPIRED');
+  assert.ok(fake.calls.every(call => call.path === '/git/blobs'));
+});
+
+test('30 staged images from one browser do not exhaust the ordinary operation throttle', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const address = `192.0.2.${++ip}`, id = crypto.randomUUID(), receipts = [];
+  for (let index = 0; index < 30; index++) {
+    const result = await worker.fetch(stagedRequest(id, index, png, '/albums', address), env);
+    assert.equal(result.status, 201); receipts.push((await result.json()).receipt);
+  }
+  const form = finalForm(id, receipts);
+  const response = await worker.fetch(new Request('https://worker.test/albums', { method: 'POST', body: form,
+    headers: { Origin: origin, Authorization: `Bearer ${env.UPLOAD_PASSWORD}`, 'CF-Connecting-IP': address } }), env);
+  assert.equal(response.status, 201); assert.equal(fake.manifest().albums[0].images.length, 30);
+});
+
+test('knowing the upload password cannot forge a receipt or a repository snapshot', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const id = crypto.randomUUID(), receipt = await stage(id);
+  const prepare = new FormData(); prepare.set('requestId', id); prepare.set('scope', '/albums');
+  const { snapshot } = await (await worker.fetch(managementRequest('/uploads/prepare', prepare), env)).json();
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(`atlas-upload-receipt-v1\nSherlockGy/SherlockGy.github.io\n${env.UPLOAD_PASSWORD}`),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const forge = async original => ({ ...original, signature: Buffer.from(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(original.data))).toString('hex') });
+  const forgedFile = finalForm(id, [await forge(receipt)]);
+  assert.equal((await worker.fetch(managementRequest('/albums', forgedFile), env)).status, 400);
+  const forgedSnapshot = finalForm(id, [receipt]); forgedSnapshot.set('snapshot', JSON.stringify(await forge(snapshot)));
+  assert.equal((await worker.fetch(managementRequest('/albums', forgedSnapshot), env)).status, 400);
+  assert.ok(!fake.calls.some(call => call.path === '/git/trees'));
+  assert.equal(fake.manifest().albums.length, 0);
+});
+
+test('staging enforces raw byte limits and finalization rejects excessive signed totals before committing', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const id = crypto.randomUUID(), bytes = new Uint8Array(8 * 1024 * 1024), receipts = [];
+  bytes.set(png);
+  for (let index = 0; index < 4; index++) receipts.push(await stage(id, index, '/albums', bytes));
+  const total = await worker.fetch(managementRequest('/albums', finalForm(id, receipts)), env);
+  assert.equal(total.status, 413); assert.equal((await total.json()).error.code, 'TOO_LARGE');
+  const oversized = await worker.fetch(stagedRequest(id, 4, new Uint8Array(10 * 1024 * 1024 + 1)), env);
+  assert.equal(oversized.status, 413);
+  const tooMany = await worker.fetch(managementRequest('/albums', finalForm(id, Array(31).fill(receipts[0]))), env);
+  assert.equal(tooMany.status, 400); assert.equal((await tooMany.json()).error.code, 'FILE_COUNT');
+  assert.equal(fake.calls.length, 4); assert.ok(fake.calls.every(call => call.path === '/git/blobs'));
+});
+
+test('browser and Worker overlap transfers and snapshot reads, then commit without rereading the snapshot', async t => {
+  const fake = fakeGit(); let firstStarted;
+  const started = new Promise(resolve => { firstStarted = resolve; });
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (new URL(url).pathname === '/graphql') await started;
+    return fake.fetch(url, options);
+  });
+  let releaseFirst, active = 0, peak = 0;
+  const wait = new Promise(resolve => { releaseFirst = resolve; });
+  const client = createUploadClient({ fetch: browserFetch(async (request, proceed) => {
+    const path = new URL(request.url).pathname;
+    if (!/^\/uploads\/[a-f0-9-]+\/\d+$/.test(path)) return proceed();
+    firstStarted(); peak = Math.max(peak, ++active);
+    try {
+      if (path.endsWith('/0')) await wait;
+      const result = await proceed();
+      if (path.endsWith('/1')) releaseFirst();
+      return result;
+    } finally { active--; }
+  }) });
+  const result = await client.save({ endpoint: 'https://worker.test/albums', password: env.UPLOAD_PASSWORD, body: browserForm(crypto.randomUUID(), 5) });
+  assert.equal(result.status, 'committed'); assert.equal(peak, 2);
+  assert.equal(fake.calls.filter(call => call.path === '/graphql').length, 1);
+  assert.equal(fake.calls.length, 9, '5 image writes + 1 read + 3 final writes');
+  assert.deepEqual(fake.manifest().albums[0].images.map(item => item.src.split('/').pop()), ['001.png', '002.png', '003.png', '004.png', '005.png']);
+});
+
+test('partial transfer failure never commits; a rebuilt FormData retry reuses completed image receipts', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  let failSecond = true; const sent = [];
+  const client = createUploadClient({ fetch: browserFetch(async (request, proceed) => {
+    const path = new URL(request.url).pathname;
+    if (/^\/uploads\/[a-f0-9-]+\/\d+$/.test(path)) {
+      sent.push(path);
+      if (path.endsWith('/1') && failSecond) { failSecond = false; throw new TypeError('connection failed'); }
+    }
+    return proceed();
+  }) });
+  const id = crypto.randomUUID(), save = () => client.save({ endpoint: 'https://worker.test/albums', password: env.UPLOAD_PASSWORD, body: browserForm(id) });
+  await assert.rejects(save(), /原样重试/);
+  assert.equal(fake.manifest().albums.length, 0); assert.ok(!fake.calls.some(call => call.path === '/git/commits'));
+  await save();
+  assert.equal(sent.filter(path => path.endsWith('/0')).length, 1);
+  assert.equal(sent.filter(path => path.endsWith('/1')).length, 2);
+  assert.equal(fake.manifest().albums.length, 1); assert.equal(fake.manifest().albums[0].images.length, 3);
+});
+
+test('a lost final response is confirmed by request ID without reuploading or creating a second commit', async t => {
+  const fake = fakeGit({ loseResponse: true }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const client = createUploadClient({ fetch: browserFetch() });
+  const result = await client.save({ endpoint: 'https://worker.test/albums', password: env.UPLOAD_PASSWORD, body: browserForm(crypto.randomUUID()) });
+  assert.equal(result.status, 'committed'); assert.equal(fake.manifest().albums.length, 1);
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 3);
+  assert.equal(fake.calls.filter(call => call.path === '/git/commits').length, 1);
+});
+
+test('staged edits retain revision checks, preserve concurrent changes and replace with new paths', async t => {
+  const fake = fakeGit({ initialManifest: editFixture(), conflicts: 1, concurrentChange: manifest => { manifest.other = 'keep'; return manifest; } });
+  t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/albums/notes'), id = crypto.randomUUID();
+  const receipt = await stage(id, 0, '/albums/notes');
+  const form = editForm(revision, [{ file: 0, replaces: 1 }, { existing: 0 }], 0, id); form.set('receipts', JSON.stringify([receipt]));
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', form), env)).status, 200);
+  assert.equal(fake.manifest().other, 'keep'); assert.equal(fake.manifest().albums[0].images[0].alt, '第二张');
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 1);
+});
+
+test('signed snapshots reject client modifications and expired snapshots reload the latest branch', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const id = crypto.randomUUID(), receipt = await stage(id);
+  const prepare = new FormData(); prepare.set('requestId', id); prepare.set('scope', '/albums');
+  const response = await worker.fetch(managementRequest('/uploads/prepare', prepare), env);
+  const { snapshot } = await response.json();
+  const tampered = finalForm(id, [receipt]); tampered.set('snapshot', JSON.stringify({ ...snapshot, data: snapshot.data + ' ' }));
+  assert.equal((await worker.fetch(managementRequest('/albums', tampered), env)).status, 400);
+  assert.equal(fake.manifest().albums.length, 0);
+  t.mock.method(Date, 'now', () => JSON.parse(snapshot.data).expiresAt + 1);
+  const valid = finalForm(id, [receipt]); valid.set('snapshot', JSON.stringify(snapshot));
+  assert.equal((await worker.fetch(managementRequest('/albums', valid), env)).status, 201);
+  assert.equal(fake.calls.filter(call => call.path === '/graphql').length, 2);
+});
+
+test('GraphQL partial or truncated snapshots stop writes; REST compatibility mode remains functional', async t => {
+  const fake = fakeGit();
+  const mock = t.mock.method(globalThis, 'fetch', async () => Response.json({ data: { repository: { ref: { target: { oid: 'head', tree: { oid: 'tree' }, file: { object: { text: '{}', isTruncated: true } } } } } } }));
+  assert.equal((await worker.fetch(request(), env)).status, 502); assert.equal(mock.mock.callCount(), 1);
+  t.mock.method(globalThis, 'fetch', fake.fetch);
+  assert.equal((await worker.fetch(request(), { ...env, GITHUB_READ_MODE: 'rest' })).status, 201);
+  assert.equal(fake.calls.filter(call => isRead(call)).length, 3); assert.ok(!fake.calls.some(call => call.path === '/graphql'));
+});
+
+test('upstream rate limits preserve retry timing and never advance the branch', async t => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({}, { status: 403, headers: { 'Retry-After': '120' } }));
+  const result = await worker.fetch(stagedRequest(crypto.randomUUID(), 0), env);
+  assert.equal(result.status, 429);
+  const data = await result.json(); assert.equal(data.error.code, 'GITHUB_RATE_LIMITED'); assert.equal(data.error.retryAfterSeconds, 120);
 });

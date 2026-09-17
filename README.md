@@ -12,6 +12,7 @@
 - 键盘：`←` / `→` 翻页，`Home` / `End` 首尾页，`Esc` 先退出网页全屏、再次按下返回图集，`/` 搜索。
 - 添加图集支持日期、说明和图片排序；未配置上传服务时可本地预览，预览不保存。
 - 已有图集支持新增图片、排序和换图；一次保存全部生效。仅上传新增或替换的文件。
+- 新版上传按文件流水处理，默认两路并发；同一页面重试复用已成功图片，最后一次提交完整图集。
 - 系列管理支持新建、重命名、调整上级系列、同级排序，以及移动已有图集、调整系列内的图集顺序。
 - 页面采用浅色界面和统一的 SVG 图标，仅显示自己的图集。
 
@@ -99,6 +100,8 @@ sequenceDiagram
     B->>B: 按月份整理并展示图集
 ```
 
+详细的提速取舍、实现和失败边界见 [图片上传提速方案](docs/upload-performance.md)。
+
 ### 三个核心部分
 
 1. **图片文件**
@@ -124,6 +127,6 @@ sequenceDiagram
 
 ## 部署
 
-仓库根目录即发布目录，保留 `.nojekyll`。GitHub Pages 发布来源为 `master` 分支根目录，静态页面无需 npm 构建；写入由 Cloudflare Worker 处理。升级时先发布支持系列的前端，再部署新版 Worker，之后开始创建系列内容。更新仓库内的 Worker 文件不会自动部署 Cloudflare，详见 [部署说明](worker/SETUP.md)。不要把 GitHub 凭据放在前端；这是公开的个人图集站，发布的图片可被访问。
+仓库根目录即发布目录，保留 `.nojekyll`。GitHub Pages 发布来源为 `master` 分支根目录，静态页面无需 npm 构建；写入由 Cloudflare Worker 处理。升级时推荐先部署新版 Worker，再发布前端；双方均保留旧上传接口的兼容路径。更新仓库内的 Worker 文件不会自动部署 Cloudflare，详见 [部署说明](worker/SETUP.md)。不要把 GitHub 凭据放在前端；这是公开的个人图集站，发布的图片可被访问。
 
 参考：[GitHub Pages 发布来源](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。

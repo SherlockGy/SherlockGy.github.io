@@ -1,4 +1,5 @@
 import config from '../config.js';
+import { createUploadClient } from './upload.js?v=20260917-upload-1';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-review-1';
 
 function node(tag, className, text) {
@@ -50,6 +51,7 @@ async function service(path, password, body) {
 }
 
 function managerDialog(id, title, description, onOpenChange) {
+  const uploadClient = createUploadClient();
   const dialog = node('dialog', 'upload-dialog manager-dialog'); dialog.id = id; dialog.setAttribute('aria-labelledby', `${id}-title`);
   dialog.innerHTML = `<form><header class="dialog-header"><h2 id="${id}-title"></h2><button type="button" class="icon-button manager-close" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#close"/></svg></button></header>
     <div class="dialog-content"><p class="form-hint manager-description"></p>
@@ -72,9 +74,10 @@ function managerDialog(id, title, description, onOpenChange) {
   model.summary = text => { $('.manager-summary').textContent = text; };
   model.close = () => {
     if (model.busy || (model.dirty && !confirm('还有未保存的修改，确定放弃并关闭吗？'))) return;
-    model.dispose?.(); $('.manager-password').value = ''; dialog.close(); onOpenChange();
+    uploadClient.reset(); model.dispose?.(); $('.manager-password').value = ''; dialog.close(); onOpenChange();
   };
   model.open = () => {
+    uploadClient.reset();
     model.dispose?.(); Object.assign(model, { busy: false, dirty: false, loaded: false, saved: false, requestId: null, revision: null });
     model.workspace.replaceChildren(); model.workspace.hidden = true;
     $('.manager-password').value = ''; $('.manager-load').textContent = '载入最新内容';
@@ -86,7 +89,7 @@ function managerDialog(id, title, description, onOpenChange) {
     try {
       const data = await service(model.path, $('.manager-password').value);
       if (!data || !/^[a-f0-9]{64}$/.test(data.revision)) throw new Error('请先部署支持编辑与系列的新版 Worker');
-      model.receive(data); model.revision = data.revision;
+      model.receive(data); model.revision = data.revision; uploadClient.reset();
       model.loaded = true; model.dirty = false; model.requestId = null;
       model.workspace.hidden = false; $('.manager-load').textContent = '重新载入'; model.status('');
     } catch (error) { model.status(error.message); }
@@ -104,9 +107,13 @@ function managerDialog(id, title, description, onOpenChange) {
     try {
       const body = model.payload();
       body.set('revision', model.revision); body.set('requestId', model.requestId ||= crypto.randomUUID());
-      const data = await service(model.path, $('.manager-password').value, body);
+      const data = model.path.startsWith('/albums/')
+        ? await uploadClient.save({ endpoint: new URL(model.path, config.uploadEndpoint).href,
+          password: $('.manager-password').value, body, onProgress: message => model.status(message) })
+        : await service(model.path, $('.manager-password').value, body);
       if (!['committed', 'unchanged'].includes(data?.status) || (data.status === 'committed' && typeof data.commitSha !== 'string')) throw new Error('服务未返回保存凭据，请保留草稿并原样重试');
       model.saved = true; model.dirty = false; $('.manager-password').value = ''; $('.manager-password').required = false;
+      uploadClient.reset();
       model.status(data.status === 'unchanged' ? '内容没有变化。' : '已保存。网站发布需要一点时间，稍后刷新查看。', true);
       model.onSaved?.(data);
     } catch (error) { model.status(error.message); }
