@@ -1,7 +1,8 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-thumbs-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-progress-1';
-import { configureCoverImage } from './covers.js?v=20260917-thumbs-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-previews-1';
+import { configureCoverImage } from './covers.js?v=20260917-previews-1';
+import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-previews-1';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
 import { createSlideshow } from './slideshow.js?v=20260917-1';
 import { createScrollReader } from './reader.js?v=20260917-review-1';
@@ -13,26 +14,27 @@ const state = { albums: [], series: [], view: 'archive', seriesId: '', query: ''
 const reader = $('#reader');
 const uploadDialog = $('#upload-dialog');
 const uploadClient = createUploadClient();
+const imagePreview = createImagePreview(updateBodyLock);
 const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
 const imageEditor = createImageEditor(updateBodyLock, data => {
   if (data.album) {
     const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
     state.series = normalizeSeries(data);
     const updated = normalizeManifest({ schemaVersion: 1, albums: [data.album], series: state.series }, document.baseURI)[0];
-    updated.images[0].thumbnails ||= knownThumbnails.get(updated.images[0].src);
+    for (const image of updated.images) image.thumbnails ||= knownThumbnails.get(image.src);
     state.albums = state.albums.map(album => album.id === updated.id ? updated : album);
   }
   if (data.status === 'committed') $('#publish-notice').hidden = false;
   closeReader();
   renderCatalog();
-});
+}, imagePreview);
 const seriesManager = createSeriesManager(updateBodyLock, data => {
   if (data.manifest) {
     const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
     state.series = normalizeSeries(data.manifest);
     state.albums = normalizeManifest(data.manifest, document.baseURI);
     // Worker responses contain source metadata; retain already published covers by original URL.
-    for (const album of state.albums) album.images[0].thumbnails ||= knownThumbnails.get(album.images[0].src);
+    for (const album of state.albums) for (const image of album.images) image.thumbnails ||= knownThumbnails.get(image.src);
     renderCatalog();
   }
   if (data.status === 'committed') $('#publish-notice').hidden = false;
@@ -431,27 +433,34 @@ async function addFiles(incoming) {
 }
 function renderFiles() {
   const list = $('#file-list'); list.replaceChildren();
+  const previews = () => state.files.map((file, index) => ({ src: state.urls[index], name: file.name }));
   state.files.forEach((file, index) => {
     const row = el('div', 'file-item');
-    const img = el('img'); img.src = state.urls[index]; img.alt = '';
-    const name = el('span', 'file-name', file.name); name.append(el('small', '', `${(file.size / 1048576).toFixed(2)} MB${index === 0 ? ' · 封面' : ''}`));
-    row.append(el('span', 'file-order', String(index + 1).padStart(2, '0')), img, name);
+    const preview = createPreviewButton({ src: state.urls[index] }, index, () => imagePreview.open(previews(), index));
+    preview.disabled = state.busy;
+    const details = el('div', 'file-details');
+    details.append(el('span', 'file-order', `${String(index + 1).padStart(2, '0')}${index === 0 ? ' · 封面' : ''}`),
+      el('span', 'file-name', file.name), el('small', 'field-note', `${(file.size / 1048576).toFixed(2)} MB`));
+    const actions = el('div', 'file-actions');
+    row.append(preview, details, actions);
     for (const [label, delta, name] of [['向前移动', -1, 'chevron-up'], ['向后移动', 1, 'chevron-down']]) {
       const move = button('', 'icon-button', () => {
         const target = index + delta; state.requestId = null;
         [state.files[index], state.files[target]] = [state.files[target], state.files[index]];
         [state.urls[index], state.urls[target]] = [state.urls[target], state.urls[index]];
         renderFiles();
+        const movedRow = list.children[target], movedButton = movedRow.querySelectorAll('.file-actions button')[delta < 0 ? 0 : 1];
+        (movedButton.disabled ? movedRow.querySelector('.image-preview-button') : movedButton).focus();
       });
       move.append(icon(name)); move.title = label;
       move.setAttribute('aria-label', `${label}第 ${index + 1} 张图片`); move.disabled = state.busy || index + delta < 0 || index + delta >= state.files.length;
-      row.append(move);
+      actions.append(move);
     }
     const remove = button('', 'icon-button', () => {
       state.requestId = null; URL.revokeObjectURL(state.urls[index]); state.files.splice(index, 1); state.urls.splice(index, 1); renderFiles();
     });
     remove.append(icon('close')); remove.title = '移除图片';
-    remove.setAttribute('aria-label', `移除第 ${index + 1} 张图片`); remove.disabled = state.busy; row.append(remove); list.append(row);
+    remove.setAttribute('aria-label', `移除第 ${index + 1} 张图片`); remove.disabled = state.busy; actions.append(remove); list.append(row);
   });
   $('#file-summary').textContent = state.files.length ? `${state.files.length} 张图片 · ${(state.files.reduce((sum, file) => sum + file.size, 0) / 1048576).toFixed(1)} MB` : '尚未选择图片';
 }
@@ -542,7 +551,9 @@ async function submitAlbum(event) {
 $('#all-months').addEventListener('click', () => openCollection('archive'));
 $('#all-series').addEventListener('click', () => openCollection('series'));
 $('#manage-series').addEventListener('click', () => seriesManager.open(state.seriesId));
-$('#edit-images').addEventListener('click', () => { if (state.album && !state.album.local) imageEditor.open(state.album.id); });
+$('#edit-images').addEventListener('click', () => {
+  if (state.album && !state.album.local) imageEditor.open(state.album.id, state.albums.flatMap(album => album.images));
+});
 $('#album-series').addEventListener('change', syncAlbumLocation);
 $$('.tab').forEach(tab => tab.addEventListener('click', () => { state.type = tab.dataset.type; renderCatalog(); }));
 $('#search').addEventListener('input', event => { state.query = event.target.value; renderCatalog(); });
@@ -574,6 +585,7 @@ drop.addEventListener('drop', event => addFiles([...event.dataTransfer.files]));
 window.addEventListener('hashchange', route);
 window.addEventListener('resize', () => { if (reader.open) applyZoom(); });
 document.addEventListener('keydown', event => {
+  if ($('#image-preview').open) return;
   if ($('#image-editor').open || $('#series-manager').open) return;
   if (event.target.closest('input, textarea, select, [contenteditable]') || event.ctrlKey || event.metaKey || event.altKey) return;
   if (reader.open) {

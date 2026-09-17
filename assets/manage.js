@@ -1,5 +1,6 @@
 import config from '../config.js';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
+import { createPreviewButton } from './previews.js?v=20260917-previews-1';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-thumbs-1';
 
 function node(tag, className, text) {
@@ -134,9 +135,15 @@ export function buildImageOrder(items) {
   return { files, order };
 }
 
-export function createImageEditor(onOpenChange, onSaved) {
+export function createImageEditor(onOpenChange, onSaved, imagePreview) {
   const ui = managerDialog('image-editor', '编辑图集', '修改名称与说明，或调整图片。第一张作为封面；分享链接仍按页码定位。', onOpenChange);
   let album, items = [], pickerTarget, draftTitle = '', draftDescription = '', canRename = false, canEditDescription = false, series = [];
+  let knownThumbnails = new Map();
+  const previewImages = () => items.map(item => {
+    if (item.file) return { src: item.src, name: item.file.name };
+    const image = album.images[item.existing];
+    return { ...image, name: album.title, thumbnails: image.thumbnails || knownThumbnails.get(image.src) };
+  });
   const revoke = item => { if (item.file) URL.revokeObjectURL(item.src); };
   ui.dispose = () => { items.forEach(revoke); items = []; };
   ui.onSaved = data => onSaved({ ...data, series });
@@ -183,9 +190,10 @@ export function createImageEditor(onOpenChange, onSaved) {
     drop.addEventListener('drop', event => { event.preventDefault(); pickerTarget = undefined; applyFiles([...event.dataTransfer.files]); });
     ui.workspace.append(drop, picker);
     const list = node('div', 'editor-list');
+    const previews = previewImages();
     items.forEach((item, index) => {
       const row = node('div', 'editor-item');
-      const preview = node('img'); preview.src = item.src; preview.alt = `第 ${index + 1} 张预览`;
+      const preview = createPreviewButton(previews[index], index, () => imagePreview.open(previewImages(), index));
       const label = node('div', 'editor-label'); label.append(node('strong', '', `${index + 1}${index === 0 ? ' · 封面' : ''}`),
         node('span', 'file-name', item.file ? item.file.name : `原第 ${item.existing + 1} 张`),
         node('small', 'field-note', item.file ? item.existing === undefined ? '待新增' : '待替换' : '已保存'));
@@ -209,7 +217,11 @@ export function createImageEditor(onOpenChange, onSaved) {
     });
     ui.workspace.append(list); ui.summary(`${items.length} / 30 张图片`); ui.sync();
   };
-  const listFocus = (index, text) => ui.workspace.querySelectorAll('.editor-item')[index]?.querySelector(`[aria-label="${text}第 ${index + 1} 张"]`)?.focus();
+  const listFocus = (index, text) => {
+    const row = ui.workspace.querySelectorAll('.editor-item')[index];
+    const move = row?.querySelector(`[aria-label="${text}第 ${index + 1} 张"]`);
+    (move && !move.disabled ? move : row?.querySelector('.image-preview-button'))?.focus();
+  };
   ui.receive = data => {
     const next = normalizeManifest({ schemaVersion: 1, albums: [data.album], series: data.series }, document.baseURI)[0];
     ui.dispose(); album = next; draftTitle = album.title; draftDescription = album.description;
@@ -233,7 +245,11 @@ export function createImageEditor(onOpenChange, onSaved) {
     }
     files.forEach(file => body.append('images', file, file.name)); return body;
   };
-  return { open(id) { ui.path = `/albums/${encodeURIComponent(id)}`; ui.open(); } };
+  return { open(id, publishedImages = []) {
+    // Match the latest Worker order by source URL, never by an earlier page number.
+    knownThumbnails = new Map(publishedImages.filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
+    ui.path = `/albums/${encodeURIComponent(id)}`; ui.open();
+  } };
 }
 
 export function createSeriesManager(onOpenChange, onSaved) {
