@@ -3,7 +3,7 @@
   "albums": [
     {
       "id": "album-fffca834-0731-446f-8387-a6470420e467",
-      "title": "新兴多智能体系统中的模式与问题",
+      "title": "Anthropic-新兴多智能体系统中的模式与问题",
       "date": "2026-09-17",
       "description": "https://www.anthropic.com/research/multiagent-systems",
       "tags": [],
@@ -11,19 +11,19 @@
       "images": [
         {
           "src": "./images/2026/09/album-fffca834-0731-446f-8387-a6470420e467/001.png",
-          "alt": "新兴多智能体系统中的模式与问题 · 第 1 页",
+          "alt": "Anthropic-新兴多智能体系统中的模式与问题 · 第 1 页",
           "width": 1448,
           "height": 1086
         },
         {
           "src": "./images/2026/09/album-fffca834-0731-446f-8387-a6470420e467/002.png",
-          "alt": "新兴多智能体系统中的模式与问题 · 第 2 页",
+          "alt": "Anthropic-新兴多智能体系统中的模式与问题 · 第 2 页",
           "width": 1448,
           "height": 1086
         },
         {
           "src": "./images/2026/09/album-fffca834-0731-446f-8387-a6470420e467/003.png",
-          "alt": "新兴多智能体系统中的模式与问题 · 第 3 页",
+          "alt": "Anthropic-新兴多智能体系统中的模式与问题 · 第 3 页",
           "width": 1448,
           "height": 1086
         },
@@ -31,19 +31,19 @@
           "src": "./images/2026/09/album-fffca834-0731-446f-8387-a6470420e467/65e7e51d-6f04-43e0-8a43-47239e262742-001.png",
           "width": 1448,
           "height": 1086,
-          "alt": "新兴多智能体系统中的模式与问题 · 第 4 页"
+          "alt": "Anthropic-新兴多智能体系统中的模式与问题 · 第 4 页"
         },
         {
           "src": "./images/2026/09/album-fffca834-0731-446f-8387-a6470420e467/65e7e51d-6f04-43e0-8a43-47239e262742-002.png",
           "width": 1448,
           "height": 1086,
-          "alt": "新兴多智能体系统中的模式与问题 · 第 5 页"
+          "alt": "Anthropic-新兴多智能体系统中的模式与问题 · 第 5 页"
         },
         {
           "src": "./images/2026/09/album-fffca834-0731-446f-8387-a6470420e467/a0380829-58fb-463e-97f0-3ef883b50436-001.png",
           "width": 1448,
           "height": 1086,
-          "alt": "新兴多智能体系统中的模式与问题 · 第 6 页"
+          "alt": "Anthropic-新兴多智能体系统中的模式与问题 · 第 6 页"
         }
       ],
       "editHistory": [
@@ -58,6 +58,10 @@
         {
           "requestId": "a0380829-58fb-463e-97f0-3ef883b50436",
           "fingerprint": "14f71400a3272ce73c41f7e1449ef73d5ea71ea3f54c8d57c79d73ec9440a06f"
+        },
+        {
+          "requestId": "9309ccb3-e411-4ace-8389-0853b7867bb1",
+          "fingerprint": "31dc66b1c33b92e2ea929a3d4905a86289ac2023d3f892d49f4706f0b1f42aa8"
         }
       ]
     },
