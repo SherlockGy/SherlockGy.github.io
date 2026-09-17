@@ -1,12 +1,12 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-review-3';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-review-3';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-review-4';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
-import { createUploadClient } from './upload.js?v=20260917-review-2';
-import { createSlideshow } from './slideshow.js?v=20260917-review-3';
-import { createImageReader, createScrollReader } from './reader.js?v=20260917-review-3';
+import { createUploadClient } from './upload.js?v=20260917-review-4';
+import { createSlideshow } from './slideshow.js?v=20260917-review-4';
+import { createImageReader, createScrollReader } from './reader.js?v=20260917-review-4';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
