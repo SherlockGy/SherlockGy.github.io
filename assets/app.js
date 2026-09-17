@@ -1,16 +1,18 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-thumbs-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-previews-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-interaction-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
-import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-previews-1';
+import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-interaction-1';
+import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
-import { createSlideshow } from './slideshow.js?v=20260917-1';
+import { createSlideshow } from './slideshow.js?v=20260917-interaction-1';
 import { createScrollReader } from './reader.js?v=20260917-review-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const state = { albums: [], series: [], view: 'archive', seriesId: '', query: '', month: '', type: 'all', expanded: false,
-  album: null, page: 0, mode: 'page', zoom: 1, preview: null, files: [], urls: [], requestId: null, busy: false, loadError: false, scrollY: 0 };
+  album: null, page: 0, mode: 'page', zoom: 1, preview: null, files: [], urls: [], requestId: null, busy: false,
+  uploadDirty: false, uploadSaved: false, loadError: false, scrollY: 0 };
 const reader = $('#reader');
 const uploadDialog = $('#upload-dialog');
 const uploadClient = createUploadClient();
@@ -75,7 +77,7 @@ function openCollection(view, seriesId = '', month = '', keepType = false) {
   state.query = ''; $('#search').value = '';
   if (!keepType) state.type = 'all';
   history.replaceState(null, '', location.pathname + location.search + collectionHash());
-  renderCatalog();
+  renderCatalog(); $('#main').focus({ preventScroll: true });
 }
 function localDate() {
   const now = new Date();
@@ -147,7 +149,7 @@ function emptyState(kind) {
     box.append(el('h2', '', '暂时无法加载图集'), el('p', '', state.errorMessage), button('重新加载', 'secondary-button', loadAlbums));
   } else {
     box.append(el('h2', '', '没有找到相符的图集'), el('p', '', '试试其他关键词，或清除当前筛选。'), button('清除筛选', 'secondary-button', () => {
-      state.query = ''; state.month = ''; state.type = 'all'; $('#search').value = ''; renderCatalog();
+      state.query = ''; state.month = ''; state.type = 'all'; $('#search').value = ''; renderCatalog(); $('#search').focus();
     }));
   }
   return box;
@@ -311,7 +313,11 @@ function closeReader(changeRoute = true) {
   if (reader.open) {
     reader.close(); updateBodyLock();
     if ($('#toast').parentElement === reader) document.body.append($('#toast'));
-    window.scrollTo(0, state.scrollY); lastFocused?.focus({ preventScroll: true });
+    window.scrollTo(0, state.scrollY);
+    if (!document.querySelector('dialog[open]')) {
+      const card = $$('.album-card').find(card => card.hash === `#/album/${encodeURIComponent(state.album?.id)}/1`);
+      (lastFocused?.isConnected && lastFocused.getClientRects().length ? lastFocused : card || $('#main')).focus({ preventScroll: true });
+    }
   }
   state.album = null;
   document.title = '图集 · SherlockGy';
@@ -319,6 +325,7 @@ function closeReader(changeRoute = true) {
 }
 
 function syncReaderControls() {
+  const focused = document.activeElement;
   const total = state.album.images.length;
   $('.segmented', reader).hidden = total === 1;
   $('.reader-footer', reader).hidden = total === 1;
@@ -329,6 +336,7 @@ function syncReaderControls() {
   $('#original-image').href = state.album.images[state.page].src;
   $('#zoom-reset').textContent = state.zoom === 1 ? '适宽' : `${Math.round(state.zoom * 100)}%`;
   $('#zoom-out').disabled = state.zoom <= .5; $('#zoom-in').disabled = state.zoom >= 3;
+  if (!state.expanded && reader.contains(focused) && focused.disabled) $('#reader-stage').focus({ preventScroll: true });
   for (const mode of ['page', 'scroll']) {
     $(`#mode-${mode}`).classList.toggle('active', state.mode === mode);
     $(`#mode-${mode}`).setAttribute('aria-pressed', String(state.mode === mode));
@@ -346,7 +354,7 @@ function renderReader() {
     img.addEventListener('error', () => {
       img.hidden = true;
       const error = el('div', 'image-error'); error.append(el('p', '', '这张图片暂时无法加载'));
-      error.append(button('重新加载图片', 'text-button', () => { error.remove(); img.hidden = false; img.src = image.src; })); figure.prepend(error);
+      error.append(button('重新加载图片', 'text-button', () => { stage.focus({ preventScroll: true }); error.remove(); img.hidden = false; img.src = image.src; })); figure.prepend(error);
     });
     figure.append(img, el('figcaption', '', `${String(index + 1).padStart(2, '0')} / ${String(state.album.images.length).padStart(2, '0')}`));
     stage.append(figure);
@@ -392,8 +400,21 @@ function resetDraft() {
   uploadClient.reset();
   state.urls.forEach(url => URL.revokeObjectURL(url));
   state.files = []; state.urls = []; state.preview = null; state.requestId = null;
-  $('#upload-form').reset(); $('#album-date').value = localDate(); $('#upload-status').textContent = '';
-  $('#upload-status').className = 'upload-status'; renderFiles();
+  state.uploadDirty = false; state.uploadSaved = false;
+  $('#upload-form').reset(); $('#album-date').value = localDate(); setFeedback($('#upload-status'), '');
+  syncUploadControls(); renderFiles();
+}
+function syncUploadControls() {
+  $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(control => {
+    control.disabled = state.busy || state.uploadSaved;
+  });
+  $('#upload-close').disabled = state.busy;
+  $('#upload-submit').disabled = state.busy;
+  $('#upload-submit').textContent = state.uploadSaved ? '完成' : config.uploadEndpoint ? '保存图集' : '预览图集';
+}
+function uploadChanged() {
+  if (state.busy || state.uploadSaved) return;
+  state.uploadDirty = true; state.requestId = null; setFeedback($('#upload-status'), '');
 }
 function openUpload() {
   resetDraft();
@@ -406,29 +427,30 @@ function openUpload() {
   $('#upload-submit').textContent = config.uploadEndpoint ? '保存图集' : '预览图集';
   $('#access-code-field').hidden = !config.uploadEndpoint;
   $('#access-code').required = !!config.uploadEndpoint;
-  uploadDialog.showModal(); updateBodyLock(); $('#album-title').focus();
+  uploadDialog.showModal(); updateBodyLock(); $('.dialog-content', uploadDialog).scrollTop = 0; $('#album-title').focus();
 }
 function syncAlbumLocation() {
   const isSeries = !!$('#album-series').value;
   $('#album-date-row').hidden = isSeries; $('#album-date').required = !isSeries;
   state.requestId = null;
 }
-function closeUpload() {
+function closeUpload({ keepDraft = false } = {}) {
   if (state.busy) return;
+  if (!keepDraft && state.uploadDirty && !confirm('还有未保存的图集，确定放弃并关闭吗？')) return;
   $('#access-code').value = ''; uploadDialog.close(); updateBodyLock();
+  if (!keepDraft) resetDraft();
 }
 
 async function addFiles(incoming) {
-  if (state.busy) return;
+  if (state.busy || state.uploadSaved) return;
   const next = [...state.files, ...incoming];
   try {
     validateFiles(next, config);
-    state.files = next; state.requestId = null;
+    state.files = next; uploadChanged();
     state.urls.push(...incoming.map(file => URL.createObjectURL(file)));
-    $('#upload-status').textContent = '';
     if (!$('#album-title').value && incoming[0]) $('#album-title').value = incoming[0].name.replace(/\.[^.]+$/, '').slice(0, 120);
     renderFiles();
-  } catch (error) { $('#upload-status').textContent = error.message; }
+  } catch (error) { setFeedback($('#upload-status'), error.message, 'error'); }
   $('#file-input').value = '';
 }
 function renderFiles() {
@@ -439,13 +461,14 @@ function renderFiles() {
     const preview = createPreviewButton({ src: state.urls[index] }, index, () => imagePreview.open(previews(), index));
     preview.disabled = state.busy;
     const details = el('div', 'file-details');
+    const filename = el('span', 'file-name', file.name); filename.title = file.name;
     details.append(el('span', 'file-order', `${String(index + 1).padStart(2, '0')}${index === 0 ? ' · 封面' : ''}`),
-      el('span', 'file-name', file.name), el('small', 'field-note', `${(file.size / 1048576).toFixed(2)} MB`));
+      filename, el('small', 'field-note', `${(file.size / 1048576).toFixed(2)} MB${state.uploadSaved ? ' · 已保存' : ''}`));
     const actions = el('div', 'file-actions');
     row.append(preview, details, actions);
     for (const [label, delta, name] of [['向前移动', -1, 'chevron-up'], ['向后移动', 1, 'chevron-down']]) {
       const move = button('', 'icon-button', () => {
-        const target = index + delta; state.requestId = null;
+        const target = index + delta; uploadChanged();
         [state.files[index], state.files[target]] = [state.files[target], state.files[index]];
         [state.urls[index], state.urls[target]] = [state.urls[target], state.urls[index]];
         renderFiles();
@@ -453,14 +476,15 @@ function renderFiles() {
         (movedButton.disabled ? movedRow.querySelector('.image-preview-button') : movedButton).focus();
       });
       move.append(icon(name)); move.title = label;
-      move.setAttribute('aria-label', `${label}第 ${index + 1} 张图片`); move.disabled = state.busy || index + delta < 0 || index + delta >= state.files.length;
+      move.setAttribute('aria-label', `${label}第 ${index + 1} 张图片`); move.disabled = state.busy || state.uploadSaved || index + delta < 0 || index + delta >= state.files.length;
       actions.append(move);
     }
     const remove = button('', 'icon-button', () => {
-      state.requestId = null; URL.revokeObjectURL(state.urls[index]); state.files.splice(index, 1); state.urls.splice(index, 1); renderFiles();
+      uploadChanged(); URL.revokeObjectURL(state.urls[index]); state.files.splice(index, 1); state.urls.splice(index, 1); renderFiles();
+      (list.children[Math.min(index, state.files.length - 1)]?.querySelector('.image-preview-button') || $('#file-input')).focus();
     });
     remove.append(icon('close')); remove.title = '移除图片';
-    remove.setAttribute('aria-label', `移除第 ${index + 1} 张图片`); remove.disabled = state.busy; actions.append(remove); list.append(row);
+    remove.setAttribute('aria-label', `移除第 ${index + 1} 张图片`); remove.disabled = state.busy || state.uploadSaved; actions.append(remove); list.append(row);
   });
   $('#file-summary').textContent = state.files.length ? `${state.files.length} 张图片 · ${(state.files.reduce((sum, file) => sum + file.size, 0) / 1048576).toFixed(1)} MB` : '尚未选择图片';
 }
@@ -472,16 +496,16 @@ function serviceError(data, fallback) {
 }
 
 async function checkConnection() {
-  if (state.busy || !config.uploadEndpoint) return;
-  const status = $('#upload-status'); status.className = 'upload-status';
+  if (state.busy || state.uploadSaved || !config.uploadEndpoint) return;
+  const status = $('#upload-status');
   try {
     const endpoint = new URL(config.uploadEndpoint);
     if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password) throw new Error('上传服务地址需要配置为 HTTPS');
     const code = $('#access-code').value.trim();
     if (!code) throw new Error('请先输入上传口令，再测试连接');
     state.busy = true;
-    $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = true);
-    status.textContent = '正在检查连接和图集目录，请稍候…';
+    syncUploadControls();
+    setFeedback(status, '正在检查连接和图集目录，请稍候…');
     const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 75000);
     let response, data;
     try {
@@ -491,21 +515,20 @@ async function checkConnection() {
     if (response.status === 404) throw new Error('请先在 Cloudflare 部署新版 Worker 代码，再测试连接');
     if (!response.ok) throw serviceError(data, `连接检查失败（HTTP ${response.status}）`);
     if (data?.status !== 'readable') throw new Error('上传服务未返回检查结果，请确认已部署新版 Worker 代码');
-    status.className = 'upload-status success';
-    status.textContent = 'GitHub 连接和图集目录读取正常。写入权限仍需通过实际上传验证。';
+    setFeedback(status, 'GitHub 连接和图集目录读取正常。写入权限仍需通过实际上传验证。', 'success');
   } catch (error) {
-    status.textContent = error.name === 'AbortError' ? '等待连接检查超时，请查看 Worker 的实时日志。当前图片已保留。'
-      : error instanceof TypeError ? '无法连接上传服务，请检查网络或服务配置。当前图片已保留。' : error.message;
+    setFeedback(status, error.name === 'AbortError' ? '等待连接检查超时，请查看 Worker 的实时日志。当前图片已保留。'
+      : error instanceof TypeError ? '无法连接上传服务，请检查网络或服务配置。当前图片已保留。' : error.message, 'error');
   } finally {
     state.busy = false;
-    $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = false);
-    renderFiles();
+    syncUploadControls(); renderFiles(); $('#check-connection').focus({ preventScroll: true });
   }
 }
 
 async function submitAlbum(event) {
   event.preventDefault(); if (state.busy) return;
-  const status = $('#upload-status'); status.className = 'upload-status';
+  if (state.uploadSaved) { closeUpload(); return; }
+  const status = $('#upload-status');
   try {
     validateFiles(state.files, config);
     const title = $('#album-title').value.trim(), seriesId = $('#album-series').value, date = seriesId ? '' : $('#album-date').value;
@@ -515,36 +538,36 @@ async function submitAlbum(event) {
     if (!config.uploadEndpoint) {
       state.preview = { id: `preview-${Date.now()}`, title, date, seriesId, description, tags: [], local: true,
         images: state.urls.map((src, index) => ({ src, alt: `${title} · 第 ${index + 1} 页` })) };
-      closeUpload(); location.hash = `#/album/${state.preview.id}/1`; return;
+      closeUpload({ keepDraft: true }); location.hash = `#/album/${state.preview.id}/1`; return;
     }
     const endpoint = new URL(config.uploadEndpoint);
     if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password) throw new Error('上传服务地址需要配置为 HTTPS');
     const code = $('#access-code').value.trim();
     if (!code) throw new Error('请输入上传口令');
     state.busy = true;
-    $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = true);
-    status.textContent = '正在上传并保存，请保持页面打开…';
+    syncUploadControls();
+    setFeedback(status, '正在上传并保存，请保持页面打开…');
     const body = new FormData();
     const requestId = state.requestId ||= crypto.randomUUID();
     body.append('requestId', requestId); body.append('title', title); body.append('date', date); body.append('description', description);
     if (seriesId) body.append('seriesId', seriesId);
     state.files.forEach(file => body.append('images', file, file.name));
     const data = await uploadClient.save({ endpoint: endpoint.href, password: code, body,
-      onProgress: message => { status.textContent = message; } });
+      onProgress: message => setFeedback(status, message) });
     if (data?.status !== 'committed' || typeof data.commitSha !== 'string') throw new Error('上传服务未返回保存凭据，请先检查图集目录再重试');
     normalizeManifest({ schemaVersion: 1, albums: [data.album], series: state.series }, document.baseURI);
-    status.className = 'upload-status success';
-    status.textContent = '图集已保存。网站发布需要一点时间，稍后刷新首页即可查看。';
+    state.uploadSaved = true; state.uploadDirty = false;
+    setFeedback(status, '图集已保存。网站发布需要一点时间，稍后刷新首页即可查看。', 'success');
     $('#access-code').value = '';
-    state.urls.forEach(url => URL.revokeObjectURL(url)); state.urls = []; state.files = []; state.requestId = null;
+    $('#access-code').required = false; $('#publish-notice').hidden = false;
+    state.requestId = null;
     uploadClient.reset();
-    $('#album-title').value = ''; $('#album-description').value = '';
   } catch (error) {
-    status.textContent = error.name === 'AbortError' ? '等待服务超时，当前草稿已保留，请原样重试；请勿刷新页面。' : error instanceof TypeError ? '无法连接上传服务。请检查网络或服务配置后重试。' : error.message;
+    setFeedback(status, error.name === 'AbortError' ? '等待服务超时，当前草稿已保留，请原样重试；请勿刷新页面。' : error instanceof TypeError ? '无法连接上传服务。请检查网络或服务配置后重试。' : error.message, 'error');
   } finally {
     state.busy = false;
-    $$('#upload-form input, #upload-form textarea, #upload-form select, #upload-form button').forEach(node => node.disabled = false);
-    renderFiles();
+    syncUploadControls(); renderFiles();
+    if (uploadDialog.open) (state.uploadSaved ? $('#upload-submit') : status).focus({ preventScroll: true });
   }
 }
 
@@ -554,7 +577,7 @@ $('#manage-series').addEventListener('click', () => seriesManager.open(state.ser
 $('#edit-images').addEventListener('click', () => {
   if (state.album && !state.album.local) imageEditor.open(state.album.id, state.albums.flatMap(album => album.images));
 });
-$('#album-series').addEventListener('change', syncAlbumLocation);
+$('#album-series').addEventListener('change', () => { syncAlbumLocation(); uploadChanged(); });
 $$('.tab').forEach(tab => tab.addEventListener('click', () => { state.type = tab.dataset.type; renderCatalog(); }));
 $('#search').addEventListener('input', event => { state.query = event.target.value; renderCatalog(); });
 $('#new-album').addEventListener('click', openUpload);
@@ -572,20 +595,20 @@ $('#copy-link').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(location.href); toast('已复制当前阅读链接'); }
   catch { toast('复制未成功，请复制浏览器地址栏中的链接'); }
 });
-$('#upload-close').addEventListener('click', closeUpload);
+$('#upload-close').addEventListener('click', () => closeUpload());
 uploadDialog.addEventListener('cancel', event => { event.preventDefault(); closeUpload(); });
 $('#upload-form').addEventListener('submit', submitAlbum);
 $('#check-connection').addEventListener('click', checkConnection);
-for (const selector of ['#album-title', '#album-date', '#album-description']) $(selector).addEventListener('input', () => { state.requestId = null; });
+for (const selector of ['#album-title', '#album-date', '#album-description']) $(selector).addEventListener('input', uploadChanged);
 $('#file-input').addEventListener('change', event => addFiles([...event.target.files]));
 const drop = $('#drop-zone');
-for (const name of ['dragenter', 'dragover']) drop.addEventListener(name, event => { event.preventDefault(); if (!state.busy) drop.classList.add('dragover'); });
+for (const name of ['dragenter', 'dragover']) drop.addEventListener(name, event => { event.preventDefault(); if (!state.busy && !state.uploadSaved) drop.classList.add('dragover'); });
 for (const name of ['dragleave', 'drop']) drop.addEventListener(name, event => { event.preventDefault(); drop.classList.remove('dragover'); });
 drop.addEventListener('drop', event => addFiles([...event.dataTransfer.files]));
 window.addEventListener('hashchange', route);
 window.addEventListener('resize', () => { if (reader.open) applyZoom(); });
 document.addEventListener('keydown', event => {
-  if ($('#image-preview').open) return;
+  if ($('#image-preview').open || uploadDialog.open) return;
   if ($('#image-editor').open || $('#series-manager').open) return;
   if (event.target.closest('input, textarea, select, [contenteditable]') || event.ctrlKey || event.metaKey || event.altKey) return;
   if (reader.open) {

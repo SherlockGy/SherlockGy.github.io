@@ -1,3 +1,5 @@
+import { configureCoverImage } from './covers.js?v=20260917-previews-1';
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export function fitImage(width, height, viewportWidth, viewportHeight, padding = 12) {
@@ -80,9 +82,10 @@ export function createSlideshow(root, { onSelect, onExit }) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'slideshow-thumb';
       button.setAttribute('aria-label', `第 ${index + 1} 张${image.alt ? `：${image.alt}` : ''}`);
       button.title = button.getAttribute('aria-label');
-      const img = document.createElement('img'); img.src = image.src; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+      const img = configureCoverImage(document.createElement('img'), { ...image, alt: '' }, {
+        sizes: '(max-width: 540px) 56px, 160px', onError: () => { img.hidden = true; },
+      });
       img.draggable = false;
-      img.addEventListener('error', () => { img.hidden = true; });
       const preview = document.createElement('span'); preview.className = 'slideshow-thumbnail'; preview.append(img);
       const number = document.createElement('span'); number.className = 'slideshow-number'; number.textContent = String(index + 1).padStart(2, '0');
       button.append(preview, number);
@@ -91,6 +94,7 @@ export function createSlideshow(root, { onSelect, onExit }) {
     });
   }
   function show(nextAlbum, nextPage) {
+    const focused = document.activeElement;
     const logPrefix = `[showSlideshow 图集放映][albumId=${nextAlbum.id}][page=${nextPage + 1}]`;
     const changedAlbum = album !== nextAlbum;
     album = nextAlbum; page = nextPage;
@@ -109,6 +113,7 @@ export function createSlideshow(root, { onSelect, onExit }) {
     $('#slideshow-count').textContent = `${page + 1} / ${album.images.length}`;
     $('#slideshow-prev').disabled = page === 0;
     $('#slideshow-next').disabled = page === album.images.length - 1;
+    if (canvas.contains(focused) || (root.contains(focused) && focused.disabled)) canvas.focus({ preventScroll: true });
     const source = album.images[page], img = document.createElement('img');
     currentImage = img; fitted = { width: 0, height: 0 };
     img.className = 'slideshow-image'; img.alt = source.alt || `第 ${page + 1} 张图片`; img.draggable = false;
