@@ -1,4 +1,4 @@
-import { fitImage, constrainPan, zoomAtPoint } from './slideshow.js?v=20260917-review-4';
+import { fitImage, constrainPan, zoomAtPoint } from './slideshow.js?v=20260917-preload-2';
 
 // Keep the page frame fixed while moving only its image. Use the same geometry
 // and zoom limits as the fullscreen hand tool.
@@ -147,9 +147,9 @@ export function createScrollReader(stage, onSelect, { fixedLayout = false } = {}
       pending = true;
       target.scrollIntoView({ block: 'start', inline: 'nearest' });
       if (fixedLayout) {
-        // A fixed frame never shifts when its image loads; only request the
-        // destination eagerly and keep earlier originals lazy.
-        target.querySelector('img').loading = 'eager';
+        // Fixed placeholders can be aligned before their image is mounted.
+        const image = target.querySelector('img');
+        if (image) image.loading = 'eager';
         pending = false;
         return;
       }

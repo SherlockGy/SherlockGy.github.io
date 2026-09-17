@@ -5,8 +5,9 @@ import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { createUploadClient } from './upload.js?v=20260917-review-4';
-import { createSlideshow } from './slideshow.js?v=20260917-review-4';
-import { createImageReader, createScrollReader } from './reader.js?v=20260917-review-4';
+import { createSlideshow } from './slideshow.js?v=20260917-preload-2';
+import { createImageReader, createScrollReader } from './reader.js?v=20260917-preload-2';
+import { createImagePreloader, createImageWindow } from './preload.js?v=20260917-preload-2';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -43,6 +44,8 @@ const seriesManager = createSeriesManager(updateBodyLock, data => {
 });
 let scrollReader;
 let imageReader;
+const pagePreloader = createImagePreloader();
+let preloadedAlbum, pageImageDispose, continuousImages;
 let lastFocused;
 let toastTimer;
 function icon(name) {
@@ -84,14 +87,6 @@ function localDate() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
-function imageNode(image, lazy = true) {
-  const img = el('img'); img.alt = image.alt;
-  img.loading = lazy ? 'lazy' : 'eager'; img.decoding = 'async';
-  if (image.width && image.height) { img.width = image.width; img.height = image.height; }
-  img.src = image.src;
-  return img;
-}
-
 async function loadAlbums() {
   $('#collection').setAttribute('aria-busy', 'true');
   try {
@@ -291,7 +286,7 @@ function route() {
   renderReader();
 }
 
-function setExpanded(expanded) {
+function setExpanded(expanded, restoreReader = true) {
   if (state.expanded === expanded) return;
   state.expanded = expanded;
   reader.classList.toggle('expanded', expanded);
@@ -300,19 +295,17 @@ function setExpanded(expanded) {
   control.setAttribute('aria-pressed', String(expanded));
   control.setAttribute('aria-label', label); control.title = label;
   control.replaceChildren(icon(expanded ? 'collapse' : 'expand'));
-  scrollReader?.disconnect();
-  imageReader?.disconnect(); imageReader = null;
+  disposeReaderImages(true);
   if (expanded && reader.open && state.album) slideshow.open(state.album, state.page);
   else {
     slideshow.close();
-    if (reader.open && state.album) { renderReader(); control.focus({ preventScroll: true }); }
+    if (restoreReader && reader.open && state.album) { renderReader(); control.focus({ preventScroll: true }); }
   }
 }
 
 function closeReader(changeRoute = true) {
-  setExpanded(false);
-  scrollReader?.disconnect();
-  imageReader?.disconnect(); imageReader = null;
+  setExpanded(false, false);
+  disposeReaderImages(true);
   if (reader.open) {
     reader.close(); updateBodyLock();
     if ($('#toast').parentElement === reader) document.body.append($('#toast'));
@@ -355,32 +348,66 @@ function syncReaderControls() {
   }
 }
 
+function disposeReaderImages(clearPreload = false) {
+  scrollReader?.disconnect(); scrollReader = null;
+  imageReader?.disconnect(); imageReader = null;
+  continuousImages?.clear(); continuousImages = null;
+  pageImageDispose?.(); pageImageDispose = null;
+  $('#reader-stage').replaceChildren();
+  if (clearPreload) { pagePreloader.clear(); preloadedAlbum = null; }
+}
+
+function mountReaderImage(frame, image, index, entry, retry, onReady = () => {}) {
+  const logPrefix = `[mountReaderImage 图片阅读][albumId=${state.album.id}][page=${index + 1}]`;
+  const img = entry.image;
+  let disposed = false;
+  img.alt = image.alt; img.hidden = !entry.ready;
+  const status = el('div', 'reader-image-status', '正在加载图片…');
+  status.setAttribute('role', 'status'); status.hidden = entry.ready;
+  frame.setAttribute('aria-busy', String(!entry.ready));
+  frame.replaceChildren(img, status);
+  function display(loaded) {
+    if (disposed) return;
+    frame.setAttribute('aria-busy', 'false');
+    if (loaded) { img.hidden = false; status.hidden = true; onReady(); }
+    else {
+      console.warn(logPrefix, '原图加载失败');
+      status.hidden = false; status.className = 'image-error';
+      status.replaceChildren(el('p', '', '这张图片暂时无法加载'), button('重新加载图片', 'text-button', () => {
+        $('#reader-stage').focus({ preventScroll: true }); retry();
+      }));
+    }
+  }
+  if (entry.ready) display(true); else entry.promise.then(display);
+  return () => { disposed = true; frame.replaceChildren(); frame.removeAttribute('aria-busy'); };
+}
+
 function renderReader() {
-  scrollReader?.disconnect();
-  imageReader?.disconnect(); imageReader = null; state.zoom = 1;
+  disposeReaderImages(state.expanded || state.mode === 'scroll' || preloadedAlbum !== state.album);
+  state.zoom = 1;
   if (state.expanded) { slideshow.show(state.album, state.page); syncReaderControls(); return; }
   syncReaderControls();
-  const stage = $('#reader-stage'); stage.replaceChildren();
+  const stage = $('#reader-stage');
   stage.classList.toggle('is-continuous', state.mode === 'scroll');
   const images = state.mode === 'scroll' ? state.album.images.map((image, index) => [image, index]) : [[state.album.images[state.page], state.page]];
-  for (const [image, index] of images) {
+  const frames = new Map();
+  for (const [, index] of images) {
     const figure = el('figure', 'reader-page'); figure.dataset.index = index;
     figure.setAttribute('aria-label', `第 ${index + 1} 张，共 ${state.album.images.length} 张`);
     const frame = el('div', 'reader-image-frame');
-    const img = imageNode(image, state.mode === 'scroll' && Math.abs(index - state.page) > 1);
-    img.addEventListener('error', () => {
-      img.hidden = true;
-      const error = el('div', 'image-error'); error.append(el('p', '', '这张图片暂时无法加载'));
-      error.append(button('重新加载图片', 'text-button', () => { stage.focus({ preventScroll: true }); error.remove(); img.hidden = false; img.src = image.src; })); frame.append(error);
-    });
-    frame.append(img);
+    frames.set(index, frame);
     figure.append(frame);
     stage.append(figure);
   }
   layoutReader(); stage.scrollTop = 0; stage.scrollLeft = 0;
   if (state.mode === 'scroll') {
+    continuousImages = createImageWindow(state.album.images, (index, entry) => mountReaderImage(
+      frames.get(index), state.album.images[index], index, entry, () => continuousImages.retry(index),
+    ));
+    continuousImages.select(state.page);
     scrollReader = createScrollReader(stage, page => {
       if (!state.album || state.expanded || state.mode !== 'scroll') return;
+      continuousImages.select(page);
       if (page !== state.page) {
         state.page = page; syncReaderControls();
         history.replaceState(null, '', `#/album/${state.album.id}/${state.page + 1}`);
@@ -388,11 +415,15 @@ function renderReader() {
     }, { fixedLayout: true });
     scrollReader.goTo(state.page);
   } else {
-    imageReader = createImageReader($('.reader-image-frame', stage), {
-      keyTarget: stage,
-      onScaleChange: scale => { state.zoom = scale; syncReaderControls(); },
+    preloadedAlbum = state.album;
+    const frame = frames.get(state.page), entry = pagePreloader.select(state.album.images, state.page);
+    pageImageDispose = mountReaderImage(frame, state.album.images[state.page], state.page, entry, renderReader, () => {
+      imageReader = createImageReader(frame, {
+        keyTarget: stage,
+        onScaleChange: scale => { state.zoom = scale; syncReaderControls(); },
+      });
+      imageReader.setHand(state.hand);
     });
-    imageReader.setHand(state.hand);
   }
   syncReaderControls();
 }
@@ -445,7 +476,7 @@ function goPage(page) {
   history.replaceState(null, '', `#/album/${state.album.id}/${state.page + 1}`);
   if (state.expanded) renderReader();
   else if (state.mode === 'scroll') {
-    scrollReader.goTo(state.page); syncReaderControls();
+    continuousImages.select(state.page); scrollReader.goTo(state.page); syncReaderControls();
   } else renderReader();
 }
 
@@ -651,8 +682,8 @@ for (const mode of ['page', 'scroll']) $(`#mode-${mode}`).addEventListener('clic
   state.mode = mode; state.hand = false; renderReader();
 });
 $('#reader-hand').addEventListener('click', () => {
-  if (state.mode !== 'page' || !imageReader) return;
-  state.hand = !state.hand; imageReader.setHand(state.hand); syncReaderControls();
+  if (state.mode !== 'page') return;
+  state.hand = !state.hand; imageReader?.setHand(state.hand); syncReaderControls();
   if (state.hand) {
     $('#reader-stage').focus({ preventScroll: true });
     toast('拖动查看 · 滚轮或双指缩放 · 点“适屏”复位');

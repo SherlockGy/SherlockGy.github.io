@@ -9,7 +9,7 @@ test('continuous reading tracks the visible page when scrolling down and back up
   assert.equal(readingPage([{ index: 1, top: 100, bottom: 200 }], 700), 1);
 });
 
-function setup(t) {
+function setup(t, options) {
   const originals = Object.fromEntries(['requestAnimationFrame', 'cancelAnimationFrame', 'ResizeObserver'].map(key => [key, globalThis[key]]));
   let frame;
   globalThis.requestAnimationFrame = callback => { frame = callback; return 1; };
@@ -26,7 +26,7 @@ function setup(t) {
   const stage = new EventTarget();
   Object.assign(stage, { scrollTop: 0, clientHeight: 700, scrollHeight: 2700,
     querySelectorAll: () => figures, getBoundingClientRect: () => ({ top: 0 }) });
-  const reader = createScrollReader(stage, index => selected.push(index));
+  const reader = createScrollReader(stage, index => selected.push(index), options);
   t.after(() => {
     reader.disconnect();
     for (const [key, value] of Object.entries(originals)) {
@@ -76,4 +76,20 @@ test('closing the reader cancels alignment and detaches its scroll handling', as
   loads.forEach(load => load.resolve()); await settle();
   stage.dispatchEvent(new Event('scroll')); flush();
   assert.deepEqual(alignments, [2]); assert.deepEqual(selected, []);
+});
+
+test('fixed frames allow direct navigation before the destination image is mounted', t => {
+  const { reader, stage, figures, alignments, selected, flush } = setup(t, { fixedLayout: true });
+  figures[2].querySelector = () => null;
+  reader.goTo(2);
+  assert.deepEqual(alignments, [2]);
+  assert.equal(figures[0].querySelector().loading, 'lazy', 'earlier originals are not requested to position the destination');
+  reader.goTo(1);
+  assert.equal(figures[1].querySelector().loading, 'eager');
+  assert.deepEqual(alignments, [2, 1]);
+  reader.goTo(30);
+  assert.deepEqual(alignments, [2, 1]);
+  // A fixed-layout jump has no asynchronous alignment left to block scrolling.
+  reader.goTo(0); stage.dispatchEvent(new Event('scroll')); flush();
+  assert.deepEqual(selected, [0]);
 });

@@ -1,4 +1,5 @@
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
+import { createImagePreloader } from './preload.js?v=20260917-preload-2';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -42,8 +43,9 @@ export function createSlideshow(root, { onSelect, onExit }) {
   const canvas = $('.slideshow-canvas'), list = $('.slideshow-list');
   const handButton = $('#slideshow-hand'), fitButton = $('#slideshow-fit');
   const status = $('#slideshow-status'), pager = createWheelPager();
+  const preloader = createImagePreloader();
   const pointers = new Map();
-  let album = null, page = 0, currentImage = null, hand = false, gesture = null;
+  let album = null, page = 0, currentImage = null, hand = false, gesture = null, renderVersion = 0;
   let view = { scale: 1, x: 0, y: 0 }, fitted = { width: 0, height: 0 };
   const ready = () => currentImage?.complete && currentImage.naturalWidth > 0 && !currentImage.hidden;
   const point = event => ({ x: event.clientX, y: event.clientY });
@@ -118,11 +120,12 @@ export function createSlideshow(root, { onSelect, onExit }) {
     });
   }
   function show(nextAlbum, nextPage) {
+    const version = ++renderVersion;
     const focused = document.activeElement;
     const logPrefix = `[showSlideshow 图集放映][albumId=${nextAlbum.id}][page=${nextPage + 1}]`;
     const changedAlbum = album !== nextAlbum;
     album = nextAlbum; page = nextPage;
-    if (changedAlbum) { setHand(false); renderDirectory(); }
+    if (changedAlbum) { preloader.clear(); setHand(false); renderDirectory(); }
     resetView();
     [...list.children].forEach((button, index) => {
       if (index === page) button.setAttribute('aria-current', 'page');
@@ -138,25 +141,26 @@ export function createSlideshow(root, { onSelect, onExit }) {
     $('#slideshow-prev').disabled = page === 0;
     $('#slideshow-next').disabled = page === album.images.length - 1;
     if (canvas.contains(focused) || (root.contains(focused) && focused.disabled)) canvas.focus({ preventScroll: true });
-    const source = album.images[page], img = document.createElement('img');
+    const source = album.images[page], entry = preloader.select(album.images, page), img = entry.image;
     currentImage = img; fitted = { width: 0, height: 0 };
     img.className = 'slideshow-image'; img.alt = source.alt || `第 ${page + 1} 张图片`; img.draggable = false;
-    img.decoding = 'async'; img.hidden = true;
-    status.replaceChildren(document.createTextNode('正在加载图片…')); status.hidden = false;
-    canvas.replaceChildren(img, status); canvas.setAttribute('aria-busy', 'true');
-    img.addEventListener('load', () => {
-      if (currentImage !== img) return;
-      resize(); img.hidden = false; status.hidden = true; canvas.setAttribute('aria-busy', 'false');
-    });
-    img.addEventListener('error', () => {
-      if (currentImage !== img) return;
-      console.warn(`${logPrefix} 图片加载失败`);
-      img.hidden = true; canvas.setAttribute('aria-busy', 'false');
-      const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'text-button'; retry.textContent = '重新加载';
-      retry.addEventListener('click', () => show(album, page));
-      status.replaceChildren(document.createTextNode('这张图片暂时无法加载'), retry); status.hidden = false;
-    });
-    img.src = source.src;
+    img.hidden = !entry.ready;
+    status.replaceChildren(document.createTextNode('正在加载图片…')); status.hidden = entry.ready;
+    canvas.replaceChildren(img, status); canvas.setAttribute('aria-busy', String(!entry.ready));
+    const display = loaded => {
+      if (version !== renderVersion || currentImage !== img) return;
+      if (loaded) {
+        resize(); img.hidden = false; status.hidden = true; canvas.setAttribute('aria-busy', 'false');
+      } else {
+        console.warn(`${logPrefix} 图片加载失败`);
+        img.hidden = true; canvas.setAttribute('aria-busy', 'false');
+        const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'text-button'; retry.textContent = '重新加载';
+        retry.addEventListener('click', () => show(album, page));
+        status.replaceChildren(document.createTextNode('这张图片暂时无法加载'), retry); status.hidden = false;
+      }
+    };
+    if (entry.ready) display(true);
+    else entry.promise.then(display);
   }
   $('#slideshow-exit').addEventListener('click', onExit);
   $('#slideshow-prev').addEventListener('click', () => onSelect(page - 1));
@@ -219,6 +223,7 @@ export function createSlideshow(root, { onSelect, onExit }) {
     show,
     resize,
     close() {
+      renderVersion++; preloader.clear();
       setHand(false); root.hidden = true; album = null; currentImage = null;
       canvas.replaceChildren(status); list.replaceChildren();
     },
