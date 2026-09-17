@@ -3,7 +3,7 @@ export function readingPage(rects, viewportHeight) {
   return visible.sort((a, b) => Math.abs(a.top) - Math.abs(b.top))[0]?.index;
 }
 
-export function createScrollReader(stage, onSelect) {
+export function createScrollReader(stage, onSelect, { fixedLayout = false } = {}) {
   const figures = [...stage.querySelectorAll('.reader-page')];
   let frame, navigation = 0, pending = false, disposed = false;
   const sync = () => {
@@ -34,7 +34,14 @@ export function createScrollReader(stage, onSelect) {
       if (!target) return;
       const current = ++navigation;
       pending = true;
-      target.scrollIntoView({ block: 'start' });
+      target.scrollIntoView({ block: 'start', inline: 'nearest' });
+      if (fixedLayout) {
+        // A fixed frame never shifts when its image loads; only request the
+        // destination eagerly and keep earlier originals lazy.
+        target.querySelector('img').loading = 'eager';
+        pending = false;
+        return;
+      }
       // Images without dimensions can move the target as they load. Load the
       // preceding pages before the final alignment, unless the user scrolls.
       const images = figures.slice(0, index + 1).map(figure => figure.querySelector('img'))
@@ -42,7 +49,7 @@ export function createScrollReader(stage, onSelect) {
       images.forEach(img => { img.loading = 'eager'; });
       Promise.all(images.map(img => img.decode().catch(() => {}))).then(() => {
         if (disposed || current !== navigation) return;
-        target.scrollIntoView({ block: 'start' });
+        target.scrollIntoView({ block: 'start', inline: 'nearest' });
         pending = false;
       });
     },
