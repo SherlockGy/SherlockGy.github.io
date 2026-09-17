@@ -6,7 +6,7 @@ function coverSizes(series) {
     `(min-width: 1800px) ${series ? 453 : 419}px, calc((100vw - ${series ? 408 : 510}px) / 2)`;
 }
 
-export function configureCoverImage(img, image, { eager = false, priority = false, series = false, onError = () => {} } = {}) {
+export function configureCoverImage(img, image, { eager = false, priority = false, series = false, sizes, onError = () => {} } = {}) {
   const variants = image.thumbnails || [];
   let original = !variants.length;
   img.alt = image.alt || '';
@@ -23,7 +23,7 @@ export function configureCoverImage(img, image, { eager = false, priority = fals
     } else onError();
   });
   if (variants.length) {
-    img.sizes = coverSizes(series);
+    img.sizes = sizes || coverSizes(series);
     img.srcset = variants.map(item => `${item.src.replaceAll(',', '%2C')} ${item.width}w`).join(', ');
   }
   // Configure loading and responsive candidates before setting src to avoid a full-size request.
