@@ -126,7 +126,9 @@ export function createUploadClient({ fetch: fetcher = (...args) => globalThis.fe
         if (!committed(result) && result.status !== 'unchanged') throw Object.assign(new Error('未收到完整保存结果，请保留草稿'), { code: 'INVALID_RESPONSE' });
         return result;
       } catch (error) {
-        if (error.code === 'RECEIPT_EXPIRED') current.receipts.clear();
+        // A rejected signature (for example after a Worker secret rotation)
+        // cannot become valid by resending the same receipt on every retry.
+        if (['RECEIPT_EXPIRED', 'INVALID_RECEIPT'].includes(error.code)) current.receipts.clear();
         if (error.status && error.status < 500) throw error;
         onProgress('正在确认保存结果，请稍候…');
         // A timeout does not prove the branch update failed. Do not switch write paths.
@@ -135,7 +137,9 @@ export function createUploadClient({ fetch: fetcher = (...args) => globalThis.fe
       }
     } catch (error) {
       if (error.status === 429 || error.retryAfterSeconds) current.retryAt = Date.now() + Math.max(60, Number(error.retryAfterSeconds) || 60) * 1000;
-      if (files.length && current.receipts.size < files.length) error.message += `（已上传 ${current.receipts.size}/${files.length} 张，原样重试会复用；请勿刷新）`;
+      if (files.length && current.receipts.size < files.length) error.message += current.receipts.size
+        ? `（已上传 ${current.receipts.size}/${files.length} 张，原样重试会复用；请勿刷新）`
+        : '（当前图片和排序已保留，请原样重试；请勿刷新）';
       throw error;
     }
   }

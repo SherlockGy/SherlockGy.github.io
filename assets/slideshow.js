@@ -42,12 +42,24 @@ export function createSlideshow(root, { onSelect, onExit }) {
   const canvas = $('.slideshow-canvas'), list = $('.slideshow-list');
   const handButton = $('#slideshow-hand'), fitButton = $('#slideshow-fit');
   const status = $('#slideshow-status'), pager = createWheelPager();
-  let album = null, page = 0, currentImage = null, hand = false, drag = null;
+  const pointers = new Map();
+  let album = null, page = 0, currentImage = null, hand = false, gesture = null;
   let view = { scale: 1, x: 0, y: 0 }, fitted = { width: 0, height: 0 };
+  const ready = () => currentImage?.complete && currentImage.naturalWidth > 0 && !currentImage.hidden;
+  const point = event => ({ x: event.clientX, y: event.clientY });
+  const measureGesture = () => {
+    const [first, second] = pointers.values();
+    if (!first) return null;
+    return second ? {
+      x: (first.x + second.x) / 2, y: (first.y + second.y) / 2,
+      distance: Math.hypot(second.x - first.x, second.y - first.y),
+    } : { ...first, distance: 0 };
+  };
 
   function stopDrag() {
-    if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
-    drag = null; canvas.classList.remove('dragging');
+    const ids = [...pointers.keys()];
+    pointers.clear(); gesture = null; canvas.classList.remove('dragging');
+    for (const id of ids) if (canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
   }
   function paint() {
     const pan = constrainPan(view.x, view.y, fitted.width * view.scale, fitted.height * view.scale, canvas.clientWidth, canvas.clientHeight);
@@ -62,8 +74,13 @@ export function createSlideshow(root, { onSelect, onExit }) {
   }
   function resize() {
     if (root.hidden || !currentImage?.naturalWidth) return;
-    fitted = fitImage(currentImage.naturalWidth, currentImage.naturalHeight, canvas.clientWidth, canvas.clientHeight);
-    stopDrag(); paint();
+    const next = fitImage(currentImage.naturalWidth, currentImage.naturalHeight, canvas.clientWidth, canvas.clientHeight);
+    if (!next.width || !next.height) return;
+    stopDrag();
+    if (fitted.width && fitted.height) {
+      view.x *= next.width / fitted.width; view.y *= next.height / fitted.height;
+    }
+    fitted = next; paint();
   }
   function resetView() {
     stopDrag(); view = { scale: 1, x: 0, y: 0 }; paint();
@@ -72,9 +89,14 @@ export function createSlideshow(root, { onSelect, onExit }) {
     hand = enabled; pager.reset(); resetView();
     canvas.classList.toggle('hand-mode', hand);
     handButton.setAttribute('aria-pressed', String(hand));
-    const label = hand ? '关闭拖动，恢复适屏' : '开启拖动与滚轮缩放';
+    const label = hand ? '关闭拖动，恢复适屏' : '开启拖动与缩放（滚轮 / 双指）';
     handButton.setAttribute('aria-label', label); handButton.title = label;
-    $('#slideshow-hint').textContent = hand ? '拖动查看 · 滚轮缩放' : '滚轮翻页 · 点击目录跳转';
+    canvas.setAttribute('aria-label', hand ? '放映图片：拖动查看，滚轮或双指缩放；加减键缩放，0 键恢复适屏' : '放映图片');
+    $('#slideshow-hint').textContent = hand ? '拖动查看 · 滚轮或双指缩放' : '滚轮翻页 · 点击目录跳转';
+  }
+  function zoom(scale, clientPoint) {
+    const rect = canvas.getBoundingClientRect();
+    view = zoomAtPoint(view, scale, { x: clientPoint.x - rect.left - rect.width / 2, y: clientPoint.y - rect.top - rect.height / 2 });
   }
   function renderDirectory() {
     list.replaceChildren();
@@ -139,18 +161,19 @@ export function createSlideshow(root, { onSelect, onExit }) {
   $('#slideshow-exit').addEventListener('click', onExit);
   $('#slideshow-prev').addEventListener('click', () => onSelect(page - 1));
   $('#slideshow-next').addEventListener('click', () => onSelect(page + 1));
-  handButton.addEventListener('click', () => setHand(!hand));
+  handButton.addEventListener('click', () => {
+    setHand(!hand);
+    if (hand) canvas.focus({ preventScroll: true });
+  });
   fitButton.addEventListener('click', resetView);
   canvas.addEventListener('dragstart', event => event.preventDefault());
   canvas.addEventListener('wheel', event => {
     event.preventDefault();
     const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1);
     if (hand) {
-      if (!currentImage?.naturalWidth) return;
+      if (!ready()) return;
       stopDrag();
-      const rect = canvas.getBoundingClientRect();
-      view = zoomAtPoint(view, view.scale * Math.exp(-clamp(delta, -120, 120) * .0025),
-        { x: event.clientX - rect.left - rect.width / 2, y: event.clientY - rect.top - rect.height / 2 });
+      zoom(view.scale * Math.exp(-clamp(delta, -120, 120) * .0025), point(event));
       paint();
     } else {
       const step = pager.feed(delta, event.timeStamp);
@@ -158,16 +181,36 @@ export function createSlideshow(root, { onSelect, onExit }) {
     }
   }, { passive: false });
   canvas.addEventListener('pointerdown', event => {
-    if (!hand || event.button !== 0 || drag || !currentImage?.naturalWidth || event.target.closest('button')) return;
+    if (!hand || event.button !== 0 || !ready() || event.target.closest('button, a')) return;
     event.preventDefault(); canvas.focus({ preventScroll: true });
-    drag = { id: event.pointerId, startX: event.clientX, startY: event.clientY, x: view.x, y: view.y };
+    pointers.set(event.pointerId, point(event)); gesture = measureGesture();
     canvas.setPointerCapture(event.pointerId); canvas.classList.add('dragging');
   });
   canvas.addEventListener('pointermove', event => {
-    if (!drag || drag.id !== event.pointerId) return;
-    view.x = drag.x + event.clientX - drag.startX; view.y = drag.y + event.clientY - drag.startY; paint();
+    if (!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId, point(event));
+    const next = measureGesture();
+    if (gesture.distance > 0 && next.distance > 0) zoom(view.scale * next.distance / gesture.distance, gesture);
+    view.x += next.x - gesture.x; view.y += next.y - gesture.y;
+    gesture = next; paint();
   });
-  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(type, stopDrag);
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(type, event => {
+    if (!pointers.delete(event.pointerId)) return;
+    gesture = measureGesture();
+    if (!pointers.size) canvas.classList.remove('dragging');
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  });
+  canvas.addEventListener('keydown', event => {
+    if (!hand || !ready() || event.ctrlKey || event.metaKey || event.altKey || event.target.closest('button, a, input, textarea, select, [contenteditable]')) return;
+    if (!['+', '=', '-', '_', '0'].includes(event.key)) return;
+    event.preventDefault(); event.stopPropagation(); stopDrag();
+    if (event.key === '0') resetView();
+    else {
+      const rect = canvas.getBoundingClientRect();
+      zoom(view.scale * (['+', '='].includes(event.key) ? 1.25 : .8), { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+      paint();
+    }
+  });
   new ResizeObserver(resize).observe(canvas);
   return {
     open(nextAlbum, nextPage) {

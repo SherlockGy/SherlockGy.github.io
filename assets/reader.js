@@ -1,4 +1,4 @@
-import { fitImage, constrainPan, zoomAtPoint } from './slideshow.js?v=20260917-review-3';
+import { fitImage, constrainPan, zoomAtPoint } from './slideshow.js?v=20260917-review-4';
 
 // Keep the page frame fixed while moving only its image. Use the same geometry
 // and zoom limits as the fullscreen hand tool.
