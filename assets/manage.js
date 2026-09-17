@@ -1,6 +1,6 @@
 import config from '../config.js';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
-import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-review-1';
+import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-thumbs-1';
 
 function node(tag, className, text) {
   const value = document.createElement(tag);

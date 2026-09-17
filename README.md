@@ -5,6 +5,7 @@
 - 按归档日期的月份倒序展示，仅显示有内容的月份。
 - 支持与时间无关的多层系列，例如“经济学 → 宏观经济学 → 货币政策 → 图集”。系列中的图集不进入月份归档。
 - 每个图集可命名，包含一张或多张图片；首张图片作为封面。
+- 发布时为现有和新增图集生成 480 / 960 像素 WebP 封面，首页按屏幕选图；阅读与下载保持使用原图。
 - 支持搜索名称、说明和标签，筛选单张或多图。
 - 支持逐页阅读、连续阅读、放大、适宽、查看原图和复制当前页链接。
 - 阅读窗口默认居中；“网页全屏”进入放映布局：左侧缩略图目录，右侧每次完整适屏显示一张图片，无顶部工具栏。浏览器地址栏和标签页保持可用。
@@ -21,6 +22,8 @@
 无需安装依赖或编译，执行 `python3 -m http.server 8080`，访问 `http://localhost:8080`。需要通过 HTTP 服务打开，不能直接双击 HTML。Node 20+ 可运行 `npm test` 验证数据处理、放映缩放与拖动边界，以及模拟 GitHub 的保存流程。Worker 只允许正式站点的浏览器来源，本地预览不会直接取得线上编辑权限。
 
 `tests/responsive.html` 为开发检查入口，可同时检查 390 px 和 320 px 的布局。
+
+预览正式发布产物：先执行 `python3 -m pip install -r scripts/requirements.txt`，再执行 `python3 scripts/build_site.py` 和 `python3 -m http.server 8080 --directory _site`。Python 3.10+ 可执行 `python3 -m unittest discover -s tests -p 'test_*.py'` 检查构建、缓存、旧图补齐和换封面。
 
 ## 内容格式
 
@@ -127,6 +130,8 @@ sequenceDiagram
 
 ## 部署
 
-仓库根目录即发布目录，保留 `.nojekyll`。GitHub Pages 发布来源为 `master` 分支根目录，静态页面无需 npm 构建；写入由 Cloudflare Worker 处理。升级时推荐先部署新版 Worker，再发布前端；双方均保留旧上传接口的兼容路径。更新仓库内的 Worker 文件不会自动部署 Cloudflare，详见 [部署说明](worker/SETUP.md)。不要把 GitHub 凭据放在前端；这是公开的个人图集站，发布的图片可被访问。
+GitHub Pages 发布来源应切换为 **GitHub Actions**，由 `.github/workflows/pages.yml` 测试、生成缩略图并发布 `_site`。首次构建会自动处理所有现有图集封面；以后上传、换图、排序触发的新提交也会自动处理。缩略图和补充后的目录仅进入网站发布产物，不写回源目录、不增加生成图片的 Git 提交。配置与回退步骤见 [缩略图发布说明](docs/thumbnails.md)。
+
+写入仍由 Cloudflare Worker 处理，这次缩略图升级不需要改 Worker 或 Secret。其他功能升级时推荐先部署新版 Worker，再发布前端；双方均保留旧上传接口的兼容路径。更新仓库内的 Worker 文件不会自动部署 Cloudflare，详见 [部署说明](worker/SETUP.md)。不要把 GitHub 凭据放在前端；这是公开的个人图集站，发布的图片可被访问。
 
 参考：[GitHub Pages 发布来源](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。

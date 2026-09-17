@@ -43,6 +43,15 @@ test('image URLs reject executable protocols and embedded credentials', () => {
   for (const url of ['javascript:alert(1)', 'data:text/html,test', 'file:///tmp/file', 'https://user:pass@example.com/img.png']) assert.throws(() => safeImageUrl(url));
   assert.equal(safeImageUrl('./images/example.png'), 'https://sherlockgy.github.io/images/example.png');
 });
+test('thumbnail metadata is optional, normalized separately, and cannot replace original reading URLs', () => {
+  const make = thumbnails => ({ schemaVersion: 1, albums: [{ ...fixture.albums[0], images: [{ src: './images/original.png', thumbnails }] }] });
+  const image = normalizeManifest(make([{ src: './thumbnails/b.webp', width: 960, height: 720 }, { src: './thumbnails/a.webp', width: 480, height: 360 }]))[0].images[0];
+  assert.equal(image.src, 'https://sherlockgy.github.io/images/original.png');
+  assert.deepEqual(image.thumbnails.map(item => item.width), [480, 960]);
+  assert.equal(normalizeManifest(make(undefined))[0].images[0].thumbnails, undefined);
+  for (const thumbnails of [[{ src: 'javascript:alert(1)', width: 480, height: 360 }], [{ src: './x.webp', width: 0, height: 360 }],
+    [{ src: './x.webp', width: 480, height: 360 }, { src: './y.webp', width: 480, height: 360 }], 'invalid']) assert.throws(() => normalizeManifest(make(thumbnails)));
+});
 test('file count, type, empty content and byte limits are enforced', () => {
   const file = { name: 'note.png', size: 1024, type: 'image/png' };
   assert.doesNotThrow(() => validateFiles([file], config));
