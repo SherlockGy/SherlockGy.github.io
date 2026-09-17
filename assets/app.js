@@ -1,6 +1,6 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-thumbs-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-thumbs-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-titles-1';
 import { configureCoverImage } from './covers.js?v=20260917-thumbs-1';
 import { createUploadClient } from './upload.js?v=20260917-upload-1';
 import { createSlideshow } from './slideshow.js?v=20260917-1';
@@ -15,8 +15,16 @@ const uploadDialog = $('#upload-dialog');
 const uploadClient = createUploadClient();
 const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
 const imageEditor = createImageEditor(updateBodyLock, data => {
+  if (data.album) {
+    const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
+    state.series = normalizeSeries(data);
+    const updated = normalizeManifest({ schemaVersion: 1, albums: [data.album], series: state.series }, document.baseURI)[0];
+    updated.images[0].thumbnails ||= knownThumbnails.get(updated.images[0].src);
+    state.albums = state.albums.map(album => album.id === updated.id ? updated : album);
+  }
   if (data.status === 'committed') $('#publish-notice').hidden = false;
   closeReader();
+  renderCatalog();
 });
 const seriesManager = createSeriesManager(updateBodyLock, data => {
   if (data.manifest) {

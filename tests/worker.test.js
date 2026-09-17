@@ -131,7 +131,7 @@ test('connection check authenticates, reads the current manifest and never write
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
-  assert.equal(result.version, '2026-09-17-upload-pipeline-1'); assert.ok(result.traceId);
+  assert.equal(result.version, '2026-09-17-album-titles-1'); assert.ok(result.traceId);
   assert.equal(fake.calls.length, 1); assert.ok(fake.calls.every(isRead));
   assert.equal(fake.manifest().albums.length, 0);
 });

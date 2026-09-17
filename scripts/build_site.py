@@ -8,11 +8,11 @@ from pathlib import Path
 import shutil
 from urllib.parse import unquote, urlsplit
 
-from PIL import Image, ImageOps, __version__ as pillow_version, features
+from PIL import Image, ImageCms, ImageOps, __version__ as pillow_version, features
 
 WIDTHS = (480, 960)
 QUALITY = 82
-RECIPE = f"cover-v1:webp:q{QUALITY}:pillow{pillow_version}:webp{features.version('webp')}"
+RECIPE = f"cover-v2:srgb:webp:q{QUALITY}:pillow{pillow_version}:webp{features.version('webp')}:cms{features.version('littlecms2')}"
 MARKER = ".atlas-generated-site"
 
 
@@ -47,7 +47,7 @@ def cover_variants(path, cache, output, report):
                     dimensions = image.size
                     if image.format != "WEBP" or not (0 < image.width <= width and 0 < image.height <= width * 2):
                         raise ValueError("Invalid cached image")
-                    image.verify()
+                    image.load()
                 report["cached"] += 1
             except (OSError, ValueError):
                 cached.unlink()
@@ -57,7 +57,17 @@ def cover_variants(path, cache, output, report):
                     # A cover is a still image; reading continues to use the full original.
                     image.seek(0)
                     oriented = ImageOps.exif_transpose(image)
-                    decoded = oriented.convert("RGBA" if "A" in oriented.getbands() or "transparency" in oriented.info else "RGB")
+                    mode = "RGBA" if "A" in oriented.getbands() or "transparency" in oriented.info else "RGB"
+                    profile = oriented.info.get("icc_profile")
+                    if profile:
+                        # Convert tagged colors to sRGB before dropping metadata in WebP.
+                        tagged = oriented if oriented.mode in ("RGB", "RGBA", "CMYK", "LAB", "L") else oriented.convert(mode)
+                        try:
+                            decoded = ImageCms.profileToProfile(tagged, ImageCms.ImageCmsProfile(BytesIO(profile)), ImageCms.createProfile("sRGB"), outputMode=mode)
+                        except (ImageCms.PyCMSError, OSError):
+                            decoded = oriented.convert(mode)
+                    else:
+                        decoded = oriented.convert(mode)
             ratio = min(1, width / decoded.width, width * 2 / decoded.height)
             dimensions = (max(1, round(decoded.width * ratio)), max(1, round(decoded.height * ratio)))
             image = decoded.resize(dimensions, Image.Resampling.LANCZOS)
