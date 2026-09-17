@@ -35,19 +35,19 @@ class BuildSiteTests(unittest.TestCase):
     def run_build(self):
         return build(self.root, self.output, self.cache)
 
-    def test_existing_covers_are_generated_without_mutating_originals_or_source_manifest(self):
+    def test_every_image_gets_thumbnails_without_mutating_originals_or_source_manifest(self):
         before = {p: p.read_bytes() for p in [self.root / "data/albums.json", self.root / "images/a.png", self.root / "images/b.png"]}
         report = self.run_build()
-        self.assertEqual((report["covers"], report["generated"]), (1, 2))
+        self.assertEqual((report["covers"], report["images"], report["generated"]), (1, 2, 4))
         published = self.published()
         cover = published["albums"][0]["images"][0]
         self.assertEqual([t["width"] for t in cover["thumbnails"]], [480, 960])
-        for thumb in cover["thumbnails"]:
-            with Image.open(self.output / thumb["src"]) as image:
-                self.assertEqual(image.format, "WEBP")
-                self.assertEqual(image.size, (thumb["width"], thumb["height"]))
-        self.assertNotIn("thumbnails", published["albums"][0]["images"][1])
-        del cover["thumbnails"]
+        for entry in published["albums"][0]["images"]:
+            for thumb in entry["thumbnails"]:
+                with Image.open(self.output / thumb["src"]) as image:
+                    self.assertEqual(image.format, "WEBP")
+                    self.assertEqual(image.size, (thumb["width"], thumb["height"]))
+            del entry["thumbnails"]
         self.assertEqual(published, self.manifest)
         for path, original in before.items():
             self.assertEqual(path.read_bytes(), original)
@@ -58,7 +58,7 @@ class BuildSiteTests(unittest.TestCase):
         self.run_build()
         first = self.published()["albums"][0]["images"][0]["thumbnails"][0]["src"]
         report = self.run_build()
-        self.assertEqual((report["generated"], report["cached"]), (0, 2))
+        self.assertEqual((report["generated"], report["cached"]), (0, 4))
         self.manifest["albums"][0]["images"].reverse()
         self.write_manifest()
         self.run_build()

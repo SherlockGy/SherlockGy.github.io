@@ -1,10 +1,10 @@
 import config from '../config.js';
 import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-thumbs-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-interaction-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-review-2';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-interaction-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
-import { createUploadClient } from './upload.js?v=20260917-upload-1';
+import { createUploadClient } from './upload.js?v=20260917-review-2';
 import { createSlideshow } from './slideshow.js?v=20260917-interaction-1';
 import { createScrollReader } from './reader.js?v=20260917-fit-1';
 
@@ -380,9 +380,13 @@ function applyZoom(alignPage = true) {
   if (!state.album || !reader.open) return;
   if (state.expanded) { slideshow.resize(); return; }
   const stage = $('#reader-stage'), style = getComputedStyle(stage);
-  const availableWidth = Math.max(1, stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
-  const availableHeight = Math.max(1, stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
-  const width = Math.floor(availableWidth * state.zoom);
+  if (!stage.clientWidth || !stage.clientHeight) return;
+  const bounds = stage.getBoundingClientRect();
+  // clientHeight/clientWidth round to whole pixels; use the smaller rendered
+  // bounds as well so fractional viewport sizes do not create a stray scrollbar.
+  const availableWidth = Math.max(1, Math.min(stage.clientWidth, bounds.width) - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+  const availableHeight = Math.max(1, Math.min(stage.clientHeight, bounds.height) - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
+  const width = Math.max(1, Math.floor(availableWidth * state.zoom));
   $$('.reader-page', stage).forEach(figure => {
     const caption = $('figcaption', figure), captionStyle = getComputedStyle(caption);
     const captionSpace = caption.getBoundingClientRect().height + parseFloat(captionStyle.marginTop);
@@ -399,6 +403,21 @@ function applyZoom(alignPage = true) {
     if (state.mode === 'scroll') scrollReader?.goTo(state.page);
     else stage.scrollTop = 0;
   }
+}
+function resizeReader() {
+  if (!state.album || !reader.open || state.expanded) return;
+  const stage = $('#reader-stage'), figure = $(`.reader-page[data-index="${state.page}"]`, stage);
+  if (!figure || !stage.clientHeight) return;
+  const top = stage.getBoundingClientRect().top + parseFloat(getComputedStyle(stage).paddingTop);
+  const before = figure.getBoundingClientRect();
+  const vertical = before.height ? (top - before.top) / before.height : 0;
+  const horizontal = stage.scrollLeft / Math.max(1, stage.scrollWidth - stage.clientWidth);
+  applyZoom(false);
+  const after = figure.getBoundingClientRect();
+  // Preserve the place being read when mobile browser chrome or the window
+  // changes size. Explicit zoom/reset actions still align the current page.
+  stage.scrollTop += after.top - top + vertical * after.height;
+  stage.scrollLeft = horizontal * Math.max(0, stage.scrollWidth - stage.clientWidth);
 }
 function goPage(page) {
   if (!state.album) return;
@@ -432,10 +451,16 @@ function uploadChanged() {
   state.uploadDirty = true; state.requestId = null; setFeedback($('#upload-status'), '');
 }
 function openUpload() {
-  resetDraft();
-  const select = $('#album-series'); select.replaceChildren(new Option('月份图集', ''));
-  for (const item of flattenSeries(state.series)) select.append(new Option(seriesTrail(state.series, item.id).map(entry => entry.title).join(' / '), item.id));
-  select.value = state.view === 'series' ? state.seriesId : ''; syncAlbumLocation();
+  if (uploadDialog.open || state.busy) return;
+  if (!state.uploadDirty) {
+    resetDraft();
+    const select = $('#album-series'); select.replaceChildren(new Option('月份图集', ''));
+    for (const item of flattenSeries(state.series)) select.append(new Option(seriesTrail(state.series, item.id).map(entry => entry.title).join(' / '), item.id));
+    select.value = state.view === 'series' ? state.seriesId : ''; syncAlbumLocation();
+  }
+  // A local preview shares these files. Resume its draft without revoking them;
+  // the old preview snapshot is replaced the next time the user previews it.
+  state.preview = null;
   $('#upload-hint').textContent = config.uploadEndpoint
     ? '第一张图片作为封面，添加后可调整顺序。'
     : '上传服务尚未连接。你可以先命名、排序并预览图片；本地预览不会保存，关闭或刷新页面后失效。';
@@ -457,7 +482,7 @@ function closeUpload({ keepDraft = false } = {}) {
 }
 
 async function addFiles(incoming) {
-  if (state.busy || state.uploadSaved) return;
+  if (state.busy || state.uploadSaved || !incoming.length) return;
   const next = [...state.files, ...incoming];
   try {
     validateFiles(next, config);
@@ -570,7 +595,8 @@ async function submitAlbum(event) {
     const data = await uploadClient.save({ endpoint: endpoint.href, password: code, body,
       onProgress: message => setFeedback(status, message) });
     if (data?.status !== 'committed' || typeof data.commitSha !== 'string') throw new Error('上传服务未返回保存凭据，请先检查图集目录再重试');
-    normalizeManifest({ schemaVersion: 1, albums: [data.album], series: state.series }, document.baseURI);
+    // The commit receipt confirms persistence. Validating against a stale
+    // local series list must not turn an already committed upload into failure.
     state.uploadSaved = true; state.uploadDirty = false;
     setFeedback(status, '图集已保存。网站发布需要一点时间，稍后刷新首页即可查看。', 'success');
     $('#access-code').value = '';
@@ -623,7 +649,11 @@ drop.addEventListener('drop', event => addFiles([...event.dataTransfer.files]));
 window.addEventListener('hashchange', route);
 // Observe the actual reading area: wrapping controls, rotation and viewport
 // changes can alter its height without changing the image dimensions.
-new ResizeObserver(() => { if (reader.open) applyZoom(); }).observe($('#reader-stage'));
+let readerResizeFrame;
+new ResizeObserver(() => {
+  cancelAnimationFrame(readerResizeFrame);
+  readerResizeFrame = requestAnimationFrame(resizeReader);
+}).observe($('#reader-stage'));
 document.addEventListener('keydown', event => {
   if ($('#image-preview').open || uploadDialog.open) return;
   if ($('#image-editor').open || $('#series-manager').open) return;

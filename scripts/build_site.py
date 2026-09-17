@@ -1,4 +1,4 @@
-"""Build a static Pages artifact with derived cover images; never edit source content."""
+"""Build a static Pages artifact with thumbnails for every image; never edit source content."""
 import argparse
 from copy import deepcopy
 from hashlib import sha256
@@ -26,13 +26,13 @@ def local_image(root, src):
         return None
     path = (root / unquote(url.path).lstrip("/")).resolve()
     if not path.is_relative_to((root / "images").resolve()):
-        raise ValueError(f"Cover must be inside images/: {src}")
+        raise ValueError(f"Image must be inside images/: {src}")
     if not path.is_file():
-        raise ValueError(f"Cover file is missing: {src}")
+        raise ValueError(f"Image file is missing: {src}")
     return path
 
 
-def cover_variants(path, cache, output, report):
+def image_variants(path, cache, output, report):
     source = path.read_bytes()
     digest = sha256(RECIPE.encode() + b"\0" + source).hexdigest()
     variants = []
@@ -54,7 +54,7 @@ def cover_variants(path, cache, output, report):
         if not cached.exists():
             if decoded is None:
                 with Image.open(BytesIO(source)) as image:
-                    # A cover is a still image; reading continues to use the full original.
+                    # Thumbnails are still images; reading continues to use the full original.
                     image.seek(0)
                     oriented = ImageOps.exif_transpose(image)
                     mode = "RGBA" if "A" in oriented.getbands() or "transparency" in oriented.info else "RGB"
@@ -80,7 +80,7 @@ def cover_variants(path, cache, output, report):
         shutil.copyfile(cached, output / "thumbnails" / name)
         variants.append({"src": f"./thumbnails/{name}", "width": dimensions[0], "height": dimensions[1]})
         report["thumbnailBytes"] += cached.stat().st_size
-    report["originalCoverBytes"] += len(source)
+    report["originalImageBytes"] += len(source)
     return variants
 
 
@@ -110,23 +110,27 @@ def build(root, output, cache):
             shutil.copyfile(root / name, output / name)
     (output / ".nojekyll").touch()
     published = deepcopy(manifest)
-    report = {"covers": 0, "externalCovers": 0, "generated": 0, "cached": 0, "originalCoverBytes": 0, "thumbnailBytes": 0}
+    report = {"covers": 0, "externalCovers": 0, "images": 0, "externalImages": 0,
+              "generated": 0, "cached": 0, "originalCoverBytes": 0, "originalImageBytes": 0, "thumbnailBytes": 0}
     for album in published["albums"]:
         if not album.get("images"):
             raise ValueError(f"Album has no cover: {album.get('id')}")
-        for entry in album["images"]:
-            if isinstance(entry, dict):
-                entry.pop("thumbnails", None)
-        cover = album["images"][0]
-        if isinstance(cover, str):
-            cover = {"src": cover}
-            album["images"][0] = cover
-        path = local_image(root, cover["src"])
-        if path is None:
-            report["externalCovers"] += 1
-            continue
-        cover["thumbnails"] = cover_variants(path, cache, output, report)
-        report["covers"] += 1
+        for index, entry in enumerate(album["images"]):
+            if isinstance(entry, str):
+                entry = {"src": entry}
+                album["images"][index] = entry
+            entry.pop("thumbnails", None)
+            path = local_image(root, entry["src"])
+            if path is None:
+                report["externalImages"] += 1
+                if index == 0:
+                    report["externalCovers"] += 1
+                continue
+            entry["thumbnails"] = image_variants(path, cache, output, report)
+            report["images"] += 1
+            if index == 0:
+                report["covers"] += 1
+                report["originalCoverBytes"] += path.stat().st_size
     (output / "data/albums.json").write_text(json.dumps(published, ensure_ascii=False, indent=2) + "\n")
     return report
 
