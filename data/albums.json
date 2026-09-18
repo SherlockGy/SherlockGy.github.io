@@ -2,6 +2,69 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7",
+      "title": "OpenAI-工程技术：在智能体优先的世界编码",
+      "date": "2026-09-18",
+      "description": "https://openai.com/zh-Hans-CN/index/harness-engineering/",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/001.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 1 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/002.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 2 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/003.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 3 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/004.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 4 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/005.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 5 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/006.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 6 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/007.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 7 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/008.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 8 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7/009.png",
+          "alt": "OpenAI-工程技术：在智能体优先的世界编码 · 第 9 页",
+          "width": 1448,
+          "height": 1086
+        }
+      ]
+    },
+    {
       "id": "album-14708b97-2cd7-4ce2-b218-33cb02f51d67",
       "title": "DeepSeek Harness 模式对比",
       "date": "2026-09-18",
