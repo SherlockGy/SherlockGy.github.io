@@ -52,7 +52,7 @@ async function service(path, password, body) {
   } finally { clearTimeout(timer); }
 }
 
-function managerDialog(id, title, description, onOpenChange) {
+function managerDialog(id, title, description, onOpenChange, { deferFooter = false } = {}) {
   const uploadClient = createUploadClient();
   const dialog = node('dialog', 'upload-dialog manager-dialog'); dialog.id = id; dialog.setAttribute('aria-labelledby', `${id}-title`);
   dialog.innerHTML = `<form><header class="dialog-header"><h2 id="${id}-title"></h2><button type="button" class="icon-button manager-close" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#close"/></svg></button></header>
@@ -67,6 +67,12 @@ function managerDialog(id, title, description, onOpenChange) {
   let opener;
   model.status = (message, kind = 'info') => setFeedback($('.upload-status'), message, kind);
   model.sync = () => {
+    if (deferFooter) {
+      const footer = $('.dialog-footer'), feedback = $('.upload-status');
+      footer.hidden = !model.loaded;
+      if (model.loaded) footer.prepend(feedback);
+      else model.workspace.before(feedback);
+    }
     dialog.querySelectorAll('input, textarea, select, button').forEach(control => { control.disabled = model.busy || model.saved; });
     $('.manager-close').disabled = model.busy;
     $('.manager-save').disabled = model.busy || (!model.saved && (!model.loaded || !model.dirty));
@@ -151,7 +157,7 @@ export function buildImageOrder(items) {
 }
 
 export function createImageEditor(onOpenChange, onSaved, imagePreview) {
-  const ui = managerDialog('image-editor', '编辑图集', '修改名称与说明，或调整图片。第一张作为封面；分享链接仍按页码定位。', onOpenChange);
+  const ui = managerDialog('image-editor', '编辑图集', '修改名称与说明，或调整图片。第一张作为封面；分享链接仍按页码定位。', onOpenChange, { deferFooter: true });
   let album, items = [], pickerTarget, draftTitle = '', draftDescription = '', canRename = false, canEditDescription = false, series = [];
   let knownThumbnails = new Map();
   const previewImages = () => items.map(item => {

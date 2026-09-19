@@ -1,6 +1,6 @@
 import config from '../config.js';
 import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260919-description-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260919-description-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260919-editor-entry-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
