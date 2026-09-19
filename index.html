@@ -7,8 +7,8 @@
   <meta name="description" content="SherlockGy 的月份图集与系列图集。">
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/style.css?v=20260919-series-1">
-  <script type="module" src="./assets/app.js?v=20260919-series-1"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=20260920-directory-1">
+  <script type="module" src="./assets/app.js?v=20260920-directory-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
@@ -61,7 +61,10 @@
         <a id="original-image" class="original-link" target="_blank" rel="noopener noreferrer" aria-label="查看原图" title="查看原图"><span>原图</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#external"/></svg></a>
       </div>
     </div>
-    <div id="reader-stage" class="reader-stage" tabindex="0" aria-label="图片阅读区域"></div>
+    <div class="reader-body">
+      <nav id="reader-directory" class="reader-directory" aria-label="逐页图片目录" hidden></nav>
+      <div id="reader-stage" class="reader-stage" tabindex="0" aria-label="图片阅读区域"></div>
+    </div>
     <footer class="reader-footer"><button id="prev-page" class="secondary-button" aria-label="上一页"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg><span>上一页</span></button><div class="page-control"><input id="page-number" type="number" min="1" value="1" aria-label="跳转到页码"><span id="page-total"></span></div><button id="next-page" class="secondary-button" aria-label="下一页"><span>下一页</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></footer>
     <div id="slideshow" class="slideshow" hidden>
       <aside class="slideshow-sidebar" aria-label="放映目录">

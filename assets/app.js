@@ -9,6 +9,7 @@ import { createUploadClient } from './upload.js?v=20260917-review-4';
 import { createSlideshow } from './slideshow.js?v=20260917-preload-2';
 import { createImageReader, createScrollReader } from './reader.js?v=20260917-preload-2';
 import { createImagePreloader, createImageWindow } from './preload.js?v=20260917-preload-2';
+import { createReaderDirectory } from './reader-directory.js?v=20260920-directory-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -20,6 +21,7 @@ const uploadDialog = $('#upload-dialog');
 const uploadClient = createUploadClient();
 const imagePreview = createImagePreview(updateBodyLock);
 const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
+const readerDirectory = createReaderDirectory($('#reader-directory'), goPage);
 const imageEditor = createImageEditor(updateBodyLock, data => {
   if (data.album) {
     const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
@@ -439,6 +441,7 @@ function setExpanded(expanded, restoreReader = true) {
   control.setAttribute('aria-label', label); control.title = label;
   control.replaceChildren(icon(expanded ? 'collapse' : 'expand'));
   disposeReaderImages(true);
+  readerDirectory.clear();
   if (expanded && reader.open && state.album) slideshow.open(state.album, state.page);
   else {
     slideshow.close();
@@ -450,6 +453,7 @@ function closeReader(changeRoute = true) {
   setReaderNoteOpen(false);
   setExpanded(false, false);
   disposeReaderImages(true);
+  readerDirectory.clear();
   if (reader.open) {
     reader.close(); updateBodyLock();
     if ($('#toast').parentElement === reader) document.body.append($('#toast'));
@@ -530,6 +534,10 @@ function renderReader() {
   disposeReaderImages(state.expanded || state.mode === 'scroll' || preloadedAlbum !== state.album);
   state.zoom = 1;
   if (state.expanded) { slideshow.show(state.album, state.page); syncReaderControls(); return; }
+  const showDirectory = state.mode === 'page' && state.album.images.length > 1;
+  $('.reader-body', reader).classList.toggle('has-directory', showDirectory);
+  if (showDirectory) readerDirectory.show(state.album, state.page);
+  else readerDirectory.clear();
   syncReaderControls();
   const stage = $('#reader-stage');
   stage.classList.toggle('is-continuous', state.mode === 'scroll');
