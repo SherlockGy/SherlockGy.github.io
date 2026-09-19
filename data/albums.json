@@ -527,6 +527,22 @@
           "height": 1024
         }
       ]
+    },
+    {
+      "id": "album-7725ed62-845a-4e5c-b0d2-dd80898fb862",
+      "title": "鸟的分类-按生活方式",
+      "seriesId": "series-af955985-2fbd-4d4e-b393-9f696a13ebb8",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "9eb629eede399c4f07b25e5fd9e66556a712b7fff8d6428a1b6cca32e6d05fff",
+      "images": [
+        {
+          "src": "./images/series/album-7725ed62-845a-4e5c-b0d2-dd80898fb862/001.png",
+          "alt": "鸟的分类-按生活方式 · 第 1 页",
+          "width": 1055,
+          "height": 1491
+        }
+      ]
     }
   ],
   "series": [
