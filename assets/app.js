@@ -1,6 +1,7 @@
 import config from '../config.js';
 import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260919-description-1';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260919-editor-entry-1';
+import { createImageEditor } from './manage.js?v=20260919-series-1';
+import { createSeriesActions } from './series.js?v=20260919-series-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
@@ -31,17 +32,19 @@ const imageEditor = createImageEditor(updateBodyLock, data => {
   closeReader();
   renderCatalog();
 }, imagePreview);
-const seriesManager = createSeriesManager(updateBodyLock, data => {
+const seriesActions = createSeriesActions(updateBodyLock, data => {
   if (data.manifest) {
     const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
     state.series = normalizeSeries(data.manifest);
     state.albums = normalizeManifest(data.manifest, document.baseURI);
+    for (const item of seriesTrail(state.series, state.seriesId)) collapsedSeries.delete(item.id);
     // Worker responses contain source metadata; retain already published covers by original URL.
     for (const album of state.albums) for (const image of album.images) image.thumbnails ||= knownThumbnails.get(image.src);
     renderCatalog();
   }
   if (data.status === 'committed') $('#publish-notice').hidden = false;
 });
+const collapsedSeries = new Set();
 let scrollReader;
 let imageReader;
 const pagePreloader = createImagePreloader();
@@ -52,7 +55,7 @@ function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'icon'); svg.setAttribute('aria-hidden', 'true');
   const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-  use.setAttribute('href', `./assets/icons.svg?v=20260919-notes-1#${name}`); svg.append(use);
+  use.setAttribute('href', `./assets/icons.svg?v=20260919-series-1#${name}`); svg.append(use);
   return svg;
 }
 
@@ -143,6 +146,7 @@ function updateBodyLock() { document.body.classList.toggle('modal-open', !!docum
 function collectionHash() { return state.view === 'series' ? `#/series${state.seriesId ? `/${state.seriesId}` : ''}` : ''; }
 function openCollection(view, seriesId = '', month = '', keepType = false) {
   state.view = view; state.seriesId = seriesId; state.month = month;
+  for (const item of seriesTrail(state.series, seriesId)) collapsedSeries.delete(item.id);
   state.query = ''; $('#search').value = '';
   if (!keepType) state.type = 'all';
   history.replaceState(null, '', location.pathname + location.search + collectionHash());
@@ -170,6 +174,39 @@ async function loadAlbums() {
   route();
 }
 
+function createSeries() {
+  seriesActions.open({ type: 'create', id: 'series-' + crypto.randomUUID(), parentId: state.seriesId, title: '' }, state);
+}
+function openSeriesOrder() {
+  const seriesIds = state.series.filter(item => item.parentId === state.seriesId).map(item => item.id);
+  const albumIds = state.albums.filter(item => !!state.seriesId && item.seriesId === state.seriesId).map(item => item.id);
+  seriesActions.open({ type: 'reorder', parentId: state.seriesId, seriesIds, albumIds, previousSeriesIds: [...seriesIds], previousAlbumIds: [...albumIds] }, state);
+}
+function contextMenu(label, actions) {
+  const details = el('details', 'context-actions');
+  const summary = el('summary', 'icon-button'); summary.setAttribute('aria-label', label); summary.title = label; summary.append(icon('more'));
+  const menu = el('div', 'context-menu');
+  for (const [text, callback] of actions) menu.append(button(text, '', () => { details.open = false; summary.focus(); callback(); }));
+  details.append(summary, menu);
+  details.addEventListener('toggle', () => {
+    if (details.open) for (const other of $$('.context-actions[open]')) if (other !== details) other.open = false;
+  });
+  details.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && details.open) { event.preventDefault(); event.stopPropagation(); details.open = false; summary.focus(); }
+  });
+  details.addEventListener('focusout', event => { if (event.relatedTarget && !details.contains(event.relatedTarget)) details.open = false; });
+  return details;
+}
+function seriesMenu(item) {
+  return contextMenu('系列操作：' + item.title, [
+    ['重命名', () => seriesActions.open({ type: 'rename', id: item.id, title: item.title, previousTitle: item.title }, state)],
+    ['移动到…', () => seriesActions.open({ type: 'move-series', id: item.id, parentId: item.parentId, previousParentId: item.parentId }, state)],
+  ]);
+}
+document.addEventListener('pointerdown', event => {
+  for (const menu of $$('.context-actions[open]')) if (!menu.contains(event.target)) menu.open = false;
+});
+
 function renderNav() {
   const nav = $('#month-nav'); nav.replaceChildren();
   const groups = groupByMonth(state.albums);
@@ -193,11 +230,22 @@ function renderNav() {
   $('#all-series').classList.toggle('active', state.view === 'series' && !state.seriesId);
   $('#all-series').setAttribute('aria-pressed', String(state.view === 'series' && !state.seriesId));
   for (const item of flattenSeries(state.series)) {
+    if (seriesTrail(state.series, item.id).slice(0, -1).some(parent => collapsedSeries.has(parent.id))) continue;
+    const row = el('div', 'series-tree-row'); row.style.setProperty('--depth', Math.min(item.depth, 6));
+    const hasChildren = state.series.some(child => child.parentId === item.id);
+    const toggle = button('', 'series-tree-toggle', () => {
+      collapsedSeries.has(item.id) ? collapsedSeries.delete(item.id) : collapsedSeries.add(item.id);
+      renderNav(); $(`[data-series-toggle="${item.id}"]`)?.focus();
+    });
+    toggle.dataset.seriesToggle = item.id; toggle.setAttribute('aria-label', `${collapsedSeries.has(item.id) ? '展开' : '收起'}：${item.title}`);
+    toggle.setAttribute('aria-expanded', String(!collapsedSeries.has(item.id)));
+    toggle.append(icon(collapsedSeries.has(item.id) ? 'chevron-right' : 'chevron-down'));
+    toggle.hidden = !hasChildren;
     const link = button(item.title, `series-link${state.view === 'series' && state.seriesId === item.id ? ' active' : ''}`, () => openCollection('series', item.id));
     link.style.setProperty('--depth', Math.min(item.depth, 6));
     link.title = seriesTrail(state.series, item.id).map(entry => entry.title).join(' / ');
     if (state.view === 'series' && state.seriesId === item.id) link.setAttribute('aria-current', 'page');
-    seriesNav.append(link);
+    row.append(toggle, link); seriesNav.append(row);
   }
 }
 
@@ -231,6 +279,17 @@ function renderCatalog() {
   const currentSeries = state.series.find(item => item.id === state.seriesId);
   const title = state.view === 'series' ? currentSeries?.title || '系列图集' : state.month ? `${state.month.slice(0, 4)} 年 ${Number(state.month.slice(5))} 月` : '月份图集';
   $('#page-title').textContent = title;
+  const isSeries = state.view === 'series';
+  $('#new-series').hidden = !isSeries || state.loadError;
+  $('#new-series').textContent = currentSeries ? '新建子系列' : '新建系列';
+  $('#new-album').hidden = isSeries && !currentSeries;
+  $('#series-tools').replaceChildren();
+  if (isSeries && !state.loadError) {
+    if (currentSeries) $('#series-tools').append(seriesMenu(currentSeries));
+    const children = state.series.filter(item => item.parentId === state.seriesId);
+    const albums = state.albums.filter(item => !!state.seriesId && item.seriesId === state.seriesId);
+    if (children.length > 1 || albums.length > 1) $('#series-tools').prepend(button('调整顺序', 'text-button', openSeriesOrder));
+  }
   const crumbs = $('#series-breadcrumbs'); crumbs.replaceChildren(); crumbs.hidden = state.view !== 'series';
   if (state.view === 'series') {
     crumbs.append(button('系列图集', 'text-button', () => openCollection('series')));
@@ -255,8 +314,10 @@ function renderCatalog() {
     if (children.length) {
       const grid = el('div', 'series-grid');
       for (const item of children) {
-        const card = button('', 'series-card', () => openCollection('series', item.id, '', true));
-        card.append(icon('folio'), el('h2', '', item.title), el('p', '', `${state.series.filter(entry => entry.parentId === item.id).length} 个子系列 · ${item.albumCount} 个图集`)); grid.append(card);
+        const card = el('article', 'series-card');
+        const link = button('', 'series-card-link', () => openCollection('series', item.id, '', true));
+        link.append(icon('folio'), el('h2', '', item.title), el('p', '', `${state.series.filter(entry => entry.parentId === item.id).length} 个子系列 · ${item.albumCount} 个图集`));
+        card.append(link, seriesMenu(item)); grid.append(card);
       }
       container.append(grid);
     }
@@ -264,8 +325,9 @@ function renderCatalog() {
     if (!children.length && !filtered.length) {
       if (query || state.type !== 'all') { container.append(emptyState('filtered')); return; }
       const empty = el('section', 'empty-state');
-      empty.append(el('h2', '', '暂无内容'),
-        button('管理系列', 'secondary-button', () => seriesManager.open(state.seriesId)), button('添加图集', 'primary-button', openUpload));
+      empty.append(el('h2', '', currentSeries ? '这个系列还是空的' : '暂无系列'),
+        button(currentSeries ? '新建子系列' : '新建系列', 'secondary-button', createSeries));
+      if (currentSeries) empty.append(button('添加图集', 'primary-button', openUpload));
       container.append(empty);
     }
     return;
@@ -313,7 +375,12 @@ function renderCards(grid, albums, offset = 0) {
       if (album.seriesId) meta.append(el('span', 'card-series', state.series.find(item => item.id === album.seriesId)?.title || '系列图集'));
       else { const date = el('time', '', album.date.replaceAll('-', '.')); date.dateTime = album.date; meta.append(date); }
       if (album.tags[0]) meta.append(el('span', 'tag', album.tags[0]));
-      meta.append(badge); card.append(meta); grid.append(card);
+      meta.append(badge);
+      if (album.seriesId) meta.append(contextMenu(`图集操作：${album.title}`, [
+        ['编辑图集', () => imageEditor.open(album.id, state.albums.flatMap(item => item.images))],
+        ['移动到…', () => seriesActions.open({ type: 'move-album', id: album.id, seriesId: album.seriesId, previousSeriesId: album.seriesId }, state)],
+      ]));
+      card.append(meta); grid.append(card);
   }
 }
 
@@ -324,6 +391,7 @@ function route() {
       state.query = ''; $('#search').value = ''; state.type = 'all'; state.month = '';
     }
     state.view = view; state.seriesId = seriesId;
+    for (const item of seriesTrail(state.series, seriesId)) collapsedSeries.delete(item.id);
     renderCatalog();
   };
   const seriesRoute = location.hash.match(/^#\/series(?:\/([a-zA-Z0-9_-]+))?$/);
@@ -584,11 +652,13 @@ function uploadChanged() {
 }
 function openUpload() {
   if (uploadDialog.open || state.busy) return;
+  if (state.view === 'series' && !state.seriesId) { createSeries(); return; }
   if (!state.uploadDirty) {
     resetDraft();
-    const select = $('#album-series'); select.replaceChildren(new Option('月份图集', ''));
-    for (const item of flattenSeries(state.series)) select.append(new Option(seriesTrail(state.series, item.id).map(entry => entry.title).join(' / '), item.id));
-    select.value = state.view === 'series' ? state.seriesId : ''; syncAlbumLocation();
+    const select = $('#album-series');
+    const destination = state.view === 'series' ? state.seriesId : '';
+    select.replaceChildren(new Option(destination ? seriesTrail(state.series, destination).map(entry => entry.title).join(' / ') : '月份图集', destination));
+    select.value = destination; syncAlbumLocation();
   }
   // A local preview shares these files. Resume its draft without revoking them;
   // the old preview snapshot is replaced the next time the user previews it.
@@ -747,7 +817,7 @@ async function submitAlbum(event) {
 
 $('#all-months').addEventListener('click', () => openCollection('archive'));
 $('#all-series').addEventListener('click', () => openCollection('series'));
-$('#manage-series').addEventListener('click', () => seriesManager.open(state.seriesId));
+$('#new-series').addEventListener('click', createSeries);
 $('#edit-images').addEventListener('click', () => {
   if (state.album && !state.album.local) imageEditor.open(state.album.id, state.albums.flatMap(album => album.images));
 });
@@ -811,7 +881,7 @@ for (const target of [reader, $('.reader-header', reader), $('#reader-stage')]) 
 document.addEventListener('keydown', event => {
   if (event.target.closest('#reader-note-panel')) return;
   if ($('#image-preview').open || uploadDialog.open) return;
-  if ($('#image-editor').open || $('#series-manager').open) return;
+  if ($('#image-editor').open || $('#series-action').open) return;
   if (event.target.closest('input, textarea, select, [contenteditable]') || event.ctrlKey || event.metaKey || event.altKey) return;
   if (reader.open) {
     if (state.expanded && ['ArrowUp', 'PageUp'].includes(event.key)) { event.preventDefault(); goPage(state.page - 1); }

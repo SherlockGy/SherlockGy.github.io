@@ -247,9 +247,9 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .breadcrumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; color: var(--muted); }
 .breadcrumbs .text-button { white-space: normal; text-align: left; overflow-wrap: anywhere; }
 .series-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; margin-top: 34px; }
-.series-card { position: relative; min-width: 0; padding: 25px; border: 1px solid var(--line); border-radius: 0 10px 10px 10px; background: var(--paper); text-align: left; transition: border-color .2s, box-shadow .2s; }
+.series-card { position: relative; min-width: 0; border: 1px solid var(--line); border-radius: 0 10px 10px 10px; background: var(--paper); text-align: left; transition: border-color .2s, box-shadow .2s; }
 .series-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--paper)); box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 5%, transparent); }
-.series-card .icon { color: var(--accent); width: 23px; height: 26px; margin-bottom: 18px; }
+.series-card-link > .icon { color: var(--accent); width: 23px; height: 26px; margin-bottom: 18px; }
 .series-card h2 { font-family: var(--display); font-size: 24px; font-weight: 600; overflow-wrap: anywhere; }
 .series-card p { margin-top: 11px; font-size: var(--text-meta); color: var(--muted); }
 .series-albums { margin-top: 34px; }
@@ -348,6 +348,39 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .series-edit-row .form-input { background: var(--paper); }
 :where(button, a, input, textarea, select):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .search:has(input:focus-visible), .form-input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Series actions stay attached to the collection or item they affect. */
+.series-tree-row { display: flex; align-items: center; min-width: 0; padding-left: calc(var(--depth) * 10px); }
+.series-tree-row .series-link { flex: 1; min-width: 0; padding: 8px 6px; }
+.series-tree-row > .series-link:first-child, .series-tree-toggle[hidden] + .series-link { margin-left: 24px; }
+.series-tree-toggle { flex: 0 0 24px; width: 24px; height: 36px; display: grid; place-items: center; color: var(--muted); }
+.series-tree-toggle .icon { width: 14px; height: 14px; }
+.series-card-link { display: block; width: 100%; height: 100%; padding: 25px; text-align: left; border-radius: inherit; }
+.series-card-link h2 { padding-right: 18px; }
+.series-card > .context-actions { position: absolute; top: 12px; right: 12px; }
+.context-actions { position: relative; flex: 0 0 auto; }
+.context-actions > summary { list-style: none; cursor: pointer; }
+.context-actions > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.context-actions > summary::-webkit-details-marker { display: none; }
+.context-actions[open] > summary { background: var(--soft); color: var(--accent); }
+.context-menu { position: absolute; z-index: 20; top: calc(100% + 4px); right: 0; width: 150px; padding: 5px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); box-shadow: 0 8px 26px color-mix(in srgb, var(--ink) 12%, transparent); }
+.context-menu button { display: block; width: 100%; padding: 10px 12px; text-align: left; font-size: var(--text-ui); border-radius: 5px; }
+.context-menu button:hover, .context-menu button:focus-visible { background: var(--soft); color: var(--accent); }
+.toolbar-context, .series-tools { display: flex; align-items: center; justify-content: flex-end; gap: 16px; min-width: 0; }
+.series-tools:empty { display: none; }
+.series-action-dialog { width: min(620px, calc(100vw - 40px)); }
+.action-context { margin-bottom: 24px; padding-left: 12px; border-left: 3px solid var(--accent); color: var(--muted); font-size: var(--text-ui); overflow-wrap: anywhere; }
+.action-field { display: block; }
+.action-password-label { margin-top: 28px; }
+.series-action-dialog .action-close { font-size: 26px; }
+.series-action-dialog .action-cancel { justify-self: start; }
+.order-heading { margin: 18px 0 10px; font-size: var(--text-body); font-weight: 500; }
+.series-order-list { list-style: none; padding: 0; margin: 0; }
+.series-order-row { display: grid; grid-template-columns: 2ch minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.order-position { color: var(--muted); font: var(--text-meta)/1.5 var(--mono); }
+.order-title { font-size: var(--text-ui); overflow-wrap: anywhere; }
+.order-controls { display: flex; gap: 6px; }
+
 @media (min-width: 1800px) {
   .album-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -382,7 +415,6 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .series-nav-heading { grid-column: 2; grid-row: 1; gap: 1px; }
   #all-series { min-height: 40px; padding: 9px 8px; gap: 7px; }
   #all-series .icon { width: 16px; height: 16px; }
-  #manage-series { padding: 9px 3px; }
   #month-nav, #series-nav { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
   #series-nav:not(:empty) { margin-top: 0; }
   body[data-view="archive"] #series-nav, body[data-view="series"] #month-nav, #series-nav:empty { display: none; }
@@ -459,7 +491,7 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .manager-create { gap: 8px; }
   .editor-add { align-items: flex-start; flex-direction: column; }
   .series-grid { grid-template-columns: minmax(0, 1fr); gap: 25px; margin-top: 29px; }
-  .series-card { padding: 22px; }
+  .series-card-link { padding: 22px; }
 }
 @media (max-width: 540px) {
   .album-grid { grid-template-columns: minmax(0, 1fr); }
@@ -498,4 +530,23 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .album-card:hover .cover { transform: none; }
+}
+
+@media (max-width: 1100px) {
+  body[data-view="series"] .collection-header { align-items: start; flex-direction: column; }
+  body[data-view="series"] .header-actions { flex-wrap: wrap; width: 100%; }
+}
+@media (max-width: 760px) {
+  #series-nav { display: block; max-height: 220px; overflow-y: auto; }
+  .series-tree-row .series-link { max-width: none; width: auto; white-space: normal; }
+  body[data-view="series"] .collection-header { display: flex; gap: 18px; }
+  body[data-view="series"] .header-actions { display: flex; gap: 10px; }
+  body[data-view="series"] .search { flex: 1 0 100%; order: 2; }
+  .toolbar-context { flex-wrap: wrap; }
+  .series-action-dialog { width: calc(100vw - 20px); }
+}
+@media (max-width: 400px) {
+  .series-order-row { gap: 8px; }
+  .order-controls { gap: 3px; }
+  .order-controls .secondary-button { padding-inline: 7px; }
 }

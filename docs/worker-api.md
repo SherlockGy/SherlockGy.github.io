@@ -101,11 +101,13 @@
 `POST /library` 使用口令和 `multipart/form-data`，提交 `requestId`、`revision`、`series`、`placements`。最后两个字段为 JSON：
 
 - `series`：完整的系列数组，条目为 `{ id, title, parentId }`。顶层 `parentId` 为 `""`；最多 200 个系列，名称 1–120 字，编号唯一，不得有循环或缺失上级。已有系列必须保留，可新增、重命名、调整层级和排序。
-- `placements`：完整的图集排列，条目为 `{ id, seriesId, date }`。所有已有图集必须恰好出现一次，禁止通过目录接口添加或丢弃图集。`seriesId` 为空时必须提供有效归档日期；归属系列时不要求日期，已有日期由服务端保留。
+- `placements`：完整的图集排列，条目为 `{ id, seriesId, date }`。所有已有图集必须恰好出现一次，禁止通过目录接口添加或丢弃图集。月份图集的 `seriesId` 必须保持为空，系列图集只能指向已有系列；禁止两类图集互相转换。`date` 必须等于原记录的日期（无日期时为 `""`），月份图集之间的相对顺序也必须保持不变。
 
-系列数组中同级条目的相对顺序、图集数组中同一系列条目的相对顺序分别决定展示顺序。新系列图集通过 `POST /albums` 创建，不要求日期，保存到 `images/series/<album-id>/`。将原月份图集移入系列只更新目录，原图片地址不变。
+系列数组中同级条目的相对顺序、图集数组中同一系列条目的相对顺序分别决定展示顺序。新系列图集通过 `POST /albums` 创建，不要求日期，保存到 `images/series/<album-id>/`。系列图集在系列之间移动只更新归属，原图片地址不变。
 
-目录保存成功返回 HTTP 200 / `{ status: "committed", commitSha, manifest }`；未变化时返回 `{ status: "unchanged", manifest }`。目录版本变更返回 HTTP 409 / `LIBRARY_CHANGED`，不会覆盖别人的变更。
+网页中的新建、重命名、移动和当前层级排序分别保存。保存时先读取最新目录，将单次操作应用到最新数据，再提交完整的 `series` 和 `placements`；重命名、移动和排序会检查操作对象的原值，避免覆盖其并发变化。与本次操作无关的条目保持最新值。
+
+目录保存成功返回 HTTP 200 / `{ status: "committed", commitSha, manifest }`；未变化时返回 `{ status: "unchanged", manifest }`。目录版本变更返回 HTTP 409 / `LIBRARY_CHANGED`，不会覆盖别人的变更。网页保留操作草稿，再次保存时读取最新版本并重新检查。连接中断等结果不明的失败则保留原请求正文与编号，原样重试以识别已完成的提交。
 
 图片编辑和目录整理分别保留最近 50 次请求编号及内容指纹。同一编号的原样重试返回成功，编号被用于不同内容时返回 HTTP 409 / `REQUEST_REUSED`；不再保留的旧请求仍受版本检查约束。接口共用现有口令、来源限制、限流、请求体上限和 GitHub 访问超时。新增日志通过统一 `logPrefix` 标明入口、中文操作和图集编号或追踪编号。
 
@@ -128,7 +130,7 @@ GitHub 请求错误额外返回 `stage` 和耗时 `elapsedMs`，若已收到 HTT
 ```json
 {
   "status": "readable",
-  "version": "2026-09-19-description-1",
+  "version": "2026-09-19-series-1",
   "traceId": "<request UUID>",
   "elapsedMs": 500,
   "albumCount": 0,

@@ -6,7 +6,7 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-19-description-1';
+const VERSION = '2026-09-19-series-1';
 const MAX_DESCRIPTION_LENGTH = 10000;
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
@@ -577,15 +577,18 @@ function validateLibrary(series, placements, manifest) {
         (item.seriesId ? !ids.has(item.seriesId) : !validDate(item.date))) fail(400, 'INVALID_PLACEMENT', '图集归属、日期或顺序格式不正确');
     seen.add(item.id);
     const album = { ...albums.get(item.id) };
+    if (!!album.seriesId !== !!item.seriesId) fail(400, 'INVALID_PLACEMENT', '月份图集与系列图集不能互相移动');
+    if (item.date !== (album.date || '')) fail(400, 'INVALID_PLACEMENT', '整理系列不能修改图集日期');
     if (item.seriesId) {
       album.seriesId = item.seriesId;
-      // Existing dates are retained only for a later move back to the archive.
-    } else {
-      delete album.seriesId; album.date = item.date;
     }
     return album;
   });
   if (seen.size !== albums.size) fail(400, 'INVALID_PLACEMENT', '目录必须保留每个已有图集');
+  if (JSON.stringify(nextAlbums.filter(album => !album.seriesId).map(album => album.id)) !==
+      JSON.stringify(manifest.albums.filter(album => !album.seriesId).map(album => album.id))) {
+    fail(400, 'INVALID_PLACEMENT', '整理系列不能调整月份图集顺序');
+  }
   return { series: normalized, albums: nextAlbums };
 }
 async function editLibrary(request, env) {

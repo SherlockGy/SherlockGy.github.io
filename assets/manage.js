@@ -2,7 +2,7 @@ import config from '../config.js';
 import { createUploadClient } from './upload.js?v=20260917-review-4';
 import { createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
-import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260919-description-1';
+import { MAX_DESCRIPTION_LENGTH, normalizeManifest, validateFiles } from './model.js?v=20260919-description-1';
 
 function node(tag, className, text) {
   const value = document.createElement(tag);
@@ -19,14 +19,6 @@ function input(label, value = '', type = 'text') {
   const control = node('input', 'form-input'); control.type = type; control.value = value;
   if (type === 'text') control.maxLength = 120;
   wrapper.append(control); return { wrapper, control };
-}
-function seriesSelect(series, value, rootLabel, exclude = '') {
-  const select = node('select', 'form-input'); select.append(new Option(rootLabel, ''));
-  for (const item of flattenSeries(series)) {
-    if (exclude && seriesTrail(series, item.id).some(entry => entry.id === exclude)) continue;
-    select.append(new Option(seriesTrail(series, item.id).map(entry => entry.title).join(' / '), item.id));
-  }
-  select.value = value; return select;
 }
 async function service(path, password, body) {
   if (!config.uploadEndpoint) throw new Error('请先配置上传服务');
@@ -279,100 +271,4 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     knownThumbnails = new Map(publishedImages.filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
     ui.path = `/albums/${encodeURIComponent(id)}`; ui.open();
   } };
-}
-
-export function createSeriesManager(onOpenChange, onSaved) {
-  const ui = managerDialog('series-manager', '管理系列', '调整系列层级、顺序和图集归属。', onOpenChange);
-  ui.path = '/library'; ui.onSaved = onSaved;
-  let series = [], placements = [], titles = new Map(), selected = '', newTitle = '';
-  const focusLocation = () => ui.workspace.querySelector('.manager-field select')?.focus();
-  const focusRow = (id, delta) => {
-    const row = [...ui.workspace.querySelectorAll('[data-item-id]')].find(row => row.dataset.itemId === id);
-    const button = row?.querySelector(`[data-direction="${delta}"]`);
-    (button && !button.disabled ? button : row?.querySelector('input, select'))?.focus();
-  };
-  const moveWithin = (list, item, delta, sameGroup) => {
-    const siblings = list.filter(sameGroup), other = siblings[siblings.indexOf(item) + delta];
-    if (!other) return;
-    const a = list.indexOf(item), b = list.indexOf(other); [list[a], list[b]] = [list[b], list[a]];
-    ui.changed(); render(); focusRow(item.id, delta);
-  };
-  const orderButtons = (list, item, predicate) => {
-    const group = list.filter(predicate), controls = node('div', 'editor-controls');
-    for (const [text, delta] of [['上移', -1], ['下移', 1]]) {
-      const button = action(text, () => moveWithin(list, item, delta, predicate));
-      button.dataset.direction = String(delta); button.setAttribute('aria-label', `${text}：${item.title || titles.get(item.id)}`);
-      button.dataset.boundary = String(!group[group.indexOf(item) + delta]); controls.append(button);
-    }
-    return controls;
-  };
-  const render = () => {
-    ui.workspace.replaceChildren();
-    const location = node('label', 'manager-field'); location.append(node('span', 'field-label', '当前整理位置'));
-    const select = seriesSelect(series, selected, '顶层系列');
-    select.addEventListener('change', () => { selected = select.value; render(); focusLocation(); }); location.append(select); ui.workspace.append(location);
-    const create = node('div', 'manager-create');
-    const title = input('新系列名称', newTitle); title.control.placeholder = '例如：经济学';
-    title.control.addEventListener('input', () => { newTitle = title.control.value; ui.changed(); });
-    const addSeries = action('添加系列', () => {
-      if (!newTitle.trim()) { ui.status('请填写新系列名称', 'error'); title.control.focus(); return; }
-      if (series.length >= 200) { ui.status('最多支持 200 个系列', 'error'); return; }
-      const id = `series-${crypto.randomUUID()}`;
-      series.push({ id, title: newTitle.trim(), parentId: selected });
-      newTitle = ''; ui.changed(); render(); focusRow(id);
-    });
-    title.control.addEventListener('keydown', event => {
-      if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); addSeries.click(); }
-    });
-    create.append(title.wrapper, addSeries); ui.workspace.append(create);
-    ui.workspace.append(node('h3', 'manager-heading', selected ? '下级系列' : '顶层系列'));
-    const children = series.filter(item => item.parentId === selected);
-    if (!children.length) ui.workspace.append(node('p', 'field-note', selected ? '暂无下级系列' : '暂无系列'));
-    for (const item of children) {
-      const row = node('section', 'series-edit-row'); row.dataset.itemId = item.id;
-      const title = input('系列名称', item.title); title.control.setAttribute('aria-label', `系列名称：${item.title}`);
-      title.control.addEventListener('input', () => { item.title = title.control.value; ui.changed(); });
-      const parentLabel = node('label', 'manager-field'); parentLabel.append(node('span', 'field-label', '上级系列'));
-      const parent = seriesSelect(series, item.parentId, '顶层', item.id);
-      parent.addEventListener('change', () => { item.parentId = parent.value; ui.changed(); render(); focusLocation(); }); parentLabel.append(parent);
-      const controls = orderButtons(series, item, entry => entry.parentId === item.parentId);
-      controls.prepend(action('进入系列', () => { selected = item.id; render(); focusLocation(); }));
-      row.append(title.wrapper, parentLabel, controls); ui.workspace.append(row);
-    }
-    ui.workspace.append(node('h3', 'manager-heading', selected ? '本系列的图集' : '月份图集'));
-    const albums = placements.filter(item => item.seriesId === selected);
-    if (!albums.length) ui.workspace.append(node('p', 'field-note', '暂无图集'));
-    for (const item of albums) {
-      const row = node('section', 'series-edit-row'); row.dataset.itemId = item.id; row.append(node('h4', 'manager-album-title', titles.get(item.id)));
-      const destination = node('label', 'manager-field'); destination.append(node('span', 'field-label', '图集归属'));
-      const select = seriesSelect(series, item.seriesId, '月份图集');
-      select.addEventListener('change', () => {
-        item.seriesId = select.value;
-        if (!item.seriesId && !validDate(item.date)) selected = '';
-        ui.changed(); render(); focusLocation();
-      }); destination.append(select); row.append(destination);
-      if (!item.seriesId) {
-        const dateField = input('归档日期', item.date, 'date'); dateField.control.required = true;
-        dateField.control.addEventListener('input', () => { item.date = dateField.control.value; ui.changed(); }); row.append(dateField.wrapper);
-      }
-      if (selected) row.append(orderButtons(placements, item, entry => entry.seriesId === item.seriesId));
-      ui.workspace.append(row);
-    }
-    ui.summary(`${series.length} 个系列 · ${placements.length} 个图集`); ui.sync();
-  };
-  ui.receive = data => {
-    const nextSeries = normalizeSeries(data.manifest); normalizeManifest(data.manifest, document.baseURI);
-    series = nextSeries;
-    placements = data.manifest.albums.map(album => ({ id: album.id, seriesId: album.seriesId || '', date: album.date || '' }));
-    titles = new Map(data.manifest.albums.map(album => [album.id, album.title]));
-    if (!series.some(item => item.id === selected)) selected = '';
-    newTitle = ''; render();
-  };
-  ui.payload = () => {
-    if (newTitle.trim()) throw new Error('新系列名称尚未添加，请先点击“添加系列”，或清空名称后保存');
-    normalizeSeries({ series });
-    if (placements.some(item => !item.seriesId && !validDate(item.date))) throw new Error('移入月份图集时需要填写有效日期');
-    const body = new FormData(); body.set('series', JSON.stringify(series)); body.set('placements', JSON.stringify(placements)); return body;
-  };
-  return { open(id = '') { selected = id; ui.open(); } };
 }

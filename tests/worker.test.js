@@ -131,7 +131,7 @@ test('connection check authenticates, reads the current manifest and never write
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
-  assert.equal(result.version, '2026-09-19-description-1'); assert.ok(result.traceId);
+  assert.equal(result.version, '2026-09-19-series-1'); assert.ok(result.traceId);
   assert.equal(fake.calls.length, 1); assert.ok(fake.calls.every(isRead));
   assert.equal(fake.manifest().albums.length, 0);
 });
@@ -286,7 +286,8 @@ test('concurrent edits to the same album are rejected; unrelated commits are pre
 });
 const nestedSeries = () => [{ id: 'economics', title: '经济学', parentId: '' }, { id: 'macro', title: '宏观经济学', parentId: 'economics' }, { id: 'policy', title: '货币政策', parentId: 'macro' }];
 test('nested series, album placement and sibling ordering save without reuploading pictures', async t => {
-  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const initial = editFixture(); initial.series = nestedSeries(); initial.albums[0].seriesId = 'macro';
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
   const { revision } = await readManagement('/library');
   const response = await worker.fetch(managementRequest('/library', libraryForm(revision, nestedSeries(), [{ id: 'notes', seriesId: 'policy', date: '2026-09-15' }])), env);
   assert.equal(response.status, 200); assert.deepEqual(fake.manifest().series, nestedSeries());
@@ -294,8 +295,8 @@ test('nested series, album placement and sibling ordering save without reuploadi
   assert.deepEqual(fake.manifest().albums[0].images, editFixture().albums[0].images);
   assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 0);
   const next = await readManagement('/library');
-  assert.equal((await worker.fetch(managementRequest('/library', libraryForm(next.revision, nestedSeries(), [{ id: 'notes', seriesId: '', date: '2026-08-12' }])), env)).status, 200);
-  assert.equal(fake.manifest().albums[0].seriesId, undefined); assert.equal(fake.manifest().albums[0].date, '2026-08-12');
+  assert.equal((await worker.fetch(managementRequest('/library', libraryForm(next.revision, nestedSeries(), [{ id: 'notes', seriesId: '', date: '2026-08-12' }])), env)).status, 400);
+  assert.equal(fake.manifest().albums[0].seriesId, 'policy'); assert.equal(fake.manifest().albums[0].date, '2026-09-15');
 });
 test('cycles, dangling parents, dropped albums, invalid dates and stale library changes are rejected', async t => {
   const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
@@ -311,7 +312,8 @@ test('cycles, dangling parents, dropped albums, invalid dates and stale library 
   assert.ok(fake.calls.every(isRead));
 });
 test('library retries preserve concurrent image edits and lost responses are idempotent', async t => {
-  const fake = fakeGit({ initialManifest: editFixture(), conflicts: 1, loseResponse: true, concurrentChange: manifest => {
+  const initial = editFixture(); initial.series = nestedSeries(); initial.albums[0].seriesId = 'macro';
+  const fake = fakeGit({ initialManifest: initial, conflicts: 1, loseResponse: true, concurrentChange: manifest => {
     manifest.albums[0].images.reverse(); return manifest;
   } }); t.mock.method(globalThis, 'fetch', fake.fetch);
   const { revision } = await readManagement('/library'), id = crypto.randomUUID();
@@ -625,4 +627,19 @@ test('multiline requests committed before newline normalization remain safe to r
   const changed = await worker.fetch(managementRequest('/albums/notes', edit), env);
   assert.equal(changed.status, 409);
   assert.equal((await changed.json()).error.code, 'REQUEST_REUSED');
+});
+
+ test('series operations cannot move, date-edit or reorder monthly albums', async t => {
+  const initial = editFixture(); initial.series = nestedSeries();
+  initial.albums.push({ ...structuredClone(initial.albums[0]), id: 'other-month' });
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const { revision } = await readManagement('/library');
+  const placements = initial.albums.map(a => ({ id: a.id, seriesId: '', date: a.date }));
+  for (const changed of [
+    [{ ...placements[0], seriesId: 'macro' }, placements[1]],
+    [{ ...placements[0], date: '2026-09-01' }, placements[1]],
+    placements.toReversed(),
+  ]) assert.equal((await worker.fetch(managementRequest('/library', libraryForm(revision, nestedSeries(), changed)), env)).status, 400);
+  assert.ok(fake.calls.every(isRead));
+  assert.deepEqual(fake.manifest().albums, initial.albums);
 });
