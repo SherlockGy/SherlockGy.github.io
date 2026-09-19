@@ -6,10 +6,10 @@ import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
 import { createUploadClient } from './upload.js?v=20260917-review-4';
-import { createSlideshow } from './slideshow.js?v=20260917-preload-2';
-import { createImageReader, createScrollReader } from './reader.js?v=20260917-preload-2';
+import { createSlideshow } from './slideshow.js?v=20260920-navigation-1';
+import { createImageReader, createScrollReader } from './reader.js?v=20260920-navigation-1';
 import { createImagePreloader, createImageWindow } from './preload.js?v=20260917-preload-2';
-import { createReaderDirectory } from './reader-directory.js?v=20260920-directory-1';
+import { createReaderDirectory } from './reader-directory.js?v=20260920-navigation-1';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -22,6 +22,21 @@ const uploadClient = createUploadClient();
 const imagePreview = createImagePreview(updateBodyLock);
 const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
 const readerDirectory = createReaderDirectory($('#reader-directory'), goPage);
+// 逐页阅读统一将翻页焦点放在目录；单图没有目录时使用已有的拖动按钮。
+function focusReadingPage() {
+  if (state.expanded) slideshow.focusCurrent();
+  else if (state.mode === 'page' && state.album?.images.length > 1) readerDirectory.focusCurrent();
+  else if (state.mode === 'page') $('#reader-hand').focus({ preventScroll: true });
+  else $('#reader-stage').focus({ preventScroll: true });
+}
+
+// 图片、留白及对话框外的灰色区域不接管焦点，表单和操作按钮仍可正常使用。
+reader.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || !state.album || (!state.expanded && state.mode !== 'page')) return;
+  if (event.target.closest('button, a, input, textarea, select, [contenteditable], #reader-note-panel')) return;
+  if (event.target !== reader && !event.target.closest('#reader-stage, .slideshow-canvas, #reader-directory, .slideshow-list')) return;
+  event.preventDefault(); focusReadingPage();
+}, { capture: true });
 const imageEditor = createImageEditor(updateBodyLock, data => {
   if (data.album) {
     const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
@@ -428,6 +443,7 @@ function route() {
   $('#edit-images').hidden = !!album.local || !config.uploadEndpoint;
   document.title = `${album.title} · 图集`;
   renderReader();
+  if (changed && state.mode === 'page') focusReadingPage();
 }
 
 function setExpanded(expanded, restoreReader = true) {
@@ -445,7 +461,7 @@ function setExpanded(expanded, restoreReader = true) {
   if (expanded && reader.open && state.album) slideshow.open(state.album, state.page);
   else {
     slideshow.close();
-    if (restoreReader && reader.open && state.album) { renderReader(); control.focus({ preventScroll: true }); }
+    if (restoreReader && reader.open && state.album) { renderReader(); focusReadingPage(); }
   }
 }
 
@@ -489,7 +505,7 @@ function syncReaderControls() {
   $('#zoom-reset').hidden = state.mode !== 'page';
   $('#reader-tool-divider').hidden = state.mode !== 'page';
   $('#reader-stage').setAttribute('aria-label', state.hand ? '图片阅读区域：拖动查看，滚轮或双指缩放；加减键缩放，0 键恢复适屏' : '图片阅读区域');
-  if (!state.expanded && reader.contains(focused) && focused.disabled) $('#reader-stage').focus({ preventScroll: true });
+  if (!state.expanded && reader.contains(focused) && focused.disabled) focusReadingPage();
   for (const mode of ['page', 'scroll']) {
     $(`#mode-${mode}`).classList.toggle('active', state.mode === mode);
     $(`#mode-${mode}`).setAttribute('aria-pressed', String(state.mode === mode));
@@ -522,7 +538,7 @@ function mountReaderImage(frame, image, index, entry, retry, onReady = () => {})
       console.warn(logPrefix, '原图加载失败');
       status.hidden = false; status.className = 'image-error';
       status.replaceChildren(el('p', '', '这张图片暂时无法加载'), button('重新加载图片', 'text-button', () => {
-        $('#reader-stage').focus({ preventScroll: true }); retry();
+        focusReadingPage(); retry();
       }));
     }
   }
@@ -540,6 +556,7 @@ function renderReader() {
   else readerDirectory.clear();
   syncReaderControls();
   const stage = $('#reader-stage');
+  stage.tabIndex = state.mode === 'scroll' ? 0 : -1;
   stage.classList.toggle('is-continuous', state.mode === 'scroll');
   const images = state.mode === 'scroll' ? state.album.images.map((image, index) => [image, index]) : [[state.album.images[state.page], state.page]];
   const frames = new Map();
@@ -571,7 +588,7 @@ function renderReader() {
     const frame = frames.get(state.page), entry = pagePreloader.select(state.album.images, state.page);
     pageImageDispose = mountReaderImage(frame, state.album.images[state.page], state.page, entry, renderReader, () => {
       imageReader = createImageReader(frame, {
-        keyTarget: stage,
+        keyTarget: reader,
         onScaleChange: scale => { state.zoom = scale; syncReaderControls(); },
       });
       imageReader.setHand(state.hand);
@@ -852,12 +869,13 @@ $('#page-number').addEventListener('change', event => goPage((Number(event.targe
 for (const mode of ['page', 'scroll']) $(`#mode-${mode}`).addEventListener('click', () => {
   if (state.mode === mode) return;
   state.mode = mode; state.hand = false; renderReader();
+  if (mode === 'page') focusReadingPage();
 });
 $('#reader-hand').addEventListener('click', () => {
   if (state.mode !== 'page') return;
   state.hand = !state.hand; imageReader?.setHand(state.hand); syncReaderControls();
   if (state.hand) {
-    $('#reader-stage').focus({ preventScroll: true });
+    focusReadingPage();
     toast('拖动查看 · 滚轮或双指缩放 · 点“适屏”复位');
   }
 });
@@ -892,12 +910,13 @@ document.addEventListener('keydown', event => {
   if ($('#image-editor').open || $('#series-action').open) return;
   if (event.target.closest('input, textarea, select, [contenteditable]') || event.ctrlKey || event.metaKey || event.altKey) return;
   if (reader.open) {
-    if (state.expanded && ['ArrowUp', 'PageUp'].includes(event.key)) { event.preventDefault(); goPage(state.page - 1); }
-    if (state.expanded && ['ArrowDown', 'PageDown'].includes(event.key)) { event.preventDefault(); goPage(state.page + 1); }
-    if (event.key === 'ArrowLeft') { event.preventDefault(); goPage(state.page - 1); }
-    if (event.key === 'ArrowRight') { event.preventDefault(); goPage(state.page + 1); }
-    if (event.key === 'Home') { event.preventDefault(); goPage(0); }
-    if (event.key === 'End') { event.preventDefault(); goPage(state.album.images.length - 1); }
+    const paginated = state.expanded || state.mode === 'page';
+    const targets = { ArrowLeft: state.page - 1, ArrowRight: state.page + 1, Home: 0, End: state.album.images.length - 1 };
+    if (paginated) Object.assign(targets, { ArrowUp: state.page - 1, ArrowDown: state.page + 1, PageUp: state.page - 1, PageDown: state.page + 1 });
+    if (event.key in targets) {
+      event.preventDefault(); goPage(targets[event.key]);
+      if (paginated) focusReadingPage();
+    }
   } else if (!uploadDialog.open && event.key === '/') { event.preventDefault(); $('#search').focus(); }
 });
 loadAlbums();

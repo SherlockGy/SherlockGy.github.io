@@ -49,6 +49,8 @@ export function createSlideshow(root, { onSelect, onExit }) {
   let view = { scale: 1, x: 0, y: 0 }, fitted = { width: 0, height: 0 };
   const ready = () => currentImage?.complete && currentImage.naturalWidth > 0 && !currentImage.hidden;
   const point = event => ({ x: event.clientX, y: event.clientY });
+  // 放映的键盘位置始终以当前缩略图为准，画布只接收拖动和缩放手势。
+  const focusCurrent = () => list.children[page]?.focus({ preventScroll: true });
   const measureGesture = () => {
     const [first, second] = pointers.values();
     if (!first) return null;
@@ -128,6 +130,7 @@ export function createSlideshow(root, { onSelect, onExit }) {
     if (changedAlbum) { preloader.clear(); setHand(false); renderDirectory(); }
     resetView();
     [...list.children].forEach((button, index) => {
+      button.tabIndex = index === page ? 0 : -1;
       if (index === page) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
     });
@@ -140,7 +143,7 @@ export function createSlideshow(root, { onSelect, onExit }) {
     $('#slideshow-count').textContent = `${page + 1} / ${album.images.length}`;
     $('#slideshow-prev').disabled = page === 0;
     $('#slideshow-next').disabled = page === album.images.length - 1;
-    if (canvas.contains(focused) || (root.contains(focused) && focused.disabled)) canvas.focus({ preventScroll: true });
+    if (list.contains(focused) || canvas.contains(focused) || (root.contains(focused) && focused.disabled)) focusCurrent();
     const source = album.images[page], entry = preloader.select(album.images, page), img = entry.image;
     currentImage = img; fitted = { width: 0, height: 0 };
     img.className = 'slideshow-image'; img.alt = source.alt || `第 ${page + 1} 张图片`; img.draggable = false;
@@ -167,7 +170,7 @@ export function createSlideshow(root, { onSelect, onExit }) {
   $('#slideshow-next').addEventListener('click', () => onSelect(page + 1));
   handButton.addEventListener('click', () => {
     setHand(!hand);
-    if (hand) canvas.focus({ preventScroll: true });
+    focusCurrent();
   });
   fitButton.addEventListener('click', resetView);
   canvas.addEventListener('dragstart', event => event.preventDefault());
@@ -185,8 +188,9 @@ export function createSlideshow(root, { onSelect, onExit }) {
     }
   }, { passive: false });
   canvas.addEventListener('pointerdown', event => {
-    if (!hand || event.button !== 0 || !ready() || event.target.closest('button, a')) return;
-    event.preventDefault(); canvas.focus({ preventScroll: true });
+    if (event.button !== 0 || event.target.closest('button, a')) return;
+    event.preventDefault(); focusCurrent();
+    if (!hand || !ready()) return;
     pointers.set(event.pointerId, point(event)); gesture = measureGesture();
     canvas.setPointerCapture(event.pointerId); canvas.classList.add('dragging');
   });
@@ -204,8 +208,8 @@ export function createSlideshow(root, { onSelect, onExit }) {
     if (!pointers.size) canvas.classList.remove('dragging');
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   });
-  canvas.addEventListener('keydown', event => {
-    if (!hand || !ready() || event.ctrlKey || event.metaKey || event.altKey || event.target.closest('button, a, input, textarea, select, [contenteditable]')) return;
+  root.addEventListener('keydown', event => {
+    if (!hand || !ready() || event.ctrlKey || event.metaKey || event.altKey || event.target.closest('a, input, textarea, select, [contenteditable], button:not(.slideshow-thumb)')) return;
     if (!['+', '=', '-', '_', '0'].includes(event.key)) return;
     event.preventDefault(); event.stopPropagation(); stopDrag();
     if (event.key === '0') resetView();
@@ -218,8 +222,9 @@ export function createSlideshow(root, { onSelect, onExit }) {
   new ResizeObserver(resize).observe(canvas);
   return {
     open(nextAlbum, nextPage) {
-      root.hidden = false; setHand(false); show(nextAlbum, nextPage); canvas.focus({ preventScroll: true });
+      root.hidden = false; setHand(false); show(nextAlbum, nextPage); focusCurrent();
     },
+    focusCurrent,
     show,
     resize,
     close() {

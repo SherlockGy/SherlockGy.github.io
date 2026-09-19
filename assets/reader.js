@@ -1,4 +1,4 @@
-import { fitImage, constrainPan, zoomAtPoint } from './slideshow.js?v=20260917-preload-2';
+import { fitImage, constrainPan, zoomAtPoint } from './slideshow.js?v=20260920-navigation-1';
 
 // Keep the page frame fixed while moving only its image. Use the same geometry
 // and zoom limits as the fullscreen hand tool.
@@ -56,7 +56,7 @@ export function createImageReader(frame, { keyTarget, onScaleChange }) {
   }
   function onPointerDown(event) {
     if (!hand || !ready() || event.button !== 0 || event.target.closest('button, a')) return;
-    event.preventDefault(); keyTarget.focus({ preventScroll: true });
+    event.preventDefault();
     pointers.set(event.pointerId, point(event)); gesture = measureGesture();
     frame.setPointerCapture(event.pointerId); frame.classList.add('dragging');
   }
@@ -75,7 +75,7 @@ export function createImageReader(frame, { keyTarget, onScaleChange }) {
     if (frame.hasPointerCapture(event.pointerId)) frame.releasePointerCapture(event.pointerId);
   }
   function onKey(event) {
-    if (!hand || !ready() || event.ctrlKey || event.metaKey || event.altKey || event.target.closest('button, a, input, textarea, select, [contenteditable]')) return;
+    if (!hand || !ready() || event.ctrlKey || event.metaKey || event.altKey || event.target.closest('#reader-note-panel, a, input, textarea, select, [contenteditable], button:not(.slideshow-thumb):not(#reader-hand)')) return;
     if (!['+', '=', '-', '_', '0'].includes(event.key)) return;
     event.preventDefault(); event.stopPropagation(); stopGesture();
     if (event.key === '0') reset();

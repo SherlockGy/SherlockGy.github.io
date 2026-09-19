@@ -35,6 +35,10 @@ export function createReaderDirectory(list, onSelect) {
   });
 
   return {
+    // 点击阅读区后，将翻页键盘位置交还给当前缩略图。
+    focusCurrent() {
+      if (!list.hidden) list.children[page]?.focus({ preventScroll: true });
+    },
     show(nextAlbum, nextPage) {
       const restoreFocus = list.contains(document.activeElement);
       list.hidden = false;

@@ -68,6 +68,18 @@ test('翻页不重复创建目录，外部控件的焦点保持不变', t => {
   assert.equal(list.children[20].attributes.get('aria-current'), 'page');
 });
 
+test('阅读区交还焦点时定位当前页，关闭目录后不抢占其他控件', t => {
+  const { list, album, document, directory } = setup(t);
+  const outside = document.createElement('button');
+  directory.show(album, 8); outside.focus();
+  directory.focusCurrent();
+  assert.equal(document.activeElement, list.children[8]);
+  directory.show(album, 9);
+  assert.equal(document.activeElement, list.children[9]);
+  directory.clear(); outside.focus(); directory.focusCurrent();
+  assert.equal(document.activeElement, outside);
+});
+
 test('关闭或切换图集后取消缩略图来源，迟到的错误不再回退原图', t => {
   const { list, album, directory } = setup(t);
   directory.show(album, 0);
