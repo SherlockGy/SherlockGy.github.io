@@ -8,7 +8,7 @@
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./assets/style.css?v=20260919-notes-2">
-  <script type="module" src="./assets/app.js?v=20260919-notes-2"></script>
+  <script type="module" src="./assets/app.js?v=20260919-description-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
@@ -83,7 +83,7 @@
         <label class="field-label" for="album-title">图集名称</label><input class="form-input" id="album-title" maxlength="120" placeholder="填写名称" required>
         <label class="field-label" for="album-series">图集归属</label><select class="form-input" id="album-series"><option value="">月份图集</option></select>
         <div class="form-row" id="album-date-row"><div><label class="field-label" for="album-date">归档日期</label><input class="form-input" id="album-date" type="date" required></div><p class="date-help">按此日期归档到月份</p></div>
-        <label class="field-label" for="album-description">说明 <span class="optional">选填</span></label><textarea class="form-input" id="album-description" maxlength="1000" rows="2" placeholder="主题、出处或备注"></textarea>
+        <label class="field-label" for="album-description">说明 <span class="optional">选填</span></label><textarea class="form-input" id="album-description" maxlength="10000" rows="4" aria-describedby="album-description-count" placeholder="主题、出处或备注"></textarea><p class="field-note" id="album-description-count">0 / 10000 字</p>
         <label class="drop-zone" id="drop-zone" for="file-input"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#images"/></svg><strong>选择图片</strong><span>或拖到这里，可一次添加多张</span><small>JPG / PNG / WebP / GIF / AVIF · 最多 30 张</small></label>
         <input id="file-input" class="visually-hidden" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif">
         <div id="file-list" class="file-list"></div>

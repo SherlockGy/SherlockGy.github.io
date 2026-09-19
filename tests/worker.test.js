@@ -131,7 +131,7 @@ test('connection check authenticates, reads the current manifest and never write
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
-  assert.equal(result.version, '2026-09-17-review-3'); assert.ok(result.traceId);
+  assert.equal(result.version, '2026-09-19-description-1'); assert.ok(result.traceId);
   assert.equal(fake.calls.length, 1); assert.ok(fake.calls.every(isRead));
   assert.equal(fake.manifest().albums.length, 0);
 });
@@ -557,4 +557,72 @@ test('upstream rate limits preserve retry timing and never advance the branch', 
   const result = await worker.fetch(stagedRequest(crypto.randomUUID(), 0), env);
   assert.equal(result.status, 429);
   const data = await result.json(); assert.equal(data.error.code, 'GITHUB_RATE_LIMITED'); assert.equal(data.error.retryAfterSeconds, 120);
+});
+
+test('new album descriptions preserve long text up to the advertised limit', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const health = await (await worker.fetch(new Request('https://worker.test/health'), env)).json();
+  assert.equal(health.capabilities.maxDescriptionLength, 10000);
+  const description = '参考资料\n'.repeat(1999) + '末'.repeat(5);
+  assert.equal(description.length, 10000);
+  const form = await request().formData(); form.set('description', description.trim());
+  const response = await worker.fetch(managementRequest('/albums', form), env);
+  assert.equal(response.status, 201);
+  assert.equal(fake.manifest().albums[0].description, description.trim());
+});
+
+test('editing an imported long description supports appending, boundary length, clearing and omission', async t => {
+  const initial = editFixture(); initial.albums[0].description = '文'.repeat(1737);
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  for (const description of ['文'.repeat(1737) + '\n新增说明 https://example.com/source', '字'.repeat(10000), undefined, '']) {
+    const current = await readManagement('/albums/notes');
+    assert.equal(current.capabilities.maxDescriptionLength, 10000);
+    const body = editForm(current.revision, [{ existing: 0 }, { existing: 1 }]);
+    if (description !== undefined) body.set('description', description);
+    const response = await worker.fetch(managementRequest('/albums/notes', body), env);
+    assert.equal(response.status, 200);
+    assert.equal(fake.manifest().albums[0].description, description ?? current.album.description);
+    assert.deepEqual(fake.manifest().albums[0].images, initial.albums[0].images);
+  }
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 0);
+});
+
+test('oversized descriptions are rejected before any GitHub access on create and edit', async t => {
+  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const create = await request().formData(); create.set('description', '字'.repeat(10001));
+  const edit = editForm('a'.repeat(64), [{ existing: 0 }, { existing: 1 }]); edit.set('description', '字'.repeat(10001));
+  for (const [path, form] of [['/albums', create], ['/albums/notes', edit]]) {
+    const response = await worker.fetch(managementRequest(path, form), env);
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error.code, 'INVALID_FIELD');
+  }
+  assert.equal(fake.calls.length, 0);
+});
+
+test('multiline requests committed before newline normalization remain safe to retry', async t => {
+  const digest = async value => Buffer.from(await crypto.subtle.digest('SHA-256', value)).toString('hex');
+  const description = '第一行\n第二行';
+  const wireDescription = description.replaceAll('\n', '\r\n');
+  const id = crypto.randomUUID();
+  const uploadFingerprint = await digest(encoder.encode(JSON.stringify(['知识图集', '2026-09-15', wireDescription, [await digest(png)]])));
+  const existing = { ...editFixture().albums[0], id: `album-${id}`, description: wireDescription, uploadFingerprint };
+  let fake = fakeGit({ initialManifest: { schemaVersion: 1, albums: [existing] } });
+  t.mock.method(globalThis, 'fetch', (...args) => fake.fetch(...args));
+  const form = await request({ id }).formData(); form.set('description', description);
+  const uploaded = await worker.fetch(managementRequest('/albums', form), env);
+  assert.equal(uploaded.status, 201);
+  assert.ok(fake.calls.every(isRead), 'Retry must not create another commit');
+  const revision = 'a'.repeat(64), requestId = crypto.randomUUID(), order = [{ existing: 0 }, { existing: 1 }];
+  const fingerprint = await digest(encoder.encode(JSON.stringify(['notes', revision, order, [], { description: wireDescription }])));
+  const initial = editFixture(); initial.albums[0].description = wireDescription;
+  initial.albums[0].editHistory = [{ requestId, fingerprint }];
+  fake = fakeGit({ initialManifest: initial });
+  const edit = editForm(revision, order, 0, requestId); edit.set('description', description);
+  const edited = await worker.fetch(managementRequest('/albums/notes', edit), env);
+  assert.equal(edited.status, 200);
+  assert.ok(fake.calls.every(isRead), 'Edit retry must not write or fail on the old revision');
+  edit.set('description', description + '不同内容');
+  const changed = await worker.fetch(managementRequest('/albums/notes', edit), env);
+  assert.equal(changed.status, 409);
+  assert.equal((await changed.json()).error.code, 'REQUEST_REUSED');
 });

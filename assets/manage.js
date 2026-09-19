@@ -2,7 +2,7 @@ import config from '../config.js';
 import { createUploadClient } from './upload.js?v=20260917-review-4';
 import { createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
-import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260917-review-3';
+import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, validateFiles, validDate } from './model.js?v=20260919-description-1';
 
 function node(tag, className, text) {
   const value = document.createElement(tag);
@@ -174,15 +174,19 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     if (!canRename) ui.workspace.append(node('p', 'field-note', '当前上传服务暂不支持修改名称，图片编辑仍可使用。'));
     const descriptionField = node('label', 'manager-field editor-description');
     const descriptionLabel = node('span', 'field-label', '说明');
-    descriptionLabel.append(node('span', 'optional', '选填，最多 1000 字'));
+    descriptionLabel.append(node('span', 'optional', `选填，最多 ${MAX_DESCRIPTION_LENGTH} 字`));
     const description = node('textarea', 'form-input');
-    description.value = draftDescription; description.maxLength = 1000; description.rows = 3;
+    description.value = draftDescription; description.maxLength = MAX_DESCRIPTION_LENGTH; description.rows = 6;
     description.placeholder = '主题、出处或备注'; description.readOnly = !canEditDescription;
+    const count = node('span', 'field-note'); count.id = 'editor-description-count';
+    description.setAttribute('aria-describedby', count.id);
+    const updateCount = () => { count.textContent = `${description.value.length} / ${MAX_DESCRIPTION_LENGTH} 字`; };
+    updateCount();
     description.addEventListener('input', () => {
       if (!canEditDescription || ui.busy || ui.saved) return;
-      draftDescription = description.value; ui.changed();
+      draftDescription = description.value; updateCount(); ui.changed();
     });
-    descriptionField.append(descriptionLabel, description); ui.workspace.append(descriptionField);
+    descriptionField.append(descriptionLabel, description, count); ui.workspace.append(descriptionField);
     if (!canEditDescription) ui.workspace.append(node('p', 'field-note', '当前上传服务暂不支持修改说明，更新服务后即可编辑。'));
     const picker = node('input', 'visually-hidden'); picker.type = 'file'; picker.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
     picker.tabIndex = -1; picker.setAttribute('aria-label', '选择新增或替换的图片');
@@ -259,7 +263,7 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     if (draftDescription !== album.description) {
       if (!canEditDescription) throw new Error('当前上传服务暂不支持修改图集说明');
       const description = draftDescription.trim();
-      if (description.length > 1000) throw new Error('图集说明最多 1000 字');
+      if (description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`图集说明最多 ${MAX_DESCRIPTION_LENGTH} 字`);
       body.set('description', description);
     }
     files.forEach(file => body.append('images', file, file.name)); return body;

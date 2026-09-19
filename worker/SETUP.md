@@ -14,7 +14,7 @@
 
 ## 升级系列与编辑功能
 
-推荐先将本目录 `worker.js` 的完整代码部署到现有 Worker，再发布新版前端。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-09-17-review-3`。
+推荐先将本目录 `worker.js` 的完整代码部署到现有 Worker，再发布新版前端。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-09-19-description-1`。
 
 此版本还修复排序后的自动页码说明：保存时按当前顺序更新 `图集名称 · 第 N 页`，自定义图片说明和原图路径保留。前端会纠正旧目录的显示，但后续保存写入正确页码需要部署此 Worker。
 
@@ -56,21 +56,25 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 ## 启用图集改名
 
-部署本目录最新代码后，`GET /health` 的版本应为 `2026-09-17-review-3`，并返回 `capabilities.editTitle: true`。已有的两个 Secret 不变，流水上传协议仍为 `signed-blobs-v1`。
+部署本目录最新代码后，`GET /health` 的版本应为 `2026-09-19-description-1`，并返回 `capabilities.editTitle: true`。已有的两个 Secret 不变，流水上传协议仍为 `signed-blobs-v1`。
 
 在阅读窗口点击“编辑图集”，输入口令并载入最新内容，即可修改名称。可以只改名，也可以与排序、换图一起保存；名称不能为空，最多 120 字。改名保持图集编号、图片路径、原图和分享链接。旧版 Worker 下名称只读，图片编辑照常使用。
 
+## 启用长备注编辑
+
+新增与编辑说明的上限统一为 10000 字，输入框显示当前字数；超过旧版 1000 字限制的已有备注可继续添加和修改。前端和 Worker 都需要更新，建议先部署 Worker；`GET /health` 返回 `capabilities.maxDescriptionLength: 10000` 后再发布前端。仅更新网页输入框无法绕过旧服务的保存限制。
+
 ## 启用图集说明编辑
 
-部署 `2026-09-17-review-3` 版 Worker 后，`GET /health` 与 `GET /albums/{id}` 均返回 `capabilities.editDescription: true`。无需新增 Secret。
+部署 `2026-09-19-description-1` 版 Worker 后，`GET /health` 与 `GET /albums/{id}` 均返回 `capabilities.editDescription: true`。无需新增 Secret。
 
-“编辑图集”中可修改或清空说明，最多 1000 字；可与名称、图片调整一起保存。说明会在保存后的当前页面立即更新。旧 Worker 下说明只读，名称与图片仍按原有能力编辑，避免出现保存成功但说明未生效的情况。
+“编辑图集”中可修改或清空说明，最多 10000 字；可与名称、图片调整一起保存。说明会在保存后的当前页面立即更新。旧 Worker 下说明只读，名称与图片仍按原有能力编辑，避免出现保存成功但说明未生效的情况。
 
 编辑、添加和系列管理弹窗均保持顶部关闭区及底部保存区可见，仅中间内容滚动。此布局调整只需发布前端；说明编辑需要部署上述 Worker。
 
 ## 超时和连接诊断
 
-- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-17-review-3` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
+- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-19-description-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
 - 若旧版提示 `Invalid redirect value`，属于 Worker 运行环境不支持 `redirect: 'error'` 的兼容性错误，请部署新版。新版使用 `manual` 并检查重定向状态，不会跟随跳转转发 Token；无需为此修改上传口令或重新生成 Token。
 - 打开 Cloudflare → Workers & Pages → `github-image-upload` → **Logs → Live**，开始查看实时日志，再回网站点击 **测试连接**或重试上传。
 - 日志中的 `github.start`、`github.success`、`github.error` 标记每一步，`stage` 表示读取主分支、读取图集目录、保存第几张图片或发布图集。`elapsedMs` 是耗时，`httpStatus` 是 GitHub 返回的 HTTP 状态，`traceId` 与页面错误中的请求编号对应。

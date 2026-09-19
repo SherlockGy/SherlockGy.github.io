@@ -1,6 +1,6 @@
 import config from '../config.js';
-import { normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260917-review-3';
-import { createImageEditor, createSeriesManager } from './manage.js?v=20260917-review-4';
+import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260919-description-1';
+import { createImageEditor, createSeriesManager } from './manage.js?v=20260919-description-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
@@ -556,12 +556,18 @@ function goPage(page) {
   } else renderReader();
 }
 
+function updateDescriptionCount() {
+  $('#album-description-count').textContent = `${$('#album-description').value.length} / ${MAX_DESCRIPTION_LENGTH} 字`;
+}
+$('#album-description').maxLength = MAX_DESCRIPTION_LENGTH;
+$('#album-description').addEventListener('input', updateDescriptionCount);
+
 function resetDraft() {
   uploadClient.reset();
   state.urls.forEach(url => URL.revokeObjectURL(url));
   state.files = []; state.urls = []; state.preview = null; state.requestId = null;
   state.uploadDirty = false; state.uploadSaved = false;
-  $('#upload-form').reset(); $('#album-date').value = localDate(); setFeedback($('#upload-status'), '');
+  $('#upload-form').reset(); updateDescriptionCount(); $('#album-date').value = localDate(); setFeedback($('#upload-status'), '');
   syncUploadControls(); renderFiles();
 }
 function syncUploadControls() {
@@ -701,6 +707,7 @@ async function submitAlbum(event) {
     if (!title) throw new Error('请填写图集名称');
     if (!seriesId && !validDate(date)) throw new Error('请选择有效的归档日期');
     const description = $('#album-description').value.trim();
+    if (description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`图集说明最多 ${MAX_DESCRIPTION_LENGTH} 字`);
     if (!config.uploadEndpoint) {
       state.preview = { id: `preview-${Date.now()}`, title, date, seriesId, description, tags: [], local: true,
         images: state.urls.map((src, index) => ({ src, alt: `${title} · 第 ${index + 1} 页` })) };

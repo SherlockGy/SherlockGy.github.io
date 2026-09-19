@@ -6,7 +6,8 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-17-review-3';
+const VERSION = '2026-09-19-description-1';
+const MAX_DESCRIPTION_LENGTH = 10000;
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
 const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
@@ -149,7 +150,9 @@ function limitedStream(stream, limit) {
 function field(form, name, max, required = false) {
   const values = form.getAll(name);
   if (values.length > 1 || values.some(value => typeof value !== 'string')) fail(400, 'INVALID_FIELD', `${name} 字段格式不正确`);
-  const value = (values[0] || '').trim();
+  // Multipart transport uses CRLF; textarea length and stored notes use LF.
+  const raw = values[0] || '';
+  const value = (name === 'description' ? raw.replace(/\r\n?/g, '\n') : raw).trim();
   if ((required && !value) || value.length > max) fail(400, 'INVALID_FIELD', `${name} 为空或过长`);
   return value;
 }
@@ -358,14 +361,14 @@ async function upload(request, env) {
   const title = field(form, 'title', 120, true);
   const seriesId = field(form, 'seriesId', 100);
   const date = seriesId ? '' : field(form, 'date', 10, true);
-  const description = field(form, 'description', 1000);
+  const description = field(form, 'description', MAX_DESCRIPTION_LENGTH);
   const requestId = uploadRequestId(form);
   env._requestId = requestId;
   if (!seriesId && !validDate(date)) fail(400, 'INVALID_DATE', '请选择有效的归档日期');
   if (seriesId && !/^[a-zA-Z0-9_-]{1,100}$/.test(seriesId)) fail(400, 'INVALID_SERIES', '所属系列格式不正确');
   const { files, info } = await preparedFiles(form, env, '/albums');
   // Preserve fingerprints of existing monthly drafts for safe retries across upgrades.
-  const fingerprint = await hash(encoder.encode(JSON.stringify([title, date, description, info.map(item => item.hash), ...(seriesId ? [seriesId] : [])])));
+  const fingerprint = await hash(encoder.encode(JSON.stringify([title, date, (form.get('description') || '').trim(), info.map(item => item.hash), ...(seriesId ? [seriesId] : [])])));
   const id = `album-${requestId}`;
   const directory = imageDirectory({ id, date, seriesId });
   let snapshot = await preparedHead(form, env, '/albums');
@@ -461,7 +464,7 @@ async function editAlbum(request, env, id) {
   const revision = field(form, 'revision', 64, true);
   if (!/^[a-f0-9]{64}$/.test(revision)) fail(400, 'INVALID_REVISION', '图集版本格式不正确');
   const title = form.has('title') ? field(form, 'title', 120, true) : undefined;
-  const description = form.has('description') ? field(form, 'description', 1000) : undefined;
+  const description = form.has('description') ? field(form, 'description', MAX_DESCRIPTION_LENGTH) : undefined;
   let order;
   try { order = JSON.parse(field(form, 'order', 10000, true)); }
   catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_ORDER', '图片顺序格式不正确'); }
@@ -469,7 +472,8 @@ async function editAlbum(request, env, id) {
   const fingerprintParts = [id, revision, order, info.map(item => item.hash)];
   // Omitted fields keep existing fingerprints compatible across Worker upgrades.
   if (title !== undefined) fingerprintParts.push({ title });
-  if (description !== undefined) fingerprintParts.push({ description });
+  // Keep the transport representation in fingerprints so pre-upgrade retries still match.
+  if (description !== undefined) fingerprintParts.push({ description: form.get('description').trim() });
   const fingerprint = await hash(encoder.encode(JSON.stringify(fingerprintParts)));
   let snapshot = await preparedHead(form, env, `/albums/${id}`);
   const inspectSnapshot = async () => {
@@ -643,7 +647,7 @@ export default {
       if (request.method === 'OPTIONS') return reply(request, null, 204);
       if (request.method === 'GET' && ['/', '/albums', '/health', '/check'].includes(path)) return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
         ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
-        message: '请在图集网站中上传图片。', endpoint: '/albums', capabilities: { editTitle: true, editDescription: true }, upload: { protocol: UPLOAD_PROTOCOL,
+        message: '请在图集网站中上传图片。', endpoint: '/albums', capabilities: { editTitle: true, editDescription: true, maxDescriptionLength: MAX_DESCRIPTION_LENGTH }, upload: { protocol: UPLOAD_PROTOCOL,
           concurrency: ['1', '2', '3'].includes(String(env.UPLOAD_CONCURRENCY)) ? Number(env.UPLOAD_CONCURRENCY) : 2,
           maxInFlightBytes: 12 * MIB, receiptTtlMs: RECEIPT_TTL_MS } });
       if ((request.method !== 'POST' && !((albumMatch || isLibrary || isUploadStatus) && request.method === 'GET')) || path === '/health' || (isUploadStatus && request.method !== 'GET')) fail(405, 'METHOD_NOT_ALLOWED', '请求方法不支持');
@@ -665,7 +669,7 @@ export default {
       if (albumMatch) {
         if (request.method === 'GET') {
           const snapshot = await readHead(env), album = editableAlbum(snapshot, albumMatch[1]);
-          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album), capabilities: { editTitle: true, editDescription: true } });
+          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album), capabilities: { editTitle: true, editDescription: true, maxDescriptionLength: MAX_DESCRIPTION_LENGTH } });
         }
         const result = await editAlbum(request, env, albumMatch[1]);
         return reply(request, result);

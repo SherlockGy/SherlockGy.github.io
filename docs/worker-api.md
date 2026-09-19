@@ -36,7 +36,7 @@
 | `title` | 必填，去除首尾空白后 1–120 字 |
 | `date` | 按月归档时必填，有效的 `YYYY-MM-DD`；系列图集不使用此字段 |
 | `seriesId` | 选填，已有系列的编号；填写后图集归属该系列，不进入月份归档 |
-| `description` | 选填，最多 1000 字 |
+| `description` | 选填，最多 10000 字 |
 | `images` | 重复字段，按出现顺序保存，1–30 张 |
 
 ## 成功响应
@@ -69,7 +69,7 @@
 
 ## 编辑已有图集
 
-`GET /albums/{id}` 需要上传口令，读取 GitHub 当前分支，返回 `{ album, series, revision, capabilities: { editTitle: true, editDescription: true } }`。`revision` 是该图集完整记录的 SHA-256，用来检测并发编辑。响应不缓存。前端分别依据 `editTitle`、`editDescription` 启用名称和说明修改；旧服务未声明的字段为只读，原有图片编辑仍可使用。
+`GET /albums/{id}` 需要上传口令，读取 GitHub 当前分支，返回 `{ album, series, revision, capabilities: { editTitle: true, editDescription: true, maxDescriptionLength: 10000 } }`。`revision` 是该图集完整记录的 SHA-256，用来检测并发编辑。响应不缓存。前端分别依据 `editTitle`、`editDescription` 启用名称和说明修改；旧服务未声明的字段为只读，原有图片编辑仍可使用。
 
 `POST /albums/{id}` 同样使用口令和 `multipart/form-data`：
 
@@ -78,7 +78,7 @@
 | `requestId` | UUID v4，同一草稿的原样重试复用 |
 | `revision` | 载入图集时取得的版本 |
 | `title` | 选填，去除首尾空白后 1–120 字；不传时保留原名称 |
-| `description` | 选填，去除首尾空白后最多 1000 字；不传时保留原说明，传空字符串时清空 |
+| `description` | 选填，去除首尾空白后最多 10000 字；不传时保留原说明，传空字符串时清空 |
 | `order` | JSON 数组，表示最终图片顺序 |
 | `images` | 本次新增或替换的文件，可为零张；仅改名称、说明或排序时不传 |
 
@@ -128,7 +128,7 @@ GitHub 请求错误额外返回 `stage` 和耗时 `elapsedMs`，若已收到 HTT
 ```json
 {
   "status": "readable",
-  "version": "2026-09-17-review-3",
+  "version": "2026-09-19-description-1",
   "traceId": "<request UUID>",
   "elapsedMs": 500,
   "albumCount": 0,
