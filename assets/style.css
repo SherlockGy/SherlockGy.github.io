@@ -317,6 +317,8 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .slideshow-thumb:hover { background: var(--wash); }
 .slideshow-thumb[aria-current] { border-color: var(--accent); background: var(--soft); color: var(--accent); box-shadow: inset 2px 0 var(--accent); }
 .slideshow-thumb:focus-visible { outline-offset: 1px; }
+/* 当前页的选中样式同时标识键盘位置，方向键与鼠标选择保持一致。 */
+.slideshow-thumb[aria-current]:focus-visible { outline: none; }
 .slideshow-thumbnail { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 3 / 2; overflow: hidden; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); }
 .slideshow-thumbnail img { width: 100%; height: 100%; object-fit: contain; }
 .slideshow-number { display: block; margin: 6px 2px 0; font: var(--text-meta)/1.5 var(--mono); }
