@@ -2,6 +2,117 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-df634476-714a-4f83-911d-f02dd2c4799b",
+      "title": "【Codex 上下文管理机制】",
+      "date": "2026-09-19",
+      "description": "以下按对本文核心内容的支撑程度排序。资料核验日期：2026 年 9 月 19 日；源码引用固定于提交 `fd59b42a09df`，在线文档以核验时的内容为依据。\n\n1. **Codex 执行循环｜OpenAI**  \n   介绍上下文的组织方式、模型与工具的交互过程，以及任务推进中上下文增长和压缩的关系。  \n   [Unrolling the Codex agent loop](https://openai.com/index/unrolling-the-codex-agent-loop/)\n\n2. **上下文处理与恢复机制｜Codex 公开源码**  \n   用于核验文本摘要、远程压缩和窗口重置的选择关系，以及任务笔记与历史记录的具体职责。以下链接均指向固定版本。  \n   [处理路径选择](https://github.com/openai/codex/blob/fd59b42a09df58d301839cac889c2db69c40f6cb/codex-rs/core/src/tasks/compact.rs) · [Notes 与 History 定义](https://github.com/openai/codex/blob/fd59b42a09df58d301839cac889c2db69c40f6cb/codex-rs/ext/history-notes/src/tools.rs)\n\n3. **原生上下文压缩｜OpenAI 官方文档**  \n   说明专用压缩项如何以较少的 token 延续任务状态，以及压缩项与保留消息如何组成后续上下文。  \n   [Compaction](https://developers.openai.com/api/docs/guides/compaction)\n\n4. **核心配置与生效条件｜Codex 官方文档**  \n   提供窗口信息、自动整理阈值、工具输出预算、实验性上下文管理和跨任务记忆等配置的定义。  \n   [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference)\n\n5. **项目知识与长期任务的组织方法｜OpenAI 工程实践**  \n   介绍如何通过简短的资料入口、可维护的项目文档，以及进度和决策记录，支持智能体持续工作。  \n   [Harness engineering](https://openai.com/index/harness-engineering/)\n\n6. **项目指导的发现与加载｜Codex 官方文档**  \n   说明 AGENTS.md 的适用范围、发现顺序、合并规则和读取预算，为项目指导如何进入上下文提供依据。  \n   [Custom instructions with AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)\n\n7. **跨任务记忆｜Codex 官方文档**  \n   介绍历史任务中的经验如何参与记忆生成、后台更新方式，以及记忆使用和生成的分别控制。  \n   [Memories](https://learn.chatgpt.com/docs/customization/memories)\n\n8. **技能说明的按需加载｜官方文档**  \n   说明先提供技能名称与描述、选用后再读取完整说明的机制，体现从输入阶段控制上下文规模的方法。  \n   [Build skills](https://learn.chatgpt.com/docs/build-skills)\n\n9. **会话状态与上下文窗口｜OpenAI 官方文档**  \n   解释多轮交互中的状态传递，以及输入、输出和推理 token 与上下文窗口容量的关系。  \n   [Conversation state](https://developers.openai.com/api/docs/guides/conversation-state)",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/001.png",
+          "alt": "【Codex 上下文管理机制】 · 第 1 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/002.png",
+          "alt": "【Codex 上下文管理机制】 · 第 2 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/003.png",
+          "alt": "【Codex 上下文管理机制】 · 第 3 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/004.png",
+          "alt": "【Codex 上下文管理机制】 · 第 4 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/005.png",
+          "alt": "【Codex 上下文管理机制】 · 第 5 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/006.png",
+          "alt": "【Codex 上下文管理机制】 · 第 6 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/007.png",
+          "alt": "【Codex 上下文管理机制】 · 第 7 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/008.png",
+          "alt": "【Codex 上下文管理机制】 · 第 8 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/009.png",
+          "alt": "【Codex 上下文管理机制】 · 第 9 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/010.png",
+          "alt": "【Codex 上下文管理机制】 · 第 10 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/011.png",
+          "alt": "【Codex 上下文管理机制】 · 第 11 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/012.png",
+          "alt": "【Codex 上下文管理机制】 · 第 12 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/013.png",
+          "alt": "【Codex 上下文管理机制】 · 第 13 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/014.png",
+          "alt": "【Codex 上下文管理机制】 · 第 14 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/015.png",
+          "alt": "【Codex 上下文管理机制】 · 第 15 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/016.png",
+          "alt": "【Codex 上下文管理机制】 · 第 16 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-df634476-714a-4f83-911d-f02dd2c4799b/017.png",
+          "alt": "【Codex 上下文管理机制】 · 第 17 页",
+          "width": 1448,
+          "height": 1086
+        }
+      ]
+    },
+    {
       "id": "album-a4e1e0ec-2c44-47c1-aa9b-7a9dc2fd08c7",
       "title": "OpenAI-工程技术：在智能体优先的世界编码",
       "date": "2026-09-18",
