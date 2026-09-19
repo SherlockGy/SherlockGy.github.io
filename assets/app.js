@@ -52,7 +52,7 @@ function icon(name) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'icon'); svg.setAttribute('aria-hidden', 'true');
   const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-  use.setAttribute('href', `./assets/icons.svg#${name}`); svg.append(use);
+  use.setAttribute('href', `./assets/icons.svg?v=20260919-notes-1#${name}`); svg.append(use);
   return svg;
 }
 
@@ -73,6 +73,71 @@ function toast(message) {
   (reader.open ? reader : document.body).append(node);
   node.textContent = message; node.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { node.hidden = true; }, 3000);
+}
+async function copyAlbumNote(album) {
+  const logPrefix = `[copyAlbumNote 复制图集备注][albumId=${album.id}]`;
+  try {
+    try { await navigator.clipboard.writeText(album.description); }
+    catch {
+      // Allow copying when the Clipboard API is unavailable or denied.
+      const focused = document.activeElement;
+      const field = el('textarea', 'clipboard-field');
+      field.value = album.description; field.readOnly = true;
+      field.setAttribute('aria-label', '复制备注');
+      (reader.open ? reader : document.body).append(field);
+      try {
+        field.select();
+        if (!document.execCommand('copy')) throw new Error('Clipboard unavailable');
+      } finally { field.remove(); if (focused?.isConnected) focused.focus({ preventScroll: true }); }
+    }
+    toast('已复制完整备注');
+  } catch {
+    console.warn(logPrefix, '剪贴板写入失败');
+    toast(reader.open ? '复制未成功，请展开备注后选中文本复制' : '复制未成功，请进入图集，在备注中选中文本复制');
+  }
+}
+function setReaderNoteOpen(open, restoreFocus = false) {
+  const toggle = $('#reader-note-toggle'), panel = $('#reader-note-panel');
+  const expanded = open && !toggle.hidden && !state.expanded;
+  if (!expanded && restoreFocus) toggle.focus({ preventScroll: true });
+  panel.hidden = !expanded; toggle.setAttribute('aria-expanded', String(expanded));
+  if (expanded) layoutReaderNote();
+}
+function layoutReaderNote() {
+  const panel = $('#reader-note-panel'), text = $('#reader-note-text');
+  if (panel.hidden || !reader.open || state.expanded) return;
+  panel.style.removeProperty('--note-offset');
+  const readerBounds = reader.getBoundingClientRect(), bounds = panel.getBoundingClientRect();
+  const style = getComputedStyle(panel);
+  const topLimit = readerBounds.top + reader.clientTop + 8;
+  const bottomLimit = readerBounds.top + reader.clientTop + reader.clientHeight - 8;
+  const chrome = text.getBoundingClientRect().top - bounds.top + parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
+  // Keep the fixed copy/close controls and at least two lines of text visible.
+  // On short screens the panel can move upward instead of being clipped below.
+  const minimumTextHeight = parseFloat(getComputedStyle(text).lineHeight) * 2;
+  const top = Math.max(topLimit, Math.min(bounds.top, bottomLimit - chrome - minimumTextHeight));
+  panel.style.setProperty('--note-offset', `${top - bounds.top}px`);
+  text.style.setProperty('--note-available-height', `${Math.max(0, Math.floor(bottomLimit - top - chrome))}px`);
+}
+function updateReaderNote(album, reset) {
+  const text = $('#reader-note-text');
+  if (reset) { setReaderNoteOpen(false); text.scrollTop = 0; }
+  $('#reader-note-toggle').hidden = !album.description;
+  if (text.textContent !== album.description) {
+    text.textContent = album.description;
+    // A note consisting of a source URL remains easy to open as well as copy.
+    try {
+      const url = new URL(album.description);
+      if (/^https?:$/.test(url.protocol) && !/\s/.test(album.description) && !url.username && !url.password) {
+        const link = el('a', '', album.description);
+        link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+        text.replaceChildren(link);
+      }
+    } catch { /* Ordinary notes are rendered as plain text. */ }
+    text.scrollTop = 0;
+  }
+  if (!album.description) setReaderNoteOpen(false);
+  else layoutReaderNote();
 }
 function updateBodyLock() { document.body.classList.toggle('modal-open', !!document.querySelector('dialog[open]')); }
 function collectionHash() { return state.view === 'series' ? `#/series${state.seriesId ? `/${state.seriesId}` : ''}` : ''; }
@@ -223,9 +288,10 @@ function renderCatalog() {
 function renderCards(grid, albums, offset = 0) {
   const eagerCount = matchMedia('(max-width: 540px)').matches ? 1 : matchMedia('(min-width: 1800px)').matches ? 3 : 2;
   for (const [index, album] of albums.entries()) {
-      const card = el('a', `album-card${album.images.length > 1 ? ' multiple' : ''}`);
-      card.href = `#/album/${encodeURIComponent(album.id)}/1`;
-      card.setAttribute('aria-label', `阅读 ${album.title}，${album.images.length} 张图片`);
+      const card = el('article', `album-card${album.images.length > 1 ? ' multiple' : ''}`);
+      const link = el('a', 'album-link');
+      link.href = `#/album/${encodeURIComponent(album.id)}/1`;
+      link.setAttribute('aria-label', `阅读 ${album.title}，${album.images.length} 张图片`);
       const cover = el('div', 'cover');
       const coverImage = configureCoverImage(el('img'), { ...album.images[0], alt: '' }, {
         eager: offset + index < eagerCount, priority: offset + index === 0, series: state.view === 'series',
@@ -235,12 +301,19 @@ function renderCards(grid, albums, offset = 0) {
       badge.append(document.createTextNode(`${album.images.length} 张`)); cover.append(coverImage);
       const open = el('span', 'card-open'); open.setAttribute('aria-hidden', 'true'); open.append(icon('expand')); cover.append(open);
       const info = el('div', 'card-info'); info.append(el('h3', '', album.title));
-      if (album.description) info.append(el('p', 'card-description', album.description));
+      link.append(cover, info); card.append(link);
+      if (album.description) {
+        const note = el('div', 'card-note');
+        const copy = button('', 'icon-button card-note-copy', () => copyAlbumNote(album));
+        copy.setAttribute('aria-label', `复制备注：${album.title}`); copy.title = '复制完整备注';
+        copy.append(icon('copy'));
+        note.append(el('p', 'card-description', album.description), copy); card.append(note);
+      }
       const meta = el('div', 'card-meta');
       if (album.seriesId) meta.append(el('span', 'card-series', state.series.find(item => item.id === album.seriesId)?.title || '系列图集'));
       else { const date = el('time', '', album.date.replaceAll('-', '.')); date.dateTime = album.date; meta.append(date); }
       if (album.tags[0]) meta.append(el('span', 'tag', album.tags[0]));
-      meta.append(badge); info.append(meta); card.append(cover, info); grid.append(card);
+      meta.append(badge); card.append(meta); grid.append(card);
   }
 }
 
@@ -280,6 +353,7 @@ function route() {
   $('#reader-title').textContent = album.title;
   const locationLabel = album.seriesId ? seriesTrail(state.series, album.seriesId).map(item => item.title).join(' / ') : album.date.replaceAll('-', '.');
   $('#reader-meta').textContent = `${locationLabel}  ·  ${album.images.length} 张图片${album.local ? '  ·  本地预览，尚未保存' : ''}`;
+  updateReaderNote(album, changed);
   $('#copy-link').disabled = !!album.local;
   $('#edit-images').hidden = !!album.local || !config.uploadEndpoint;
   document.title = `${album.title} · 图集`;
@@ -288,6 +362,7 @@ function route() {
 
 function setExpanded(expanded, restoreReader = true) {
   if (state.expanded === expanded) return;
+  setReaderNoteOpen(false);
   state.expanded = expanded;
   reader.classList.toggle('expanded', expanded);
   const control = $('#fullscreen');
@@ -304,6 +379,7 @@ function setExpanded(expanded, restoreReader = true) {
 }
 
 function closeReader(changeRoute = true) {
+  setReaderNoteOpen(false);
   setExpanded(false, false);
   disposeReaderImages(true);
   if (reader.open) {
@@ -311,7 +387,7 @@ function closeReader(changeRoute = true) {
     if ($('#toast').parentElement === reader) document.body.append($('#toast'));
     window.scrollTo(0, state.scrollY);
     if (!document.querySelector('dialog[open]')) {
-      const card = $$('.album-card').find(card => card.hash === `#/album/${encodeURIComponent(state.album?.id)}/1`);
+      const card = $$('.album-link').find(card => card.hash === `#/album/${encodeURIComponent(state.album?.id)}/1`);
       (lastFocused?.isConnected && lastFocused.getClientRects().length ? lastFocused : card || $('#main')).focus({ preventScroll: true });
     }
   }
@@ -673,7 +749,18 @@ $$('.tab').forEach(tab => tab.addEventListener('click', () => { state.type = tab
 $('#search').addEventListener('input', event => { state.query = event.target.value; renderCatalog(); });
 $('#new-album').addEventListener('click', openUpload);
 $('#reader-close').addEventListener('click', () => closeReader());
-reader.addEventListener('cancel', event => { event.preventDefault(); if (state.expanded) setExpanded(false); else closeReader(); });
+reader.addEventListener('cancel', event => {
+  event.preventDefault();
+  if (!$('#reader-note-panel').hidden) setReaderNoteOpen(false, true);
+  else if (state.expanded) setExpanded(false);
+  else closeReader();
+});
+$('#reader-note-toggle').addEventListener('click', () => setReaderNoteOpen($('#reader-note-panel').hidden));
+$('#reader-note-close').addEventListener('click', () => setReaderNoteOpen(false, true));
+$('#reader-note-copy').addEventListener('click', () => { if (state.album) copyAlbumNote(state.album); });
+reader.addEventListener('pointerdown', event => {
+  if (!event.target.closest('#reader-note-panel, #reader-note-toggle')) setReaderNoteOpen(false);
+});
 $('#prev-page').addEventListener('click', () => goPage(state.page - 1));
 $('#next-page').addEventListener('click', () => goPage(state.page + 1));
 $('#page-number').addEventListener('change', event => goPage((Number(event.target.value) || 1) - 1));
@@ -709,11 +796,13 @@ window.addEventListener('hashchange', route);
 // Observe the actual reading area: wrapping controls, rotation and viewport
 // changes can alter its height without changing the image dimensions.
 let readerResizeFrame;
-new ResizeObserver(() => {
+const readerLayoutObserver = new ResizeObserver(() => {
   cancelAnimationFrame(readerResizeFrame);
-  readerResizeFrame = requestAnimationFrame(resizeReader);
-}).observe($('#reader-stage'));
+  readerResizeFrame = requestAnimationFrame(() => { resizeReader(); layoutReaderNote(); });
+});
+for (const target of [reader, $('.reader-header', reader), $('#reader-stage')]) readerLayoutObserver.observe(target);
 document.addEventListener('keydown', event => {
+  if (event.target.closest('#reader-note-panel')) return;
   if ($('#image-preview').open || uploadDialog.open) return;
   if ($('#image-editor').open || $('#series-manager').open) return;
   if (event.target.closest('input, textarea, select, [contenteditable]') || event.ctrlKey || event.metaKey || event.altKey) return;

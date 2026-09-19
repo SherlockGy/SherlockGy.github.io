@@ -98,6 +98,7 @@ main#main { min-width: 0; width: 100%; max-width: 1580px; padding: 45px 48px 88p
 .month-year { order: -1; display: block; margin-bottom: 6px; color: var(--muted); font: var(--text-ui)/1.5 var(--mono); letter-spacing: .06em; }
 .album-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 24px; align-items: start; }
 .album-card { display: block; min-width: 0; border-radius: 10px; outline-offset: 7px; }
+.album-link { display: block; border-radius: 10px; outline-offset: 7px; }
 .cover { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 3 / 2; padding: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 2px 4px color-mix(in srgb, var(--ink) 3%, transparent); transition: border-color .2s, box-shadow .2s, transform .2s; }
 .cover img { width: 100%; height: 100%; object-fit: contain; border-radius: 3px; }
 .album-card.multiple .cover::after { content: ''; position: absolute; left: 7px; right: 7px; bottom: -5px; height: 5px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; background: var(--paper); }
@@ -105,7 +106,13 @@ main#main { min-width: 0; width: 100%; max-width: 1580px; padding: 45px 48px 88p
 .card-info { padding: 15px 2px 0; }
 .card-info h3 { font-size: var(--text-title); font-weight: 550; line-height: 1.6; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .card-description { margin-top: 6px; color: var(--muted); font-size: var(--text-meta); line-height: 1.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-note { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 6px; padding-left: 2px; }
+.card-note .card-description { flex: 1; min-width: 0; margin: 0; }
+.card-note .card-note-copy { width: 32px; height: 32px; padding: 7px; }
+.card-note-copy .icon { width: 17px; height: 17px; }
+.clipboard-field { position: fixed; top: 0; left: 0; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; }
 .card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 9px; margin-top: 8px; color: var(--muted); font-size: var(--text-meta); line-height: 1.6; }
+.album-card > .card-meta { padding-inline: 2px; }
 .card-meta time { font-family: var(--mono); white-space: nowrap; }
 .tag { max-width: 110px; padding: 2px 6px; border-radius: 4px; background: var(--paper); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .image-badge { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; white-space: nowrap; }
@@ -122,13 +129,28 @@ body.modal-open { overflow: hidden; }
 .reader { position: fixed; inset: 0; width: min(1380px, calc(100vw - 48px)); height: calc(100dvh - 40px); max-width: none; max-height: none; margin: auto; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 70px color-mix(in srgb, var(--ink) 18%, transparent); }
 .reader[open] { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
 .reader.expanded { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
-.reader-header { display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+.reader-header { position: relative; display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
 .icon-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 36px; height: 36px; padding: 8px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); transition: color .15s, background .15s; }
 .icon-button:hover:not(:disabled), .icon-button[aria-pressed="true"] { color: var(--accent); background: var(--soft); }
 .reader-back { border-color: var(--line); }
 .reader-heading { min-width: 0; flex: 1; }
 .reader-heading h2 { max-width: 850px; font-size: var(--text-title); font-weight: 550; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .reader-heading p { margin-top: 5px; color: var(--muted); font-size: var(--text-meta); overflow-wrap: anywhere; }
+.reader-details { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 12px; margin-top: 5px; }
+.reader-details #reader-meta { margin: 0; }
+.reader-note-toggle { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 5px; border-radius: 4px; color: var(--accent); font-size: var(--text-meta); }
+.reader-note-toggle:hover, .reader-note-toggle[aria-expanded="true"] { background: var(--soft); }
+.reader-note-toggle .icon { width: 14px; height: 14px; }
+.reader-note-toggle[aria-expanded="true"] .icon { transform: rotate(180deg); }
+.reader-note-panel { position: absolute; z-index: 10; top: calc(100% - 2px + var(--note-offset, 0px)); left: 20px; width: min(520px, calc(100% - 40px)); padding: 12px 16px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: 0 10px 28px color-mix(in srgb, var(--ink) 14%, transparent); }
+.reader-note-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.reader-note-header h3 { margin-right: auto; font-size: var(--text-ui); font-weight: 550; }
+.reader-note-header .text-button { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); }
+.reader-note-header .text-button .icon { width: 15px; height: 15px; }
+.reader-note-header .icon-button { width: 30px; height: 30px; padding: 6px; }
+.reader-note-text { max-height: min(240px, 32dvh, var(--note-available-height, 240px)); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: var(--line) transparent; padding-right: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--text-ui); line-height: 1.8; user-select: text; }
+.reader-note-text:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.reader-note-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 .reader-actions { display: flex; gap: 5px; margin-left: auto; }
 .reader-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 20px; background: var(--paper); border-bottom: 1px solid var(--line); }
 .segmented { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--wash); }
@@ -320,7 +342,7 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 #series-nav:not(:empty) { margin-top: 9px; }
 .card-open { position: absolute; bottom: 20px; right: 20px; display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--accent); box-shadow: 0 2px 8px color-mix(in srgb, var(--ink) 8%, transparent); opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s; }
 .card-open .icon { width: 16px; height: 16px; }
-.album-card:hover .card-open, .album-card:focus-visible .card-open { opacity: 1; transform: translateY(0); }
+.album-card:hover .card-open, .album-link:focus-visible .card-open { opacity: 1; transform: translateY(0); }
 .series-card::before { content: ''; position: absolute; top: -9px; left: -1px; width: 68px; height: 9px; border: 1px solid var(--line); border-bottom: 0; border-radius: 6px 6px 0 0; background: var(--paper); transition: border-color .2s; }
 .series-card:hover::before { border-color: color-mix(in srgb, var(--accent) 45%, var(--paper)); }
 .series-edit-row .form-input { background: var(--paper); }
@@ -399,6 +421,7 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .reader.expanded { width: 100vw; height: 100dvh; border-radius: 0; }
   .reader-header { min-height: 66px; padding: 12px; gap: 9px; flex-wrap: wrap; }
   .reader-heading { flex-basis: calc(100% - 45px); }
+  .reader-note-panel { left: 12px; width: calc(100% - 24px); padding: 10px 12px 12px; }
   .reader-heading p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; font-size: var(--text-meta); }
   .reader-actions { margin-left: 39px; gap: 3px; }
   .reader-actions .icon-button, .reader-back { width: 32px; height: 34px; padding: 6px; }
