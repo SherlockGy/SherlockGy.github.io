@@ -528,5 +528,18 @@
         }
       ]
     }
+  ],
+  "series": [
+    {
+      "id": "series-af955985-2fbd-4d4e-b393-9f696a13ebb8",
+      "title": "鸟",
+      "parentId": ""
+    }
+  ],
+  "libraryHistory": [
+    {
+      "requestId": "6cb71a72-73da-4918-8630-56173fd29e4d",
+      "fingerprint": "0e4b2d7252402a33ce69ba24c7d6ec7c14c1ec995184cf58972321b4bbffe1d4"
+    }
   ]
 }
