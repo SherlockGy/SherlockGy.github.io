@@ -3,7 +3,7 @@
   "albums": [
     {
       "id": "album-ca0fa3a5-95c3-4870-b4b8-2c180b3b03cf",
-      "title": "一个 Skill 里有什么？",
+      "title": "Skill 介绍和设计",
       "date": "2026-09-20",
       "description": "",
       "tags": [],
@@ -11,9 +11,33 @@
       "images": [
         {
           "src": "./images/2026/09/album-ca0fa3a5-95c3-4870-b4b8-2c180b3b03cf/001.png",
-          "alt": "一个 Skill 里有什么？ · 第 1 页",
+          "alt": "Skill 介绍和设计 · 第 1 页",
           "width": 1672,
           "height": 941
+        },
+        {
+          "src": "./images/2026/09/album-ca0fa3a5-95c3-4870-b4b8-2c180b3b03cf/5d448191-83e5-4414-a714-a3b214735488-001.png",
+          "width": 1672,
+          "height": 941,
+          "alt": "Skill 介绍和设计 · 第 2 页"
+        },
+        {
+          "src": "./images/2026/09/album-ca0fa3a5-95c3-4870-b4b8-2c180b3b03cf/5d448191-83e5-4414-a714-a3b214735488-002.png",
+          "width": 1672,
+          "height": 941,
+          "alt": "Skill 介绍和设计 · 第 3 页"
+        },
+        {
+          "src": "./images/2026/09/album-ca0fa3a5-95c3-4870-b4b8-2c180b3b03cf/5d448191-83e5-4414-a714-a3b214735488-003.png",
+          "width": 1672,
+          "height": 941,
+          "alt": "Skill 介绍和设计 · 第 4 页"
+        }
+      ],
+      "editHistory": [
+        {
+          "requestId": "5d448191-83e5-4414-a714-a3b214735488",
+          "fingerprint": "e574aeaf8cf7e1c252b20a64a959627d374a204f60d553e0196e75adae5904f5"
         }
       ]
     },
