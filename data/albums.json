@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-ca0fa3a5-95c3-4870-b4b8-2c180b3b03cf",
+      "title": "一个 Skill 里有什么？",
+      "date": "2026-09-20",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "6b2fe5dff2f90eb82b32957c7c6f6c3b13d7a089e3d4b0f658e20fd7dc8cf64e",
+      "images": [
+        {
+          "src": "./images/2026/09/album-ca0fa3a5-95c3-4870-b4b8-2c180b3b03cf/001.png",
+          "alt": "一个 Skill 里有什么？ · 第 1 页",
+          "width": 1672,
+          "height": 941
+        }
+      ]
+    },
+    {
       "id": "album-df634476-714a-4f83-911d-f02dd2c4799b",
       "title": "Codex 上下文管理机制",
       "date": "2026-09-19",
