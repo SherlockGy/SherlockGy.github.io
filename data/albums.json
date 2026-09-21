@@ -772,6 +772,22 @@
           "height": 941
         }
       ]
+    },
+    {
+      "id": "album-72a6531b-8d61-4fab-9903-16b5c8c99aef",
+      "title": "啡啡",
+      "seriesId": "series-a58677d4-d270-429f-80ec-fe68b3470e4a",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "96e7a51ee7f2832f38c8141152002f14c20fd2756ef828ff7234c84f47f57802",
+      "images": [
+        {
+          "src": "./images/series/album-72a6531b-8d61-4fab-9903-16b5c8c99aef/001.png",
+          "alt": "啡啡 · 第 1 页",
+          "width": 1254,
+          "height": 1254
+        }
+      ]
     }
   ],
   "series": [
