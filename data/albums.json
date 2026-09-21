@@ -784,12 +784,21 @@
       "id": "series-d461f598-bb32-435e-a755-54fd1b704e34",
       "title": "学前教育",
       "parentId": ""
+    },
+    {
+      "id": "series-a58677d4-d270-429f-80ec-fe68b3470e4a",
+      "title": "啡啡",
+      "parentId": ""
     }
   ],
   "libraryHistory": [
     {
       "requestId": "6cb71a72-73da-4918-8630-56173fd29e4d",
       "fingerprint": "0e4b2d7252402a33ce69ba24c7d6ec7c14c1ec995184cf58972321b4bbffe1d4"
+    },
+    {
+      "requestId": "a9b520ca-fdaa-4007-9bcb-22f561e7e349",
+      "fingerprint": "af745054b1040144812de1d28f62cacc5061c29b3991c1f69890e847a8eb8e85"
     }
   ]
 }
