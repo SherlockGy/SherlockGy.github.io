@@ -10,10 +10,16 @@
       "uploadFingerprint": "dbe4dcf1c59cb5307cee8cb6a276ac195d18cd9ea8d27fbae200dfb2b3a61544",
       "images": [
         {
-          "src": "./images/2026/09/album-fdeb6f3a-68e6-4f53-8e40-2c51bd18332d/001.png",
-          "alt": "Jev 和 SystemOne 是什么？ · 第 1 页",
+          "src": "./images/2026/09/album-fdeb6f3a-68e6-4f53-8e40-2c51bd18332d/a18a4ac2-a209-4fae-af63-2c42ca0428d7-001.png",
           "width": 1447,
-          "height": 1087
+          "height": 1087,
+          "alt": "Jev 和 SystemOne 是什么？ · 第 1 页"
+        }
+      ],
+      "editHistory": [
+        {
+          "requestId": "a18a4ac2-a209-4fae-af63-2c42ca0428d7",
+          "fingerprint": "4575a955e3f102139a604a96ba862be16eeb166c2bd3be980fe8e909a8ba1466"
         }
       ]
     },
