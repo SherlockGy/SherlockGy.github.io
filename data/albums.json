@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-fdeb6f3a-68e6-4f53-8e40-2c51bd18332d",
+      "title": "Jev 和 SystemOne 是什么？",
+      "date": "2026-09-24",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "dbe4dcf1c59cb5307cee8cb6a276ac195d18cd9ea8d27fbae200dfb2b3a61544",
+      "images": [
+        {
+          "src": "./images/2026/09/album-fdeb6f3a-68e6-4f53-8e40-2c51bd18332d/001.png",
+          "alt": "Jev 和 SystemOne 是什么？ · 第 1 页",
+          "width": 1447,
+          "height": 1087
+        }
+      ]
+    },
+    {
       "id": "album-ca0fa3a5-95c3-4870-b4b8-2c180b3b03cf",
       "title": "Skill 介绍和设计",
       "date": "2026-09-20",
