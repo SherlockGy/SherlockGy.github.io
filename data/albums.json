@@ -2,6 +2,46 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-28d2b4bf-1c35-414e-8aa8-2834b1bda020",
+      "title": "01-完成标准",
+      "date": "2026-09-26",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "ab098e6f8623ea902275a907d93631e22d05ff2c91b5ac253e328c8c8df319f5",
+      "images": [
+        {
+          "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/001.png",
+          "alt": "01-完成标准 · 第 1 页",
+          "width": 1086,
+          "height": 1448
+        },
+        {
+          "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/002.png",
+          "alt": "01-完成标准 · 第 2 页",
+          "width": 1086,
+          "height": 1448
+        },
+        {
+          "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/003.png",
+          "alt": "01-完成标准 · 第 3 页",
+          "width": 1086,
+          "height": 1448
+        },
+        {
+          "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/004.png",
+          "alt": "01-完成标准 · 第 4 页",
+          "width": 1086,
+          "height": 1448
+        },
+        {
+          "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/005.png",
+          "alt": "01-完成标准 · 第 5 页",
+          "width": 1086,
+          "height": 1448
+        }
+      ]
+    },
+    {
       "id": "album-fdeb6f3a-68e6-4f53-8e40-2c51bd18332d",
       "title": "Jev 和 SystemOne 是什么？",
       "date": "2026-09-24",
