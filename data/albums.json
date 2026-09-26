@@ -3,7 +3,7 @@
   "albums": [
     {
       "id": "album-28d2b4bf-1c35-414e-8aa8-2834b1bda020",
-      "title": "01-完成标准",
+      "title": "Opus 5.5 出了，提示词怎么调整？",
       "date": "2026-09-26",
       "description": "",
       "tags": [],
@@ -11,33 +11,39 @@
       "images": [
         {
           "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/001.png",
-          "alt": "01-完成标准 · 第 1 页",
+          "alt": "Opus 5.5 出了，提示词怎么调整？ · 第 1 页",
           "width": 1086,
           "height": 1448
         },
         {
           "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/002.png",
-          "alt": "01-完成标准 · 第 2 页",
+          "alt": "Opus 5.5 出了，提示词怎么调整？ · 第 2 页",
           "width": 1086,
           "height": 1448
         },
         {
           "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/003.png",
-          "alt": "01-完成标准 · 第 3 页",
+          "alt": "Opus 5.5 出了，提示词怎么调整？ · 第 3 页",
           "width": 1086,
           "height": 1448
         },
         {
           "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/004.png",
-          "alt": "01-完成标准 · 第 4 页",
+          "alt": "Opus 5.5 出了，提示词怎么调整？ · 第 4 页",
           "width": 1086,
           "height": 1448
         },
         {
           "src": "./images/2026/09/album-28d2b4bf-1c35-414e-8aa8-2834b1bda020/005.png",
-          "alt": "01-完成标准 · 第 5 页",
+          "alt": "Opus 5.5 出了，提示词怎么调整？ · 第 5 页",
           "width": 1086,
           "height": 1448
+        }
+      ],
+      "editHistory": [
+        {
+          "requestId": "057f703e-ee96-4d94-adde-6881969a49ca",
+          "fingerprint": "4ac5dcdebd9d56d953c4f3237de0b845e3d4d6ff24d3e5d9fc7e41084dd3b447"
         }
       ]
     },
