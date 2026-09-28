@@ -65,7 +65,7 @@
     },
     {
       "id": "album-8d1c6d1a-0e41-4b2a-877a-39fc279f27e5",
-      "title": "01-concepts-and-name-xiaohongshu-v2",
+      "title": "Agent智能体、模型、Harness到底怎么区分？",
       "date": "2026-09-28",
       "description": "",
       "tags": [],
@@ -73,15 +73,21 @@
       "images": [
         {
           "src": "./images/2026/09/album-8d1c6d1a-0e41-4b2a-877a-39fc279f27e5/001.png",
-          "alt": "01-concepts-and-name-xiaohongshu-v2 · 第 1 页",
+          "alt": "Agent智能体、模型、Harness到底怎么区分？ · 第 1 页",
           "width": 1087,
           "height": 1447
         },
         {
           "src": "./images/2026/09/album-8d1c6d1a-0e41-4b2a-877a-39fc279f27e5/002.png",
-          "alt": "01-concepts-and-name-xiaohongshu-v2 · 第 2 页",
+          "alt": "Agent智能体、模型、Harness到底怎么区分？ · 第 2 页",
           "width": 1086,
           "height": 1448
+        }
+      ],
+      "editHistory": [
+        {
+          "requestId": "1f944097-faf5-4f3a-800e-36bb2342b906",
+          "fingerprint": "bc3a6a32b382cbd297b567c13e8802030c7ad56cf63f77bc1d724c5c3a36dea6"
         }
       ]
     },
