@@ -2,6 +2,28 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-8d1c6d1a-0e41-4b2a-877a-39fc279f27e5",
+      "title": "01-concepts-and-name-xiaohongshu-v2",
+      "date": "2026-09-28",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "cb422e8940aba125d508f6bf46eed844b4e497aa010fbb3a1935e7d84fa8c64c",
+      "images": [
+        {
+          "src": "./images/2026/09/album-8d1c6d1a-0e41-4b2a-877a-39fc279f27e5/001.png",
+          "alt": "01-concepts-and-name-xiaohongshu-v2 · 第 1 页",
+          "width": 1087,
+          "height": 1447
+        },
+        {
+          "src": "./images/2026/09/album-8d1c6d1a-0e41-4b2a-877a-39fc279f27e5/002.png",
+          "alt": "01-concepts-and-name-xiaohongshu-v2 · 第 2 页",
+          "width": 1086,
+          "height": 1448
+        }
+      ]
+    },
+    {
       "id": "album-28d2b4bf-1c35-414e-8aa8-2834b1bda020",
       "title": "Opus 5.5 出了，提示词怎么调整？",
       "date": "2026-09-26",
