@@ -2,6 +2,40 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-258f189a-fa21-48e5-a43f-1372b21c63d4",
+      "title": "Claude 模型名称的含义",
+      "date": "2026-09-28",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "fe9ef98e94cbb5d13df6378716578f6a5f19895757ca00871e062f9bc1c6311e",
+      "images": [
+        {
+          "src": "./images/2026/09/album-258f189a-fa21-48e5-a43f-1372b21c63d4/001.png",
+          "alt": "Claude 模型名称的含义 · 第 1 页",
+          "width": 1086,
+          "height": 1448
+        },
+        {
+          "src": "./images/2026/09/album-258f189a-fa21-48e5-a43f-1372b21c63d4/002.png",
+          "alt": "Claude 模型名称的含义 · 第 2 页",
+          "width": 1087,
+          "height": 1447
+        },
+        {
+          "src": "./images/2026/09/album-258f189a-fa21-48e5-a43f-1372b21c63d4/003.png",
+          "alt": "Claude 模型名称的含义 · 第 3 页",
+          "width": 1122,
+          "height": 1402
+        },
+        {
+          "src": "./images/2026/09/album-258f189a-fa21-48e5-a43f-1372b21c63d4/004.png",
+          "alt": "Claude 模型名称的含义 · 第 4 页",
+          "width": 1086,
+          "height": 1448
+        }
+      ]
+    },
+    {
       "id": "album-ee86c261-2e67-4c3a-9e7a-2265cc645241",
       "title": "什么是 AGI？",
       "date": "2026-09-28",
