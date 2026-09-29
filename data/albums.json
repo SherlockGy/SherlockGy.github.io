@@ -987,6 +987,11 @@
       "id": "series-a58677d4-d270-429f-80ec-fe68b3470e4a",
       "title": "啡啡",
       "parentId": ""
+    },
+    {
+      "id": "series-7e45bac6-3a82-4bb6-bce5-4cf9e25887aa",
+      "title": "理财",
+      "parentId": ""
     }
   ],
   "libraryHistory": [
@@ -997,6 +1002,10 @@
     {
       "requestId": "a9b520ca-fdaa-4007-9bcb-22f561e7e349",
       "fingerprint": "af745054b1040144812de1d28f62cacc5061c29b3991c1f69890e847a8eb8e85"
+    },
+    {
+      "requestId": "b35de3f1-daea-4942-a323-95ff12c41fea",
+      "fingerprint": "5bc0d6c8ccda6458edf6422df6dcde470449ba1fde9008f9d75c7a9ed6635a6a"
     }
   ]
 }
