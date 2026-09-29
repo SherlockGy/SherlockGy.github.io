@@ -2,6 +2,28 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-1d3cb65e-e572-405b-8f8c-58c22873e459",
+      "title": "提示词工程：目标定义 × 判断标准 × 领域表达",
+      "date": "2026-09-29",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "dda1cc4c9414acd03adfb585643343e0edb9449d4d63100c770864330651520b",
+      "images": [
+        {
+          "src": "./images/2026/09/album-1d3cb65e-e572-405b-8f8c-58c22873e459/001.png",
+          "alt": "提示词工程：目标定义 × 判断标准 × 领域表达 · 第 1 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/09/album-1d3cb65e-e572-405b-8f8c-58c22873e459/002.png",
+          "alt": "提示词工程：目标定义 × 判断标准 × 领域表达 · 第 2 页",
+          "width": 1448,
+          "height": 1086
+        }
+      ]
+    },
+    {
       "id": "album-258f189a-fa21-48e5-a43f-1372b21c63d4",
       "title": "Claude 模型名称里的文艺气息",
       "date": "2026-09-28",
