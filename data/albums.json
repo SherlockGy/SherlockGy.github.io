@@ -970,6 +970,22 @@
           "height": 1254
         }
       ]
+    },
+    {
+      "id": "album-7002c2ad-7a28-499c-8251-37b31bcf7381",
+      "title": "指数型 ETF 概念",
+      "seriesId": "series-7e45bac6-3a82-4bb6-bce5-4cf9e25887aa",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "4481124ba575b4667e752cae7d6140598f0793b45b9ea362072ffe13d40318ca",
+      "images": [
+        {
+          "src": "./images/series/album-7002c2ad-7a28-499c-8251-37b31bcf7381/001.png",
+          "alt": "指数型 ETF 概念 · 第 1 页",
+          "width": 1484,
+          "height": 1060
+        }
+      ]
     }
   ],
   "series": [
