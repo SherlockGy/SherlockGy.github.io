@@ -7,8 +7,8 @@
   <meta name="description" content="SherlockGy 的月份图集与系列图集。">
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/style.css?v=20260920-focus-1">
-  <script type="module" src="./assets/app.js?v=20260920-navigation-1"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=20261004-export-2">
+  <script type="module" src="./assets/app.js?v=20261004-export-2"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
@@ -45,7 +45,7 @@
     <header class="reader-header">
       <button id="reader-close" class="icon-button reader-back" aria-label="返回图集" title="返回图集"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#arrow-left"/></svg></button>
       <div class="reader-heading"><h2 id="reader-title"></h2><div class="reader-details"><p id="reader-meta"></p><button id="reader-note-toggle" class="reader-note-toggle" aria-expanded="false" aria-controls="reader-note-panel" hidden><span>备注</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-down"/></svg></button></div></div>
-      <div class="reader-actions"><button id="edit-images" class="text-button">编辑图集</button><button id="copy-link" class="icon-button" aria-label="复制图集链接" title="复制图集链接"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#link"/></svg></button><button id="fullscreen" class="icon-button" aria-label="网页全屏" aria-pressed="false" title="网页全屏"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#expand"/></svg></button></div>
+      <div class="reader-actions"><button id="download-album" class="text-button">下载</button><button id="edit-images" class="text-button">编辑图集</button><button id="copy-link" class="icon-button" aria-label="复制图集链接" title="复制图集链接"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#link"/></svg></button><button id="fullscreen" class="icon-button" aria-label="网页全屏" aria-pressed="false" title="网页全屏"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#expand"/></svg></button></div>
       <section id="reader-note-panel" class="reader-note-panel" aria-labelledby="reader-note-title" hidden>
         <div class="reader-note-header"><h3 id="reader-note-title">备注</h3><button id="reader-note-copy" class="text-button"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg?v=20260919-notes-1#copy"/></svg><span>复制备注</span></button><button id="reader-note-close" class="icon-button" aria-label="收起备注" title="收起备注"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#close"/></svg></button></div>
         <div id="reader-note-text" class="reader-note-text" tabindex="0" role="region" aria-label="备注正文"></div>
@@ -74,10 +74,31 @@
           <div class="slideshow-page-controls"><button id="slideshow-prev" class="icon-button" aria-label="上一张" title="上一张"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg></button><span id="slideshow-count" role="status" aria-live="polite"></span><button id="slideshow-next" class="icon-button" aria-label="下一张" title="下一张"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></div>
           <div class="slideshow-tools"><span id="slideshow-scale" class="zoom-scale" aria-label="当前缩放 100%" title="当前缩放比例，以适屏大小为 100%">100%</span><button id="slideshow-hand" class="icon-button" aria-label="开启拖动与缩放（滚轮 / 双指）" title="开启拖动与缩放（滚轮 / 双指）" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg?v=20260917-1#hand"/></svg></button><button id="slideshow-fit" class="text-button" aria-label="恢复适屏大小与居中位置" title="恢复适屏大小与居中位置">适屏</button></div>
           <p id="slideshow-hint">滚轮翻页 · 点击目录跳转</p>
+          <button id="slideshow-download" class="text-button slideshow-download">下载图集</button>
         </div>
       </aside>
       <div class="slideshow-canvas" aria-label="放映图片" aria-describedby="slideshow-hint"><div id="slideshow-status" class="slideshow-status" role="status" hidden></div></div>
     </div>
+  </dialog>
+  <dialog id="album-export" class="upload-dialog export-dialog" aria-labelledby="export-title">
+    <form>
+      <header class="dialog-header"><h2 id="export-title">下载图集</h2><button type="button" id="export-close" class="icon-button" aria-label="关闭下载"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#close"/></svg></button></header>
+      <div class="dialog-content">
+        <p id="export-album-name" class="export-album-name"></p>
+        <label class="field-label" for="export-format">文件格式</label>
+        <select id="export-format" class="form-input" aria-describedby="export-format-note"><option value="pdf">PDF</option><option value="pptx">PowerPoint（PPTX）</option></select>
+        <p id="export-format-note" class="field-note"></p>
+        <label class="field-label" for="export-password">上传口令</label>
+        <input id="export-password" class="form-input" type="password" autocomplete="off" required placeholder="输入现有上传口令">
+        <p class="field-note">使用现有上传口令，仅在本次窗口内有效，关闭后清除。动态图片导出为静态画面。</p>
+      </div>
+      <footer class="dialog-footer">
+        <p id="export-status" class="upload-status" role="status" aria-live="polite" aria-atomic="true"></p>
+        <div class="export-download-actions"><button type="button" id="export-cancel" class="secondary-button" hidden>取消生成</button></div>
+        <a id="export-download" class="primary-button" hidden>下载文件</a>
+        <button type="submit" id="export-submit" class="primary-button">生成并下载</button>
+      </footer>
+    </form>
   </dialog>
   <dialog id="upload-dialog" class="upload-dialog" aria-labelledby="upload-title">
     <form id="upload-form">

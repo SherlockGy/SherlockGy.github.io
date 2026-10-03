@@ -10,6 +10,7 @@ import { createSlideshow } from './slideshow.js?v=20260920-navigation-1';
 import { createImageReader, createScrollReader } from './reader.js?v=20260920-navigation-1';
 import { createImagePreloader, createImageWindow } from './preload.js?v=20260917-preload-2';
 import { createReaderDirectory } from './reader-directory.js?v=20260920-navigation-1';
+import { createAlbumExport } from './export.js?v=20261004-export-2';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -22,6 +23,7 @@ const uploadClient = createUploadClient();
 const imagePreview = createImagePreview(updateBodyLock);
 const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
 const readerDirectory = createReaderDirectory($('#reader-directory'), goPage);
+const albumExport = createAlbumExport(updateBodyLock);
 // 逐页阅读统一将翻页焦点放在目录；单图没有目录时使用已有的拖动按钮。
 function focusReadingPage() {
   if (state.expanded) slideshow.focusCurrent();
@@ -441,6 +443,7 @@ function route() {
   updateReaderNote(album, changed);
   $('#copy-link').disabled = !!album.local;
   $('#edit-images').hidden = !!album.local || !config.uploadEndpoint;
+  for (const control of ['#download-album', '#slideshow-download']) $(control).hidden = !!album.local || !config.uploadEndpoint;
   document.title = `${album.title} · 图集`;
   renderReader();
   if (changed && state.mode === 'page') focusReadingPage();
@@ -466,6 +469,7 @@ function setExpanded(expanded, restoreReader = true) {
 }
 
 function closeReader(changeRoute = true) {
+  albumExport.close();
   setReaderNoteOpen(false);
   setExpanded(false, false);
   disposeReaderImages(true);
@@ -881,6 +885,7 @@ $('#reader-hand').addEventListener('click', () => {
 });
 $('#zoom-reset').addEventListener('click', () => imageReader?.reset());
 $('#fullscreen').addEventListener('click', () => setExpanded(!state.expanded));
+for (const control of ['#download-album', '#slideshow-download']) $(control).addEventListener('click', () => albumExport.open(state.album));
 $('#copy-link').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(location.href); toast('已复制当前阅读链接'); }
   catch { toast('复制未成功，请复制浏览器地址栏中的链接'); }
@@ -905,6 +910,7 @@ const readerLayoutObserver = new ResizeObserver(() => {
 });
 for (const target of [reader, $('.reader-header', reader), $('#reader-stage')]) readerLayoutObserver.observe(target);
 document.addEventListener('keydown', event => {
+  if ($('#album-export').open) return;
   if (event.target.closest('#reader-note-panel')) return;
   if ($('#image-preview').open || uploadDialog.open) return;
   if ($('#image-editor').open || $('#series-action').open) return;

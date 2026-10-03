@@ -305,6 +305,12 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .manager-summary { min-width: 0; }
 #album-title { margin-bottom: 18px; }
 .reader-actions #edit-images { margin-right: 7px; }
+.export-dialog { width: min(560px, calc(100vw - 40px)); }
+.export-album-name { margin-bottom: 22px; font-size: var(--text-ui); line-height: 1.7; overflow-wrap: anywhere; }
+.export-dialog label[for="export-password"] { margin-top: 22px; }
+.export-download-actions { display: flex; gap: 10px; }
+#export-download { justify-self: end; text-decoration: none; }
+.slideshow-download { display: block; margin: 6px auto 0; }
 .reader.expanded[open] { display: block; }
 .reader.expanded > .reader-header, .reader.expanded > .reader-toolbar,
 .reader.expanded > .reader-body, .reader.expanded > .reader-footer { display: none; }
