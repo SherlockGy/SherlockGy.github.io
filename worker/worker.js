@@ -6,11 +6,14 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-09-19-series-1';
+const VERSION = '2026-10-04-upload-1';
 const MAX_DESCRIPTION_LENGTH = 10000;
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
-const LIMITS = { files: 30, fileBytes: 10 * MIB, totalBytes: 30 * MIB, bodyBytes: 31 * MIB };
+const LIMITS = { files: 60, fileBytes: 10 * MIB, totalBytes: 600 * MIB, bodyBytes: 31 * MIB };
+// 旧整包接口在单次请求内转存所有文件，保留原上限以控制 GitHub 子请求数。
+const LEGACY_MAX_FILES = 30;
+const LEGACY_TOTAL_BYTES = 30 * MIB;
 const encoder = new TextEncoder();
 const attempts = new Map(); // Best-effort per-isolate throttling, not a global quota.
 const RECEIPT_TTL_MS = 24 * 60 * 60 * 1000;
@@ -217,7 +220,7 @@ function existingAlbum(snapshot, id, fingerprint) {
 async function readUploadForm(request) {
   const contentType = request.headers.get('Content-Type') || '';
   if (!contentType.toLowerCase().startsWith('multipart/form-data;')) fail(415, 'EXPECTED_FORM', '请从图集网站选择图片上传');
-  if (Number(request.headers.get('Content-Length')) > LIMITS.bodyBytes) fail(413, 'TOO_LARGE', '单次图片总大小不能超过 30 MB');
+  if (Number(request.headers.get('Content-Length')) > LIMITS.bodyBytes) fail(413, 'TOO_LARGE', '旧版整包请求过大，请刷新网站后使用逐文件上传');
   if (!request.body) fail(400, 'EMPTY_BODY', '未收到上传内容');
   let form;
   try {
@@ -235,12 +238,13 @@ function uploadRequestId(form) {
 }
 async function inspectFiles(form, allowEmpty = false) {
   const files = form.getAll('images');
-  if ((!allowEmpty && !files.length) || files.length > LIMITS.files) fail(400, 'FILE_COUNT', '每个图集需要 1–30 张图片');
+  if ((!allowEmpty && !files.length) || files.length > LIMITS.files) fail(400, 'FILE_COUNT', `每个图集需要 1–${LIMITS.files} 张图片`);
+  if (files.length > LEGACY_MAX_FILES) fail(400, 'FILE_COUNT', '旧版整包上传最多 30 张，请刷新网站后使用逐文件上传，支持最多 60 张');
   let total = 0;
   const info = [];
   for (const file of files) {
     if (typeof file === 'string' || typeof file?.arrayBuffer !== 'function' || file.size === 0) fail(400, 'INVALID_FILE', '图片为空或格式不正确');
-    if (file.size > LIMITS.fileBytes || (total += file.size) > LIMITS.totalBytes) fail(413, 'TOO_LARGE', '单张最多 10 MB，单次合计最多 30 MB');
+    if (file.size > LIMITS.fileBytes || (total += file.size) > LEGACY_TOTAL_BYTES) fail(413, 'TOO_LARGE', '旧版整包上传单张最多 10 MiB，合计最多 30 MiB，请刷新网站后使用逐文件上传');
     const bytes = new Uint8Array(await file.arrayBuffer());
     const extension = imageType(bytes.subarray(0, 64));
     if (!extension) fail(400, 'INVALID_FILE', '仅支持真实的 JPG、PNG、WebP、GIF 或 AVIF 图片，不接受 SVG 或 HTML');
@@ -313,7 +317,7 @@ async function uploadImage(request, env, requestId, index) {
   const scope = uploadScope(new URL(request.url).searchParams.get('scope'));
   env._requestId = requestId;
   if (!request.body) fail(400, 'INVALID_FILE', '图片为空');
-  if (Number(request.headers.get('Content-Length')) > LIMITS.fileBytes) fail(413, 'TOO_LARGE', '单张图片最多 10 MB');
+  if (Number(request.headers.get('Content-Length')) > LIMITS.fileBytes) fail(413, 'TOO_LARGE', `单张图片最多 ${LIMITS.fileBytes / MIB} MiB`);
   const bytes = new Uint8Array(await new Response(limitedStream(request.body, LIMITS.fileBytes)).arrayBuffer());
   const extension = imageType(bytes.subarray(0, 64));
   if (!extension) fail(400, 'INVALID_FILE', '仅支持真实的 JPG、PNG、WebP、GIF 或 AVIF 图片');
@@ -336,12 +340,12 @@ async function preparedFiles(form, env, scope, allowEmpty = false) {
   let receipts;
   try { receipts = JSON.parse(field(form, 'receipts', 100000, true)); }
   catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_RECEIPT', '图片凭据格式不正确'); }
-  if (!Array.isArray(receipts) || (!allowEmpty && !receipts.length) || receipts.length > LIMITS.files) fail(400, 'FILE_COUNT', '每个图集需要 1–30 张图片');
+  if (!Array.isArray(receipts) || (!allowEmpty && !receipts.length) || receipts.length > LIMITS.files) fail(400, 'FILE_COUNT', `每个图集需要 1–${LIMITS.files} 张图片`);
   const requestId = uploadRequestId(form), info = [];
   let total = 0;
   for (let index = 0; index < receipts.length; index++) {
     const item = await verifyReceipt(env, receipts[index], requestId, scope, index);
-    if ((total += item.size) > LIMITS.totalBytes) fail(413, 'TOO_LARGE', '单次图片总大小不能超过 30 MB');
+    if ((total += item.size) > LIMITS.totalBytes) fail(413, 'TOO_LARGE', `本次上传合计不能超过 ${LIMITS.totalBytes / MIB} MiB`);
     info.push(item);
   }
   // Existing commit construction is shared by legacy files and staged images.
@@ -390,7 +394,7 @@ async function upload(request, env) {
     if (info[index].width) { image.width = info[index].width; image.height = info[index].height; }
     album.images.push(image);
   }
-  // At most 48 GitHub subrequests for 30 images and two conflict retries.
+  // 流水上传在各自请求中转存原图；旧整包最多 30 张，含两次冲突重试仍不超过 48 次子请求。
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt > 0) snapshot = await readHead(env);
     const duplicate = existingAlbum(snapshot, id, fingerprint);
@@ -433,7 +437,7 @@ async function albumRevision(album) {
   return hash(encoder.encode(JSON.stringify(album)));
 }
 function validateOrder(order, album, fileCount) {
-  if (!Array.isArray(order) || !order.length || order.length > LIMITS.files) fail(400, 'FILE_COUNT', '编辑后的图集需要 1–30 张图片');
+  if (!Array.isArray(order) || !order.length || order.length > LIMITS.files) fail(400, 'FILE_COUNT', `编辑后的图集需要 1–${LIMITS.files} 张图片`);
   const originals = new Set(), uploads = new Set();
   for (const entry of order) {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) fail(400, 'INVALID_ORDER', '图片顺序格式不正确');
@@ -651,8 +655,8 @@ export default {
       if (request.method === 'GET' && ['/', '/albums', '/health', '/check'].includes(path)) return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
         ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
         message: '请在图集网站中上传图片。', endpoint: '/albums', capabilities: { editTitle: true, editDescription: true, maxDescriptionLength: MAX_DESCRIPTION_LENGTH }, upload: { protocol: UPLOAD_PROTOCOL,
-          concurrency: ['1', '2', '3'].includes(String(env.UPLOAD_CONCURRENCY)) ? Number(env.UPLOAD_CONCURRENCY) : 2,
-          maxInFlightBytes: 12 * MIB, receiptTtlMs: RECEIPT_TTL_MS } });
+          concurrency: ['1', '2', '3'].includes(String(env.UPLOAD_CONCURRENCY)) ? Number(env.UPLOAD_CONCURRENCY) : 3,
+          maxFiles: LIMITS.files, maxFileBytes: LIMITS.fileBytes, maxTotalBytes: LIMITS.totalBytes, maxInFlightBytes: 12 * MIB, receiptTtlMs: RECEIPT_TTL_MS } });
       if ((request.method !== 'POST' && !((albumMatch || isLibrary || isUploadStatus) && request.method === 'GET')) || path === '/health' || (isUploadStatus && request.method !== 'GET')) fail(405, 'METHOD_NOT_ALLOWED', '请求方法不支持');
       if (!env.GITHUB_TOKEN || typeof env.UPLOAD_PASSWORD !== 'string' || env.UPLOAD_PASSWORD.length < 8) fail(503, 'NOT_CONFIGURED', '请先在 Cloudflare 添加 GITHUB_TOKEN 和至少 8 位的 UPLOAD_PASSWORD Secret');
       throttle(request, !!imageMatch);

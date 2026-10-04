@@ -22,7 +22,7 @@
 - 已有图集支持修改名称与说明、新增图片、排序和换图；一次保存全部生效。仅上传新增或替换的文件，单独修改名称或说明不上传图片。
 - 首次上传与后续编辑都提供较大的排序预览图，点击“查看大图”可逐张查看、切换原尺寸；关闭大图后继续原草稿。已有缩略图按原图地址复用，缺少缩略图时按需加载原图；首次上传直接使用本地文件预览。
 - 添加、编辑和系列操作弹窗中，顶部关闭区与底部操作区保持可见，中间内容独立滚动；编辑图集在载入成功后才显示保存区。长提示可独立滚动阅读。
-- 新版上传按文件流水处理，默认两路并发；同一页面重试复用已成功图片，最后一次提交完整图集。
+- 新版上传按文件流水处理，默认三路并发；同一页面重试复用已成功图片，最后一次提交完整图集。
 - 系列页面直接新建系列或子系列，对象旁的菜单支持重命名和移动，“调整顺序”只整理当前层级。侧栏支持展开与收起多层目录；月份图集与系列图集不能互相移动。
 - 页面采用浅色界面和统一的 SVG 图标，仅显示自己的图集。
 
@@ -99,7 +99,7 @@
 
 `config.js` 已填写 Worker 的公开地址。将 [worker.js](worker/worker.js) 粘贴到 Cloudflare 编辑器，并按照 [部署说明](worker/SETUP.md) 设置两个 Secret。GitHub 凭据只能保存在 Worker 的 Secret 中，不能写入本仓库。Worker 需在你的 Cloudflare 账户中完成部署，前端才可以实际发布图集。
 
-详见 [Worker 接口约定](docs/worker-api.md)。每个图集最多 30 张，单张 10 MiB，一次上传的文件合计 30 MiB。编辑时，合计大小只计算本次新增或替换的文件，排序不重新上传原图。支持 JPG、PNG、WebP、GIF、AVIF。
+详见 [Worker 接口约定](docs/worker-api.md)。每个图集最多 60 张，单张 10 MiB，一次上传的文件合计 600 MiB。编辑时，合计大小只计算本次新增或替换的文件，排序不重新上传原图。支持 JPG、PNG、WebP、GIF、AVIF。
 
 ## 图片上传与展示原理
 
@@ -153,6 +153,6 @@ sequenceDiagram
 
 GitHub Pages 发布来源应切换为 **GitHub Actions**，由 `.github/workflows/pages.yml` 测试、生成缩略图并发布 `_site`。首次构建会自动处理所有现有图集中的本地图片；以后上传、换图、排序触发的新提交也会自动处理。缩略图和补充后的目录仅进入网站发布产物，不写回源目录、不增加生成图片的 Git 提交。配置与回退步骤见 [缩略图发布说明](docs/thumbnails.md)。
 
-写入仍由 Cloudflare Worker 处理。仓库版本为 `2026-09-19-series-1`：系列整理接口禁止两类图集互相转换，并保护月份图集的日期和相对顺序。名称与长说明编辑、排序时更新自动页码说明的能力保持可用。建议先部署 Worker，再发布新版前端；Secret 保持原值。更新仓库内的 Worker 文件不会自动部署 Cloudflare，详见 [部署说明](worker/SETUP.md)。不要把 GitHub 凭据放在前端；这是公开的个人图集站，发布的图片可被访问。
+写入仍由 Cloudflare Worker 处理。仓库版本为 `2026-10-04-upload-1`：系列整理接口禁止两类图集互相转换，并保护月份图集的日期和相对顺序。名称与长说明编辑、排序时更新自动页码说明的能力保持可用。建议先部署 Worker，再发布新版前端；Secret 保持原值。更新仓库内的 Worker 文件不会自动部署 Cloudflare，详见 [部署说明](worker/SETUP.md)。不要把 GitHub 凭据放在前端；这是公开的个人图集站，发布的图片可被访问。
 
 参考：[GitHub Pages 发布来源](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。

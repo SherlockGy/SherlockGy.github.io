@@ -131,7 +131,7 @@ test('connection check authenticates, reads the current manifest and never write
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
-  assert.equal(result.version, '2026-09-19-series-1'); assert.ok(result.traceId);
+  assert.equal(result.version, '2026-10-04-upload-1'); assert.ok(result.traceId);
   assert.equal(fake.calls.length, 1); assert.ok(fake.calls.every(isRead));
   assert.equal(fake.manifest().albums.length, 0);
 });
@@ -353,11 +353,11 @@ test('manual order and parent changes persist without changing image order or dr
   const next = await readManagement('/library');
   assert.equal((await worker.fetch(managementRequest('/library', libraryForm(next.revision, series.slice(1), placements)), env)).status, 400);
 });
-test('editing cannot exceed 30 images and series destinations must exist', async t => {
-  const initial = editFixture(); initial.albums[0].images = Array.from({ length: 30 }, () => ({ ...initial.albums[0].images[0] }));
+test('编辑后的图集不能超过 60 张 and series destinations must exist', async t => {
+  const initial = editFixture(); initial.albums[0].images = Array.from({ length: 60 }, () => ({ ...initial.albums[0].images[0] }));
   const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
   const { revision } = await readManagement('/albums/notes');
-  const order = [...Array.from({ length: 30 }, (_, existing) => ({ existing })), { file: 0 }];
+  const order = [...Array.from({ length: 60 }, (_, existing) => ({ existing })), { file: 0 }];
   assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(revision, order, 1)), env)).status, 400);
   const form = new FormData(); form.set('title', '图集'); form.set('seriesId', 'missing'); form.set('requestId', crypto.randomUUID());
   form.append('images', new File([png], 'note.png', { type: 'image/png' }));
@@ -420,17 +420,17 @@ test('tampered, reordered, cross-draft, cross-album, expired and mixed receipts 
   assert.ok(fake.calls.every(call => call.path === '/git/blobs'));
 });
 
-test('30 staged images from one browser do not exhaust the ordinary operation throttle', async t => {
+test('同一浏览器上传 60 张图片不会耗尽普通操作配额', async t => {
   const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
   const address = `192.0.2.${++ip}`, id = crypto.randomUUID(), receipts = [];
-  for (let index = 0; index < 30; index++) {
+  for (let index = 0; index < 60; index++) {
     const result = await worker.fetch(stagedRequest(id, index, png, '/albums', address), env);
     assert.equal(result.status, 201); receipts.push((await result.json()).receipt);
   }
   const form = finalForm(id, receipts);
   const response = await worker.fetch(new Request('https://worker.test/albums', { method: 'POST', body: form,
     headers: { Origin: origin, Authorization: `Bearer ${env.UPLOAD_PASSWORD}`, 'CF-Connecting-IP': address } }), env);
-  assert.equal(response.status, 201); assert.equal(fake.manifest().albums[0].images.length, 30);
+  assert.equal(response.status, 201); assert.equal(fake.manifest().albums[0].images.length, 60);
 });
 
 test('knowing the upload password cannot forge a receipt or a repository snapshot', async t => {
@@ -449,18 +449,19 @@ test('knowing the upload password cannot forge a receipt or a repository snapsho
   assert.equal(fake.manifest().albums.length, 0);
 });
 
-test('staging enforces raw byte limits and finalization rejects excessive signed totals before committing', async t => {
+test('流水上传允许合计超过 30 MiB，仍拒绝单张超限和超过 60 张', async t => {
   const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
   const id = crypto.randomUUID(), bytes = new Uint8Array(8 * 1024 * 1024), receipts = [];
   bytes.set(png);
   for (let index = 0; index < 4; index++) receipts.push(await stage(id, index, '/albums', bytes));
   const total = await worker.fetch(managementRequest('/albums', finalForm(id, receipts)), env);
-  assert.equal(total.status, 413); assert.equal((await total.json()).error.code, 'TOO_LARGE');
+  assert.equal(total.status, 201);
   const oversized = await worker.fetch(stagedRequest(id, 4, new Uint8Array(10 * 1024 * 1024 + 1)), env);
   assert.equal(oversized.status, 413);
-  const tooMany = await worker.fetch(managementRequest('/albums', finalForm(id, Array(31).fill(receipts[0]))), env);
+  const tooMany = await worker.fetch(managementRequest('/albums', finalForm(id, Array(61).fill(receipts[0]))), env);
   assert.equal(tooMany.status, 400); assert.equal((await tooMany.json()).error.code, 'FILE_COUNT');
-  assert.equal(fake.calls.length, 4); assert.ok(fake.calls.every(call => call.path === '/git/blobs'));
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 4);
+  assert.equal(fake.calls.filter(call => call.path === '/git/commits').length, 1);
 });
 
 test('browser and Worker overlap transfers and snapshot reads, then commit without rereading the snapshot', async t => {
@@ -484,7 +485,7 @@ test('browser and Worker overlap transfers and snapshot reads, then commit witho
     } finally { active--; }
   }) });
   const result = await client.save({ endpoint: 'https://worker.test/albums', password: env.UPLOAD_PASSWORD, body: browserForm(crypto.randomUUID(), 5) });
-  assert.equal(result.status, 'committed'); assert.equal(peak, 2);
+  assert.equal(result.status, 'committed'); assert.equal(peak, 3);
   assert.equal(fake.calls.filter(call => call.path === '/graphql').length, 1);
   assert.equal(fake.calls.length, 9, '5 image writes + 1 read + 3 final writes');
   assert.deepEqual(fake.manifest().albums[0].images.map(item => item.src.split('/').pop()), ['001.png', '002.png', '003.png', '004.png', '005.png']);
@@ -642,4 +643,57 @@ test('multiline requests committed before newline normalization remain safe to r
   ]) assert.equal((await worker.fetch(managementRequest('/library', libraryForm(revision, nestedSeries(), changed)), env)).status, 400);
   assert.ok(fake.calls.every(isRead));
   assert.deepEqual(fake.manifest().albums, initial.albums);
+});
+
+test('上传能力默认三路并发，允许显式降速，并公开完整大小限制', async () => {
+  for (const [value, expected] of [[undefined, 3], ['1', 1], ['2', 2], ['3', 3], ['4', 3]]) {
+    const result = await (await worker.fetch(new Request('https://worker.test/health'), { ...env, UPLOAD_CONCURRENCY: value })).json();
+    assert.equal(result.upload.concurrency, expected);
+    assert.equal(result.upload.maxFiles, 60);
+    assert.equal(result.upload.maxFileBytes, 10 * 1048576);
+    assert.equal(result.upload.maxTotalBytes, 600 * 1048576);
+    assert.equal(result.upload.maxInFlightBytes, 12 * 1048576);
+  }
+});
+
+test('流水上传索引允许第 60 张并在转存前拒绝第 61 张', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const id = crypto.randomUUID();
+  assert.equal((await worker.fetch(stagedRequest(id, 59), env)).status, 201);
+  assert.equal((await worker.fetch(stagedRequest(id, 60), env)).status, 400);
+  assert.equal(fake.calls.length, 1);
+});
+
+test('已有 59 张图集可新增至 60 张，随后继续排序与换图', async t => {
+  const initial = editFixture();
+  initial.albums[0].images = Array.from({ length: 59 }, (_, index) => ({ src: `./images/${index}.png` }));
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const current = await readManagement('/albums/notes'), id = crypto.randomUUID();
+  const receipt = await stage(id, 0, '/albums/notes');
+  const order = [...Array.from({ length: 59 }, (_, existing) => ({ existing })), { file: 0 }];
+  const form = editForm(current.revision, order, 0, id); form.set('receipts', JSON.stringify([receipt]));
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', form), env)).status, 200);
+  assert.equal(fake.manifest().albums[0].images.length, 60);
+  const next = await readManagement('/albums/notes');
+  const replacement = [{ file: 0, replaces: 59 }, ...Array.from({ length: 59 }, (_, existing) => ({ existing }))];
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', editForm(next.revision, replacement, 1)), env)).status, 200);
+  assert.equal(fake.manifest().albums[0].images.length, 60);
+});
+
+test('600 MiB 的有效凭据能原子提交，超大单图凭据不能绕过验证', async t => {
+  const fake = fakeGit(); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const id = crypto.randomUUID(), sample = JSON.parse((await stage(id)).data);
+  // 使用测试专用服务端密钥构造边界凭据，避免测试持有 600 MiB 图片；不使用线上密钥或写入线上仓库。
+  const key = await crypto.subtle.importKey('raw', encoder.encode(`atlas-upload-receipt-v1\nSherlockGy/SherlockGy.github.io\n${env.GITHUB_TOKEN}\n${env.UPLOAD_PASSWORD}`),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sign = async payload => {
+    const data = JSON.stringify(payload);
+    return { data, signature: Buffer.from(await crypto.subtle.sign('HMAC', key, encoder.encode(data))).toString('hex') };
+  };
+  const receipts = await Promise.all(Array.from({ length: 60 }, (_, index) => sign({ ...sample, index, size: 10 * 1048576 })));
+  assert.equal((await worker.fetch(managementRequest('/albums', finalForm(id, receipts)), env)).status, 201);
+  assert.equal(fake.manifest().albums[0].images.length, 60);
+  receipts[0] = await sign({ ...sample, size: 10 * 1048576 + 1 });
+  assert.equal((await worker.fetch(managementRequest('/albums', finalForm(id, receipts)), env)).status, 400);
+  assert.equal(fake.calls.filter(call => call.path === '/git/commits').length, 1);
 });

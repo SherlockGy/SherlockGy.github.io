@@ -14,14 +14,14 @@
 
 ## 升级系列与编辑功能
 
-推荐先将本目录 `worker.js` 的完整代码部署到现有 Worker，再发布新版前端。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-09-19-series-1`。
+推荐先将本目录 `worker.js` 的完整代码部署到现有 Worker，再发布新版前端。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-10-04-upload-1`。
 
 此版本还修复排序后的自动页码说明：保存时按当前顺序更新 `图集名称 · 第 N 页`，自定义图片说明和原图路径保留。前端会纠正旧目录的显示，但后续保存写入正确页码需要部署此 Worker。
 
 - 在系列页面直接新建系列或子系列；通过对象旁的菜单重命名、移动，通过“调整顺序”整理当前层级。每次操作输入现有上传口令后单独保存，保存时自动读取最新目录。
 - 月份图集与系列图集保持独立，不能互相移动。Worker 同时禁止系列整理请求修改月份图集的日期与相对顺序。
 - 进入某个系列后添加图集，自动归属当前系列，不需要填写归档日期。
-- 阅读窗口“编辑图集”支持修改名称与说明、新增、排序和换图。编辑后的图集最多 30 张；只对本次新文件执行上传，单独修改名称或说明不上传图片。
+- 阅读窗口“编辑图集”支持修改名称与说明、新增、排序和换图。编辑后的图集最多 60 张；只对本次新文件执行上传，单独修改名称或说明不上传图片。
 - 保存时会检查版本。图集编辑遇到冲突后，可选择“重新载入”，并确认放弃当前修改；系列操作遇到目录更新可再次保存，自动读取并检查最新数据。如果操作对象本身已有冲突，需刷新页面重新操作。
 - 旧图文件保留，换图不等于删除历史图片；同一页码链接在排序后可能显示另一张图片。
 
@@ -37,6 +37,12 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 创建 Token 的入口：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token。Resource owner 选择 SherlockGy；Repository access 选择 Only select repositories，再选 SherlockGy.github.io；设置有效期。仅需 Contents 的 Read and write，Metadata 的 Read-only 为自动附带权限。
 
+## 启用 60 张与 600 MiB 上传
+
+先部署本目录最新 Worker，再发布前端。`GET /health` 的 `version` 应为 `2026-10-04-upload-1`，`upload.maxFiles` 为 `60`、`upload.maxTotalBytes` 为 `629145600`、`upload.concurrency` 为 `3`。如果已有普通环境变量 `UPLOAD_CONCURRENCY=2`，需改为 `3`，显式配置会覆盖代码默认值。Secret 保持原值。
+
+新建和编辑后的图集最多 60 张，单张 10 MiB，每次新增或换图合计 600 MiB。在途原图仍最多 12 MiB，大图自动减少并发。旧整包接口保留 30 张、30 MiB 上限，当前网页自动使用逐文件协议。
+
 ## 升级流水上传
 
 新版仍使用原来的两个 Secret。`GET /health` 应返回 `upload.protocol: "signed-blobs-v1"`。前端会自动启用逐文件流水传输、签名凭据复用和最终一次提交；新建与编辑图片都适用。
@@ -45,7 +51,7 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 | Name | 值 | 用途 |
 | --- | --- | --- |
-| `UPLOAD_CONCURRENCY` | `1`、`2`、`3`，默认 `2` | 控制浏览器同时上传并转存的文件数；遇到限流可降到 `1` |
+| `UPLOAD_CONCURRENCY` | `1`、`2`、`3`，默认 `3` | 控制浏览器同时上传并转存的文件数；遇到限流可降到 `1` |
 | `GITHUB_READ_MODE` | 默认 GraphQL，设为 `rest` 使用旧接口 | GraphQL 快照读取不可用时的兼容模式 |
 
 前端在途原图预算为 12 MiB，较大的图片自动减少并发。旧前端仍能调用旧接口；新前端连接旧 Worker 时也会回到旧上传路径。仅更新仓库里的代码不会激活线上 Worker 的新功能。
@@ -56,7 +62,7 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 ## 启用图集改名
 
-部署本目录最新代码后，`GET /health` 的版本应为 `2026-09-19-series-1`，并返回 `capabilities.editTitle: true`。已有的两个 Secret 不变，流水上传协议仍为 `signed-blobs-v1`。
+部署本目录最新代码后，`GET /health` 的版本应为 `2026-10-04-upload-1`，并返回 `capabilities.editTitle: true`。已有的两个 Secret 不变，流水上传协议仍为 `signed-blobs-v1`。
 
 在阅读窗口点击“编辑图集”，输入口令并载入最新内容，即可修改名称。可以只改名，也可以与排序、换图一起保存；名称不能为空，最多 120 字。改名保持图集编号、图片路径、原图和分享链接。旧版 Worker 下名称只读，图片编辑照常使用。
 
@@ -74,7 +80,7 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 ## 超时和连接诊断
 
-- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-09-19-series-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
+- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-10-04-upload-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
 - 若旧版提示 `Invalid redirect value`，属于 Worker 运行环境不支持 `redirect: 'error'` 的兼容性错误，请部署新版。新版使用 `manual` 并检查重定向状态，不会跟随跳转转发 Token；无需为此修改上传口令或重新生成 Token。
 - 打开 Cloudflare → Workers & Pages → `github-image-upload` → **Logs → Live**，开始查看实时日志，再回网站点击 **测试连接**或重试上传。
 - 日志中的 `github.start`、`github.success`、`github.error` 标记每一步，`stage` 表示读取主分支、读取图集目录、保存第几张图片或发布图集。`elapsedMs` 是耗时，`httpStatus` 是 GitHub 返回的 HTTP 状态，`traceId` 与页面错误中的请求编号对应。
@@ -85,11 +91,11 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 ## 运行说明
 
 - 不需要 KV、D1、R2 或 npm 依赖。
-- 1–30 张图片保存为一个命名图集，图片和目录通过一个 Git commit 一起提交。
+- 1–60 张图片保存为一个命名图集，图片和目录通过一个 Git commit 一起提交。
 - 不强制更新分支；并发冲突时重读目录，保留其他内容。同一批图片的重试复用请求编号，避免超时后重复保存。图片凭据有效 24 小时，仓库快照有效 5 分钟；轮换 GitHub Token 或上传口令后需重新建立草稿。
 - 文件类型通过文件头判断，不进行完整图像解码。PNG/GIF 自动记录宽高，其他格式可正常阅读。
 - 自带每个 Worker isolate 内的简单频率限制；它不提供全球统一的严格限额。
-- 代码上限为单张 10 MiB、合计 30 MiB。Cloudflare Free 的 CPU 限额较低，大图批量编码可能触发 1102；遇到时先减小图片或分批，需稳定处理大图时再评估 Workers Paid。未在你的 Cloudflare 账户进行负载测试。
+- 代码上限为单张 10 MiB、合计 600 MiB。Cloudflare Free 的 CPU 限额较低，大图批量编码可能触发 1102；遇到时先减小图片或分批，需稳定处理大图时再评估 Workers Paid。未在你的 Cloudflare 账户进行负载测试。
 - 显示保存成功后，GitHub Pages 还需要完成发布，稍后刷新网站查看。
 
 参考：[Cloudflare Secret 设置](https://developers.cloudflare.com/workers/configuration/secrets/)、[GitHub Token 创建](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)、[Cloudflare 实时日志](https://developers.cloudflare.com/workers/observability/logs/real-time-logs/)、[Cloudflare 运行限制](https://developers.cloudflare.com/workers/platform/limits/)。

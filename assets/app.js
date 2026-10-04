@@ -1,11 +1,11 @@
 import config from '../config.js';
-import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20260919-description-1';
-import { createImageEditor } from './manage.js?v=20260919-series-1';
+import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20261004-upload-1';
+import { createImageEditor } from './manage.js?v=20261004-upload-1';
 import { createSeriesActions } from './series.js?v=20260919-series-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
-import { createUploadClient } from './upload.js?v=20260917-review-4';
+import { createUploadClient } from './upload.js?v=20261004-upload-1';
 import { createSlideshow } from './slideshow.js?v=20260920-navigation-1';
 import { createImageReader, createScrollReader } from './reader.js?v=20260920-navigation-1';
 import { createImagePreloader, createImageWindow } from './preload.js?v=20260917-preload-2';

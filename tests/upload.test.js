@@ -22,15 +22,15 @@ test('queue overlaps work, bounds bytes, and preserves input indices despite rev
 
 test('queue stops scheduling after a failure and drains active uploads before returning', async () => {
   const gate = deferred(), started = [], completed = [];
-  const run = runUploadQueue([{ size: 1 }, { size: 1 }, { size: 1 }], async (_, index) => {
+  const run = runUploadQueue([{ size: 1 }, { size: 1 }, { size: 1 }, { size: 1 }], async (_, index) => {
     started.push(index);
     if (index === 0) throw new Error('network failed');
     await gate.promise; completed.push(index);
   });
   const assertion = assert.rejects(run, /network failed/);
   await new Promise(setImmediate);
-  assert.deepEqual(started, [0, 1]); assert.deepEqual(completed, []);
-  gate.resolve(); await assertion; assert.deepEqual(completed, [1]);
+  assert.deepEqual(started, [0, 1, 2]); assert.deepEqual(completed, []);
+  gate.resolve(); await assertion; assert.deepEqual(completed, [1, 2]);
 });
 
 test('an individual file larger than the queue budget runs alone without deadlock', async () => {

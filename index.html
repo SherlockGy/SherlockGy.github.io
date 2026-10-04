@@ -8,7 +8,7 @@
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./assets/style.css?v=20261004-export-2">
-  <script type="module" src="./assets/app.js?v=20261004-export-2"></script>
+  <script type="module" src="./assets/app.js?v=20261004-upload-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
@@ -109,7 +109,7 @@
         <label class="field-label" for="album-series">图集归属</label><select class="form-input" id="album-series"><option value="">月份图集</option></select>
         <div class="form-row" id="album-date-row"><div><label class="field-label" for="album-date">归档日期</label><input class="form-input" id="album-date" type="date" required></div><p class="date-help">按此日期归档到月份</p></div>
         <label class="field-label" for="album-description">说明 <span class="optional">选填</span></label><textarea class="form-input" id="album-description" maxlength="10000" rows="4" aria-describedby="album-description-count" placeholder="主题、出处或备注"></textarea><p class="field-note" id="album-description-count">0 / 10000 字</p>
-        <label class="drop-zone" id="drop-zone" for="file-input"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#images"/></svg><strong>选择图片</strong><span>或拖到这里，可一次添加多张</span><small>JPG / PNG / WebP / GIF / AVIF · 最多 30 张</small></label>
+        <label class="drop-zone" id="drop-zone" for="file-input"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#images"/></svg><strong>选择图片</strong><span>或拖到这里，可一次添加多张</span><small>JPG / PNG / WebP / GIF / AVIF · 最多 60 张 · 单张 10 MiB · 合计 600 MiB</small></label>
         <input id="file-input" class="visually-hidden" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif">
         <div id="file-list" class="file-list"></div>
         <div id="access-code-field" hidden><label class="field-label" for="access-code">上传口令</label><div class="access-code-row"><input class="form-input" id="access-code" type="password" autocomplete="off" placeholder="输入口令"><button class="secondary-button" id="check-connection" type="button">测试连接</button></div><p class="field-note">关闭窗口后清除口令</p></div>

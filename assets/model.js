@@ -121,8 +121,8 @@ export function validateFiles(files, config) {
   let total = 0;
   for (const file of files) {
     if (!types.has(file.type)) throw new Error(`不支持「${file.name}」，请选择 JPG、PNG、WebP、GIF 或 AVIF`);
-    if (!file.size || file.size > config.maxFileBytes) throw new Error(`「${file.name}」为空或超过单张 ${config.maxFileBytes / 1048576} MB 限制`);
+    if (!file.size || file.size > config.maxFileBytes) throw new Error(`「${file.name}」为空或超过单张 ${config.maxFileBytes / 1048576} MiB 限制`);
     total += file.size;
   }
-  if (total > config.maxTotalBytes) throw new Error(`一个图集总大小不能超过 ${config.maxTotalBytes / 1048576} MB`);
+  if (total > config.maxTotalBytes) throw new Error(`本次上传合计不能超过 ${config.maxTotalBytes / 1048576} MiB`);
 }

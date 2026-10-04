@@ -1,8 +1,8 @@
 import config from '../config.js';
-import { createUploadClient } from './upload.js?v=20260917-review-4';
+import { createUploadClient } from './upload.js?v=20261004-upload-1';
 import { createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
-import { MAX_DESCRIPTION_LENGTH, normalizeManifest, validateFiles } from './model.js?v=20260919-description-1';
+import { MAX_DESCRIPTION_LENGTH, normalizeManifest, validateFiles } from './model.js?v=20261004-upload-1';
 
 function node(tag, className, text) {
   const value = document.createElement(tag);
@@ -195,7 +195,7 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
         const focusIndex = pickerTarget ? items.indexOf(pickerTarget) : items.length;
         const current = items.filter(item => item !== pickerTarget && item.file).map(item => item.file);
         validateFiles([...current, ...incoming], config);
-        if ((pickerTarget ? items.length : items.length + incoming.length) > config.maxFiles) throw new Error('每个图集最多 30 张图片');
+        if ((pickerTarget ? items.length : items.length + incoming.length) > config.maxFiles) throw new Error(`每个图集最多 ${config.maxFiles} 张图片`);
         if (pickerTarget) {
           revoke(pickerTarget); Object.assign(pickerTarget, { file: incoming[0], src: URL.createObjectURL(incoming[0]) });
         } else items.push(...incoming.map(file => ({ file, src: URL.createObjectURL(file) })));
@@ -204,7 +204,7 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     };
     picker.addEventListener('change', () => applyFiles([...picker.files]));
     const add = action('添加图片', () => choose(undefined), 'primary-button');
-    const drop = node('div', 'editor-add'); drop.append(add, node('span', 'field-note', '也可将图片拖到这里。单张 10 MB，本次新增与换图合计 30 MB。'));
+    const drop = node('div', 'editor-add'); drop.append(add, node('span', 'field-note', `也可将图片拖到这里。单张 ${config.maxFileBytes / 1048576} MiB，本次新增与换图合计 ${config.maxTotalBytes / 1048576} MiB。`));
     for (const eventName of ['dragenter', 'dragover']) drop.addEventListener(eventName, event => { event.preventDefault(); });
     drop.addEventListener('drop', event => { event.preventDefault(); pickerTarget = undefined; applyFiles([...event.dataTransfer.files]); });
     ui.workspace.append(drop, picker);
@@ -236,7 +236,7 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
       }, 'text-button'));
       row.append(preview, label, controls); list.append(row);
     });
-    ui.workspace.append(list); ui.summary(`${items.length} / 30 张图片`); ui.sync();
+    ui.workspace.append(list); ui.summary(`${items.length} / ${config.maxFiles} 张图片`); ui.sync();
   };
   const listFocus = (index, text) => {
     const row = ui.workspace.querySelectorAll('.editor-item')[index];

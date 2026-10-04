@@ -4,7 +4,7 @@ const PROTOCOL = 'signed-blobs-v1';
 
 // Limit both request count and the amount of image data being processed at once.
 // Wait for active jobs after a failure so their receipts survive the next retry.
-export async function runUploadQueue(files, upload, { concurrency = 2, maxBytes = 12 * MIB } = {}) {
+export async function runUploadQueue(files, upload, { concurrency = 3, maxBytes = 12 * MIB } = {}) {
   let next = 0, active = 0, bytes = 0, failure;
   return new Promise((resolve, reject) => {
     const pump = () => {
@@ -109,7 +109,7 @@ export function createUploadClient({ fetch: fetcher = (...args) => globalThis.fe
           throw Object.assign(new Error(`第 ${index + 1} 张图片未返回保存凭据，请重试`), { code: 'INVALID_RESPONSE' });
         }
         current.receipts.set(index, { receipt: data.receipt, createdAt: Date.now() }); progress();
-      }, { concurrency: Math.max(1, Math.min(3, Math.floor(Number(options.concurrency)) || 2)),
+      }, { concurrency: Math.max(1, Math.min(3, Math.floor(Number(options.concurrency)) || 3)),
         maxBytes: Math.max(1, Math.min(12 * MIB, Number(options.maxInFlightBytes) || 12 * MIB)) });
       const [prepared, transferred] = await Promise.allSettled([prepare, transfer]);
       if (prepared.status === 'rejected') throw prepared.reason;

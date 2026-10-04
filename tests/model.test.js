@@ -55,8 +55,9 @@ test('thumbnail metadata is optional, normalized separately, and cannot replace 
 test('file count, type, empty content and byte limits are enforced', () => {
   const file = { name: 'note.png', size: 1024, type: 'image/png' };
   assert.doesNotThrow(() => validateFiles([file], config));
-  for (const files of [[], Array(31).fill(file), [{ ...file, size: 0 }], [{ ...file, type: 'image/svg+xml' }],
-    [{ ...file, size: 11 * 1048576 }], Array(4).fill({ ...file, size: 9 * 1048576 })]) assert.throws(() => validateFiles(files, config));
+  assert.doesNotThrow(() => validateFiles(Array(60).fill({ ...file, size: 10 * 1048576 }), config));
+  for (const files of [[], Array(61).fill(file), [{ ...file, size: 0 }], [{ ...file, type: 'image/svg+xml' }],
+    [{ ...file, size: 11 * 1048576 }], Array(60).fill({ ...file, size: 10 * 1048576 + 1 })]) assert.throws(() => validateFiles(files, config));
 });
 test('production manifest remains valid as real albums are added', async () => {
   const data = JSON.parse(await readFile(new URL('../data/albums.json', import.meta.url)));
