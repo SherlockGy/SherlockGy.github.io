@@ -75,6 +75,8 @@ main#main { min-width: 0; width: 100%; max-width: 1580px; padding: 45px 48px 88p
 .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font-size: var(--text-ui); white-space: nowrap; transition: border-color .15s, background .15s; }
 .secondary-button .icon { width: 16px; height: 16px; }
 .secondary-button:hover:not(:disabled) { background: var(--wash); border-color: color-mix(in srgb, var(--accent) 30%, var(--paper)); }
+.pill-button { min-height: 36px; padding: 6px 15px; border-radius: 999px; color: var(--accent); border-color: color-mix(in srgb, var(--accent) 25%, var(--paper)); }
+.pill-button:hover:not(:disabled) { background: var(--soft); border-color: var(--accent); }
 .text-button { padding: 7px 0; color: var(--muted); font-size: var(--text-ui); white-space: nowrap; }
 .text-button:hover:not(:disabled) { color: var(--accent); }
 .search { display: flex; align-items: center; gap: 9px; width: 228px; min-width: 0; min-height: 42px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); transition: border-color .15s, box-shadow .15s; }
@@ -151,7 +153,7 @@ body.modal-open { overflow: hidden; }
 .reader-note-text { max-height: min(240px, 32dvh, var(--note-available-height, 240px)); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: var(--line) transparent; padding-right: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--text-ui); line-height: 1.8; user-select: text; }
 .reader-note-text:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .reader-note-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
-.reader-actions { display: flex; gap: 5px; margin-left: auto; }
+.reader-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .reader-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 20px; background: var(--paper); border-bottom: 1px solid var(--line); }
 .segmented { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--wash); }
 .segmented button { display: flex; align-items: center; gap: 6px; min-height: 30px; padding: 5px 12px; border-radius: 5px; color: var(--muted); font-size: var(--text-meta); }
@@ -304,9 +306,26 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .editor-controls .secondary-button { min-height: 34px; padding: 5px 11px; font-size: var(--text-meta); }
 .manager-summary { min-width: 0; }
 #album-title { margin-bottom: 18px; }
-.reader-actions #edit-images { margin-right: 7px; }
 .export-dialog { width: min(560px, calc(100vw - 40px)); }
 .export-album-name { margin-bottom: 22px; font-size: var(--text-ui); line-height: 1.7; overflow-wrap: anywhere; }
+.export-format-field { position: relative; }
+.export-format-select { appearance: none; padding-inline: 14px 46px; cursor: pointer; }
+.export-format-select:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 45%, var(--paper)); }
+.export-format-select:disabled { cursor: default; opacity: .5; }
+.export-format-arrow { position: absolute; right: 16px; top: calc(50% - 8px); width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+.export-format-field:has(select:disabled) .export-format-arrow { opacity: .5; }
+/* 保留原生选择与键盘行为，支持的浏览器中统一展开菜单的外观。 */
+@supports (appearance: base-select) {
+  .export-format-select, .export-format-select::picker(select) { appearance: base-select; }
+  .export-format-select::picker-icon { display: none; }
+  .export-format-select:open { border-color: var(--accent); background: var(--paper); }
+  .export-format-field:has(select:open) .export-format-arrow { transform: rotate(180deg); color: var(--accent); }
+  .export-format-select::picker(select) { min-width: anchor-size(width); margin-top: 6px; padding: 5px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 12%, transparent); max-height: min(240px, 40dvh); overflow-y: auto; }
+  .export-format-select option { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; border-radius: 6px; font: var(--text-body)/1.5 var(--sans); cursor: pointer; }
+  .export-format-select option:checked { color: var(--accent); background: var(--soft); font-weight: 500; }
+  .export-format-select option:hover, .export-format-select option:focus { background: var(--wash); outline: none; }
+  .export-format-select option::checkmark { order: 1; margin-left: auto; color: var(--accent); }
+}
 .export-dialog label[for="export-password"] { margin-top: 22px; }
 .export-download-actions { display: flex; gap: 10px; }
 #export-download { justify-self: end; text-decoration: none; }
