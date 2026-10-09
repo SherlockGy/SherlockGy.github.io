@@ -1030,6 +1030,11 @@
       "id": "series-7e45bac6-3a82-4bb6-bce5-4cf9e25887aa",
       "title": "理财",
       "parentId": ""
+    },
+    {
+      "id": "series-0d929c8a-7fd7-4c7c-9512-236e6736d6b7",
+      "title": "视觉表达原理",
+      "parentId": ""
     }
   ],
   "libraryHistory": [
@@ -1044,6 +1049,10 @@
     {
       "requestId": "b35de3f1-daea-4942-a323-95ff12c41fea",
       "fingerprint": "5bc0d6c8ccda6458edf6422df6dcde470449ba1fde9008f9d75c7a9ed6635a6a"
+    },
+    {
+      "requestId": "2c3603c7-4867-4455-8506-6f9da9302829",
+      "fingerprint": "c8e6ff6e4dcbe0f7696ac54f19507916dbe8cc32dbb1fc3bb8128e8e22849399"
     }
   ]
 }
