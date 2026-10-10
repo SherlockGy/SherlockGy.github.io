@@ -1023,6 +1023,27 @@
           "height": 1152
         }
       ]
+    },
+    {
+      "id": "album-368c1766-1651-42a3-8d3a-3b28740823b3",
+      "title": "维生素D",
+      "seriesId": "series-056267d0-3aa1-4097-bd5c-bc82b23f5c4b",
+      "description": "",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/series/album-368c1766-1651-42a3-8d3a-3b28740823b3/001.png",
+          "alt": "维生素D · 第 1 页 · 作用与来源",
+          "width": 1024,
+          "height": 1536
+        },
+        {
+          "src": "./images/series/album-368c1766-1651-42a3-8d3a-3b28740823b3/002.png",
+          "alt": "维生素D · 第 2 页 · 补到几岁",
+          "width": 1024,
+          "height": 1536
+        }
+      ]
     }
   ],
   "series": [
@@ -1049,6 +1070,11 @@
     {
       "id": "series-0d929c8a-7fd7-4c7c-9512-236e6736d6b7",
       "title": "视觉表达原理",
+      "parentId": ""
+    },
+    {
+      "id": "series-056267d0-3aa1-4097-bd5c-bc82b23f5c4b",
+      "title": "育儿",
       "parentId": ""
     }
   ],
