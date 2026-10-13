@@ -1044,6 +1044,21 @@
           "height": 1536
         }
       ]
+    },
+    {
+      "id": "album-85d01023-ed83-4b2c-9443-0e61df856a83",
+      "title": "合胞病毒",
+      "seriesId": "series-056267d0-3aa1-4097-bd5c-bc82b23f5c4b",
+      "description": "",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/series/album-85d01023-ed83-4b2c-9443-0e61df856a83/合胞病毒.png",
+          "alt": "合胞病毒",
+          "width": 1024,
+          "height": 1536
+        }
+      ]
     }
   ],
   "series": [
