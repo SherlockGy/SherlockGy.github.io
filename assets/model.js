@@ -29,6 +29,7 @@ export function normalizeManifest(data, base) {
     return {
       id: album.id, title: album.title.trim(), date: album.date, seriesId: album.seriesId || '',
       description: typeof album.description === 'string' ? album.description : '',
+      document: normalizeDocument(album.document),
       tags: Array.isArray(album.tags) ? album.tags.filter(tag => typeof tag === 'string') : [],
       images: album.images.map((image, index) => {
         const item = typeof image === 'string' ? { src: image } : image;
@@ -125,4 +126,15 @@ export function validateFiles(files, config) {
     total += file.size;
   }
   if (total > config.maxTotalBytes) throw new Error(`本次上传合计不能超过 ${config.maxTotalBytes / 1048576} MiB`);
+}
+
+
+// Document behavior is opt-in metadata, never inferred from portrait artwork.
+export function normalizeDocument(value) {
+  if (!value || value.type !== 'document') return undefined;
+  const b = value.contentBounds;
+  const valid = Array.isArray(b) && b.length === 4 && b.every(Number.isFinite)
+    && b[0] >= 0 && b[1] >= 0 && b[2] <= 1 && b[3] <= 1
+    && b[2] - b[0] >= .25 && b[3] - b[1] >= .25;
+  return { type: 'document', contentBounds: valid ? [...b] : [0, 0, 1, 1] };
 }

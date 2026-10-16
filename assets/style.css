@@ -581,3 +581,23 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .order-controls { gap: 3px; }
   .order-controls .secondary-button { padding-inline: 7px; }
 }
+
+
+/* Explicit document albums keep the continuous reader even in webpage fullscreen. */
+.reader.document-album.expanded[open] { display: grid; }
+.reader.document-album.expanded > .reader-header,
+.reader.document-album.expanded > .reader-toolbar,
+.reader.document-album.expanded > .reader-body,
+.reader.document-album.expanded > .reader-footer { display: flex; }
+.reader.document-album.expanded > .reader-body { display: grid; }
+.reader-stage.is-document { overflow-x: hidden; touch-action: pan-y pinch-zoom; }
+.is-document .reader-page { background: white; box-shadow: 0 1px 5px #00000012; }
+.is-document .reader-image-frame img { position: absolute; max-width: none; width: var(--document-image-width); height: var(--document-image-height); left: var(--document-image-x); top: var(--document-image-y); object-fit: fill; }
+#document-controls { display: inline-flex; align-items: center; gap: 2px; }
+#document-controls[hidden] { display: none; }
+#document-controls .text-button { min-width: 30px; }
+@media (max-width: 600px) {
+  .document-album .reader-toolbar { gap: 6px; padding-inline: 10px; flex-wrap: wrap; }
+  .document-album .segmented button { padding-inline: 8px; }
+  #document-controls .zoom-scale { margin-inline-end: 0; }
+}

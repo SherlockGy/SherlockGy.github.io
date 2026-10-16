@@ -156,3 +156,10 @@ GitHub Pages 发布来源应切换为 **GitHub Actions**，由 `.github/workflow
 写入仍由 Cloudflare Worker 处理。仓库版本为 `2026-10-04-upload-1`：系列整理接口禁止两类图集互相转换，并保护月份图集的日期和相对顺序。名称与长说明编辑、排序时更新自动页码说明的能力保持可用。建议先部署 Worker，再发布新版前端；Secret 保持原值。更新仓库内的 Worker 文件不会自动部署 Cloudflare，详见 [部署说明](worker/SETUP.md)。不要把 GitHub 凭据放在前端；这是公开的个人图集站，发布的图片可被访问。
 
 参考：[GitHub Pages 发布来源](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。
+
+
+### 文档图集阅读
+
+仅当图集含有显式 `document: { "type": "document", "contentBounds": [left, top, right, bottom] }` 元数据时，默认使用文档连续阅读。边界为原图归一化坐标，所有页面共用同一组安全边界；应先核对全部页面内容，再缩减留白。图片条目须保留原始 `width` / `height`。不依据竖版尺寸自动判断文档，也不修改原始图片。
+
+阅读模式按图片比例计算页面高度，桌面默认正文列宽 820px，窄屏自动适宽。滚轮与触摸默认纵向滚动，网页全屏保持阅读模式；“整页”和“原图”可查看未裁切内容，“细节”开启现有拖动/缩放工具。宽度调节只在屏幕容得下时显示；窄屏可用“细节”显式放大。目录入口恢复本地记录的阅读页、页内位置和宽度；带页码的分享链接优先选择指定页。记录仅存于当前浏览器，禁用存储不影响阅读。

@@ -1,5 +1,6 @@
+import { documentGeometry, readDocumentProgress } from './document-reader.js?v=20261016-document-1';
 import config from '../config.js';
-import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20261004-upload-1';
+import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20261016-document-1';
 import { createImageEditor } from './manage.js?v=20261004-upload-1';
 import { createSeriesActions } from './series.js?v=20260919-series-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
@@ -18,6 +19,22 @@ const state = { albums: [], series: [], view: 'archive', seriesId: '', query: ''
   album: null, page: 0, mode: 'page', zoom: 1, hand: false, preview: null, files: [], urls: [], requestId: null, busy: false,
   uploadDirty: false, uploadSaved: false, loadError: false, scrollY: 0 };
 const reader = $('#reader');
+const isDocument = () => state.album?.document?.type === 'document';
+const isDocumentReading = () => isDocument() && state.mode === 'scroll';
+const usesSlideshow = () => state.expanded && !isDocument();
+let documentScale = 1, documentRestore = null;
+function saveDocumentProgress() {
+  if (!isDocumentReading() || !reader.open) return;
+  const stage = $('#reader-stage');
+  const figure = $(`.reader-page[data-index="${state.page}"]`, stage);
+  if (!figure) return;
+  const top = stage.getBoundingClientRect().top + parseFloat(getComputedStyle(stage).paddingTop);
+  const offset = (top - figure.getBoundingClientRect().top) / figure.offsetHeight;
+  try { localStorage.setItem(`document-reader:${state.album.id}`, JSON.stringify({ page: state.page, offset, scale: documentScale })); } catch {}
+}
+$('#reader-stage').addEventListener('scroll', () => {
+  if (isDocumentReading()) saveDocumentProgress();
+}, { passive: true });
 const uploadDialog = $('#upload-dialog');
 const uploadClient = createUploadClient();
 const imagePreview = createImagePreview(updateBodyLock);
@@ -26,7 +43,7 @@ const readerDirectory = createReaderDirectory($('#reader-directory'), goPage);
 const albumExport = createAlbumExport(updateBodyLock);
 // 逐页阅读统一将翻页焦点放在目录；单图没有目录时使用已有的拖动按钮。
 function focusReadingPage() {
-  if (state.expanded) slideshow.focusCurrent();
+  if (usesSlideshow()) slideshow.focusCurrent();
   else if (state.mode === 'page' && state.album?.images.length > 1) readerDirectory.focusCurrent();
   else if (state.mode === 'page') $('#reader-hand').focus({ preventScroll: true });
   else $('#reader-stage').focus({ preventScroll: true });
@@ -34,7 +51,7 @@ function focusReadingPage() {
 
 // 图片、留白及对话框外的灰色区域不接管焦点，表单和操作按钮仍可正常使用。
 reader.addEventListener('pointerdown', event => {
-  if (event.button !== 0 || !state.album || (!state.expanded && state.mode !== 'page')) return;
+  if (event.button !== 0 || !state.album || (!usesSlideshow() && state.mode !== 'page')) return;
   if (event.target.closest('button, a, input, textarea, select, [contenteditable], #reader-note-panel')) return;
   if (event.target !== reader && !event.target.closest('#reader-stage, .slideshow-canvas, #reader-directory, .slideshow-list')) return;
   event.preventDefault(); focusReadingPage();
@@ -371,7 +388,7 @@ function renderCards(grid, albums, offset = 0) {
   for (const [index, album] of albums.entries()) {
       const card = el('article', `album-card${album.images.length > 1 ? ' multiple' : ''}`);
       const link = el('a', 'album-link');
-      link.href = `#/album/${encodeURIComponent(album.id)}/1`;
+      link.href = `#/album/${encodeURIComponent(album.id)}${album.document ? "" : "/1"}`;
       link.setAttribute('aria-label', `阅读 ${album.title}，${album.images.length} 张图片`);
       const cover = el('div', 'cover');
       const coverImage = configureCoverImage(el('img'), { ...album.images[0], alt: '' }, {
@@ -432,7 +449,16 @@ function route() {
   const changed = state.album?.id !== album.id;
   state.album = album;
   state.page = Math.max(0, Math.min(album.images.length - 1, Number(match[2] || 1) - 1));
-  if (changed) { state.zoom = 1; state.hand = false; state.mode = 'page'; }
+  if (changed) {
+    state.zoom = 1; state.hand = false; state.mode = isDocument() ? 'scroll' : 'page';
+    try { documentRestore = isDocument() ? readDocumentProgress(localStorage, album.id) : null; } catch { documentRestore = null; }
+    documentScale = documentRestore?.scale || 1;
+    // Explicit deep links always select their requested page. Restore a saved
+    // within-page offset only when that same page is opened again.
+    if (!match[2] && documentRestore) state.page = Math.min(album.images.length - 1, documentRestore.page);
+    if (documentRestore?.page !== state.page) documentRestore = null;
+  }
+  reader.classList.toggle('document-album', isDocument());
   if (!reader.open) {
     state.scrollY = window.scrollY; lastFocused = document.activeElement;
     reader.showModal(); updateBodyLock(); $('#reader-close').focus();
@@ -452,6 +478,10 @@ function route() {
 function setExpanded(expanded, restoreReader = true) {
   if (state.expanded === expanded) return;
   setReaderNoteOpen(false);
+  saveDocumentProgress();
+  if (isDocumentReading()) {
+    try { documentRestore = readDocumentProgress(localStorage, state.album.id); } catch { documentRestore = null; }
+  }
   state.expanded = expanded;
   reader.classList.toggle('expanded', expanded);
   const control = $('#fullscreen');
@@ -461,7 +491,7 @@ function setExpanded(expanded, restoreReader = true) {
   control.replaceChildren(icon(expanded ? 'collapse' : 'expand'));
   disposeReaderImages(true);
   readerDirectory.clear();
-  if (expanded && reader.open && state.album) slideshow.open(state.album, state.page);
+  if (expanded && reader.open && state.album && !isDocument()) slideshow.open(state.album, state.page);
   else {
     slideshow.close();
     if (restoreReader && reader.open && state.album) { renderReader(); focusReadingPage(); }
@@ -469,6 +499,7 @@ function setExpanded(expanded, restoreReader = true) {
 }
 
 function closeReader(changeRoute = true) {
+  saveDocumentProgress();
   albumExport.close();
   setReaderNoteOpen(false);
   setExpanded(false, false);
@@ -479,7 +510,7 @@ function closeReader(changeRoute = true) {
     if ($('#toast').parentElement === reader) document.body.append($('#toast'));
     window.scrollTo(0, state.scrollY);
     if (!document.querySelector('dialog[open]')) {
-      const card = $$('.album-link').find(card => card.hash === `#/album/${encodeURIComponent(state.album?.id)}/1`);
+      const card = $$('.album-link').find(card => card.hash === `#/album/${encodeURIComponent(state.album?.id)}/1` || card.hash === `#/album/${encodeURIComponent(state.album?.id)}`);
       (lastFocused?.isConnected && lastFocused.getClientRects().length ? lastFocused : card || $('#main')).focus({ preventScroll: true });
     }
   }
@@ -491,7 +522,15 @@ function closeReader(changeRoute = true) {
 function syncReaderControls() {
   const focused = document.activeElement;
   const total = state.album.images.length;
-  $('.segmented', reader).hidden = total === 1;
+  $('.segmented', reader).hidden = total === 1 && !isDocument();
+  $('#mode-page span').textContent = isDocument() ? '整页' : '逐页';
+  $('#mode-page').setAttribute('aria-label', isDocument() ? '完整原页（可开启拖动缩放查看细节）' : '逐页阅读');
+  $('#mode-scroll span').textContent = isDocument() ? '阅读' : '连续';
+  $('#document-controls').hidden = !isDocumentReading();
+  $('#document-scale').textContent = `${Math.round(documentScale * 100)}%`;
+  $('#document-smaller').disabled = documentScale <= .7;
+  $('#document-larger').disabled = documentScale >= 1.5 || $('#reader-stage').clientWidth - 24 <= 820 * documentScale;
+  $('#document-width-controls').hidden = $('#reader-stage').clientWidth - 24 < 574;
   $('.reader-footer', reader).hidden = total === 1;
   $('#page-number').value = state.page + 1; $('#page-number').max = total;
   $('#page-total').textContent = `/ ${total} 页`;
@@ -553,7 +592,7 @@ function mountReaderImage(frame, image, index, entry, retry, onReady = () => {})
 function renderReader() {
   disposeReaderImages(state.expanded || state.mode === 'scroll' || preloadedAlbum !== state.album);
   state.zoom = 1;
-  if (state.expanded) { slideshow.show(state.album, state.page); syncReaderControls(); return; }
+  if (usesSlideshow()) { slideshow.show(state.album, state.page); syncReaderControls(); return; }
   const showDirectory = state.mode === 'page' && state.album.images.length > 1;
   $('.reader-body', reader).classList.toggle('has-directory', showDirectory);
   if (showDirectory) readerDirectory.show(state.album, state.page);
@@ -562,6 +601,7 @@ function renderReader() {
   const stage = $('#reader-stage');
   stage.tabIndex = state.mode === 'scroll' ? 0 : -1;
   stage.classList.toggle('is-continuous', state.mode === 'scroll');
+  stage.classList.toggle('is-document', isDocumentReading());
   const images = state.mode === 'scroll' ? state.album.images.map((image, index) => [image, index]) : [[state.album.images[state.page], state.page]];
   const frames = new Map();
   for (const [, index] of images) {
@@ -579,14 +619,21 @@ function renderReader() {
     ));
     continuousImages.select(state.page);
     scrollReader = createScrollReader(stage, page => {
-      if (!state.album || state.expanded || state.mode !== 'scroll') return;
+      if (!state.album || usesSlideshow() || state.mode !== 'scroll') return;
       continuousImages.select(page);
       if (page !== state.page) {
         state.page = page; syncReaderControls();
         history.replaceState(null, '', `#/album/${state.album.id}/${state.page + 1}`);
       }
+      saveDocumentProgress();
     }, { fixedLayout: true });
     scrollReader.goTo(state.page);
+    if (isDocumentReading() && documentRestore) {
+      const figure = $(`.reader-page[data-index="${state.page}"]`, stage);
+      const top = stage.getBoundingClientRect().top + parseFloat(getComputedStyle(stage).paddingTop);
+      stage.scrollTop += figure.getBoundingClientRect().top - top + documentRestore.offset * figure.offsetHeight;
+      documentRestore = null;
+    }
   } else {
     preloadedAlbum = state.album;
     const frame = frames.get(state.page), entry = pagePreloader.select(state.album.images, state.page);
@@ -603,7 +650,7 @@ function renderReader() {
 
 function layoutReader() {
   if (!state.album || !reader.open) return;
-  if (state.expanded) { slideshow.resize(); return; }
+  if (usesSlideshow()) { slideshow.resize(); return; }
   const stage = $('#reader-stage'), style = getComputedStyle(stage);
   if (!stage.clientWidth || !stage.clientHeight) return;
   const bounds = stage.getBoundingClientRect();
@@ -616,12 +663,23 @@ function layoutReader() {
   // Pagination lives in the fixed footer. Every image uses the whole frame,
   // including the space previously reserved for a duplicate page caption.
   $$('.reader-page', stage).forEach(figure => {
-    figure.style.width = `${width}px`;
-    $('.reader-image-frame', figure).style.height = `${height}px`;
+    const frame = $('.reader-image-frame', figure);
+    if (isDocumentReading()) {
+      const geometry = documentGeometry(state.album.images[Number(figure.dataset.index)], state.album.document.contentBounds, width, documentScale);
+      figure.style.width = `${geometry.width}px`;
+      frame.style.height = `${geometry.height}px`;
+      frame.style.setProperty('--document-image-width', `${geometry.imageWidth}px`);
+      frame.style.setProperty('--document-image-height', `${geometry.imageHeight}px`);
+      frame.style.setProperty('--document-image-x', `${geometry.x}px`);
+      frame.style.setProperty('--document-image-y', `${geometry.y}px`);
+    } else {
+      figure.style.width = `${width}px`;
+      frame.style.height = `${height}px`;
+    }
   });
 }
 function resizeReader() {
-  if (!state.album || !reader.open || state.expanded) return;
+  if (!state.album || !reader.open || usesSlideshow()) return;
   const stage = $('#reader-stage'), figure = $(`.reader-page[data-index="${state.page}"]`, stage);
   if (!figure || !stage.clientHeight) return;
   const top = stage.getBoundingClientRect().top + parseFloat(getComputedStyle(stage).paddingTop);
@@ -634,6 +692,7 @@ function resizeReader() {
   // the window changes size. The single-image controller preserves its pan.
   stage.scrollTop += after.top - top + vertical * after.height;
   stage.scrollLeft = horizontal * Math.max(0, stage.scrollWidth - stage.clientWidth);
+  syncReaderControls();
 }
 function goPage(page) {
   if (!state.album) return;
@@ -647,7 +706,7 @@ function goPage(page) {
   }
   state.page = nextPage;
   history.replaceState(null, '', `#/album/${state.album.id}/${state.page + 1}`);
-  if (state.expanded) renderReader();
+  if (usesSlideshow()) renderReader();
   else if (state.mode === 'scroll') {
     continuousImages.select(state.page); scrollReader.goTo(state.page); syncReaderControls();
   } else renderReader();
@@ -872,7 +931,10 @@ $('#next-page').addEventListener('click', () => goPage(state.page + 1));
 $('#page-number').addEventListener('change', event => goPage((Number(event.target.value) || 1) - 1));
 for (const mode of ['page', 'scroll']) $(`#mode-${mode}`).addEventListener('click', () => {
   if (state.mode === mode) return;
-  state.mode = mode; state.hand = false; renderReader();
+  saveDocumentProgress();
+  state.mode = mode; state.hand = false;
+  if (isDocumentReading()) { try { documentRestore = readDocumentProgress(localStorage, state.album.id); } catch {} if (documentRestore?.page !== state.page) documentRestore = null; }
+  renderReader();
   if (mode === 'page') focusReadingPage();
 });
 $('#reader-hand').addEventListener('click', () => {
@@ -882,6 +944,13 @@ $('#reader-hand').addEventListener('click', () => {
     focusReadingPage();
     toast('拖动查看 · 滚轮或双指缩放 · 点“适屏”复位');
   }
+});
+for (const [id, delta] of [['document-smaller', -.1], ['document-larger', .1]]) $(`#${id}`).addEventListener('click', () => {
+  documentScale = Math.round(Math.max(.7, Math.min(1.5, documentScale + delta)) * 10) / 10;
+  resizeReader(); syncReaderControls(); saveDocumentProgress();
+});
+$('#document-details').addEventListener('click', () => {
+  saveDocumentProgress(); state.mode = 'page'; state.hand = true; renderReader(); focusReadingPage();
 });
 $('#zoom-reset').addEventListener('click', () => imageReader?.reset());
 $('#fullscreen').addEventListener('click', () => setExpanded(!state.expanded));
@@ -916,7 +985,7 @@ document.addEventListener('keydown', event => {
   if ($('#image-editor').open || $('#series-action').open) return;
   if (event.target.closest('input, textarea, select, [contenteditable]') || event.ctrlKey || event.metaKey || event.altKey) return;
   if (reader.open) {
-    const paginated = state.expanded || state.mode === 'page';
+    const paginated = usesSlideshow() || state.mode === 'page';
     const targets = { ArrowLeft: state.page - 1, ArrowRight: state.page + 1, Home: 0, End: state.album.images.length - 1 };
     if (paginated) Object.assign(targets, { ArrowUp: state.page - 1, ArrowDown: state.page + 1, PageUp: state.page - 1, PageDown: state.page + 1 });
     if (event.key in targets) {
@@ -926,3 +995,4 @@ document.addEventListener('keydown', event => {
   } else if (!uploadDialog.open && event.key === '/') { event.preventDefault(); $('#search').focus(); }
 });
 loadAlbums();
+

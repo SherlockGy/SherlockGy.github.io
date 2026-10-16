@@ -50,7 +50,16 @@
           "requestId": "45d72219-7fe0-4fde-9d54-7c68984b5b58",
           "fingerprint": "6305a2082764a1b93090251b772e59a966aba49c150d5a59e415fb39880e689b"
         }
-      ]
+      ],
+      "document": {
+        "type": "document",
+        "contentBounds": [
+          0.12,
+          0.05,
+          0.88,
+          0.94
+        ]
+      }
     },
     {
       "id": "album-1d3cb65e-e572-405b-8f8c-58c22873e459",
