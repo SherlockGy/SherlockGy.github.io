@@ -137,14 +137,14 @@ async function copyAlbumNote(album) {
 }
 function setReaderNoteOpen(open, restoreFocus = false) {
   const toggle = $('#reader-note-toggle'), panel = $('#reader-note-panel');
-  const expanded = open && !toggle.hidden && !state.expanded;
+  const expanded = open && !toggle.hidden && !usesSlideshow();
   if (!expanded && restoreFocus) toggle.focus({ preventScroll: true });
   panel.hidden = !expanded; toggle.setAttribute('aria-expanded', String(expanded));
   if (expanded) layoutReaderNote();
 }
 function layoutReaderNote() {
   const panel = $('#reader-note-panel'), text = $('#reader-note-text');
-  if (panel.hidden || !reader.open || state.expanded) return;
+  if (panel.hidden || !reader.open || usesSlideshow()) return;
   panel.style.removeProperty('--note-offset');
   const readerBounds = reader.getBoundingClientRect(), bounds = panel.getBoundingClientRect();
   const style = getComputedStyle(panel);
@@ -548,7 +548,7 @@ function syncReaderControls() {
   $('#zoom-reset').hidden = state.mode !== 'page';
   $('#reader-tool-divider').hidden = state.mode !== 'page';
   $('#reader-stage').setAttribute('aria-label', state.hand ? '图片阅读区域：拖动查看，滚轮或双指缩放；加减键缩放，0 键恢复适屏' : '图片阅读区域');
-  if (!state.expanded && reader.contains(focused) && focused.disabled) focusReadingPage();
+  if (!usesSlideshow() && reader.contains(focused) && focused.disabled) focusReadingPage();
   for (const mode of ['page', 'scroll']) {
     $(`#mode-${mode}`).classList.toggle('active', state.mode === mode);
     $(`#mode-${mode}`).setAttribute('aria-pressed', String(state.mode === mode));
@@ -701,7 +701,7 @@ function goPage(page) {
   // Boundary keys and selecting the active thumbnail must not reload the
   // current original or discard the user's zoom and pan.
   if (nextPage === state.page) {
-    if (!state.expanded && state.mode === 'scroll') scrollReader?.goTo(state.page);
+    if (!usesSlideshow() && state.mode === 'scroll') scrollReader?.goTo(state.page);
     syncReaderControls(); return;
   }
   state.page = nextPage;

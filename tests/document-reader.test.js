@@ -44,3 +44,11 @@ test('published album retains all six original pages, order, title and source de
     assert.equal(image.width, 1697); assert.equal(image.height, 2400);
   });
 });
+
+test('document fullscreen keeps note expansion and layout enabled', () => {
+  const source = readFileSync(new URL('../assets/app.js', import.meta.url), 'utf8');
+  const noteCode = source.slice(source.indexOf('function setReaderNoteOpen'), source.indexOf('function updateReaderNote'));
+  assert.ok(noteCode.includes('open && !toggle.hidden && !usesSlideshow()'));
+  assert.ok(noteCode.includes('panel.hidden || !reader.open || usesSlideshow()'));
+  assert.ok(!noteCode.includes('state.expanded'));
+});
