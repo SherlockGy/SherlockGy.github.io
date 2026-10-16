@@ -1,3 +1,4 @@
+import { enhanceReadingModeSelect } from './reading-mode-select.js?v=20261016-dropdown-1';
 import config from '../config.js';
 import { createUploadClient } from './upload.js?v=20261016-settings-1';
 import { createPreviewButton } from './previews.js?v=20260917-space-1';
@@ -151,16 +152,17 @@ export function buildImageOrder(items) {
 export function createImageEditor(onOpenChange, onSaved, imagePreview) {
   const ui = managerDialog('image-editor', '编辑图集', '修改名称与说明，或调整图片。第一张作为封面；分享链接仍按页码定位。', onOpenChange, { deferFooter: true });
   let album, items = [], pickerTarget, draftTitle = '', draftDescription = '', draftReadingMode = 'gallery', canEditReadingMode = false, canRename = false, canEditDescription = false, series = [];
-  let knownThumbnails = new Map();
+  let knownThumbnails = new Map(), readingModeControl;
   const previewImages = () => items.map(item => {
     if (item.file) return { src: item.src, name: item.file.name };
     const image = album.images[item.existing];
     return { ...image, name: album.title, thumbnails: image.thumbnails || knownThumbnails.get(image.src) };
   });
   const revoke = item => { if (item.file) URL.revokeObjectURL(item.src); };
-  ui.dispose = () => { items.forEach(revoke); items = []; };
+  ui.dispose = () => { readingModeControl?.destroy(); items.forEach(revoke); items = []; };
   ui.onSaved = data => { render(); onSaved({ ...data, series }); };
   const render = () => {
+    readingModeControl?.destroy();
     ui.workspace.replaceChildren();
     const title = input('图集名称', draftTitle);
     title.control.required = true; title.control.readOnly = !canRename;
@@ -186,8 +188,9 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     });
     descriptionField.append(descriptionLabel, description, count); ui.workspace.append(descriptionField);
     if (!canEditDescription) ui.workspace.append(node('p', 'field-note', '当前上传服务暂不支持修改说明，更新服务后即可编辑。'));
-    const readingField = node('label', 'manager-field');
-    readingField.append(node('span', 'field-label', '阅读方式'));
+    const readingField = node('div', 'manager-field');
+    const readingLabel = node('label', 'field-label', '阅读方式'); readingLabel.htmlFor = 'editor-reading-mode';
+    readingField.append(readingLabel);
     const readingMode = node('select', 'form-input'); readingMode.id = 'editor-reading-mode';
     for (const [value, label] of [['gallery', '普通图集'], ['document', '文档阅读']]) {
       const option = node('option', '', label); option.value = value; readingMode.append(option);
@@ -199,8 +202,9 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
       draftReadingMode = readingMode.value; ui.changed();
     });
     readingField.append(readingMode); ui.workspace.append(readingField);
+    readingModeControl = enhanceReadingModeSelect(readingMode);
     ui.workspace.append(node('p', 'field-note', canEditReadingMode
-      ? '文档阅读默认适宽、纵向连续滚动；切换为文档不会自动裁边。'
+      ? '切换为文档不会自动裁边。'
       : '当前上传服务尚未支持切换阅读方式，更新服务后即可修改。现有方式会保留。'));
     const picker = node('input', 'visually-hidden'); picker.type = 'file'; picker.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
     picker.tabIndex = -1; picker.setAttribute('aria-label', '选择新增或替换的图片');

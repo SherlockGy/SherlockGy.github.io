@@ -601,3 +601,23 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
   .document-album .segmented button { padding-inline: 8px; }
   #document-controls .zoom-scale { margin-inline-end: 0; }
 }
+
+/* Shared reading-mode dropdown: the expanded menu uses the same quiet indigo palette. */
+.reading-mode-select { min-width: 0; }
+.reading-mode-trigger { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; text-align: left; cursor: pointer; }
+.reading-mode-trigger:hover:not(:disabled), .reading-mode-trigger[aria-expanded="true"] { border-color: var(--accent); background: var(--soft); }
+.reading-mode-trigger:disabled { cursor: not-allowed; }
+.reading-mode-chevron { width: 8px; height: 8px; flex: 0 0 8px; margin-right: 3px; border-right: 1.5px solid var(--accent); border-bottom: 1.5px solid var(--accent); transform: translateY(-2px) rotate(45deg); }
+.reading-mode-trigger[aria-expanded="true"] .reading-mode-chevron { transform: translateY(2px) rotate(225deg); }
+.reading-mode-menu { position: fixed; inset: auto; z-index: 1000; margin: 0; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); box-shadow: 0 8px 28px color-mix(in srgb, var(--ink) 14%, transparent); overflow-y: auto; overscroll-behavior: contain; font: var(--text-ui)/1.5 var(--sans); }
+.reading-mode-menu[hidden] { display: none; }
+.reading-mode-option { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 62px; padding: 10px 12px; border: 1px solid transparent; border-radius: 7px; cursor: pointer; }
+.reading-mode-option + .reading-mode-option { margin-top: 3px; }
+.reading-mode-option[aria-selected="true"] { background: var(--soft); color: var(--accent); }
+.reading-mode-option.is-active { border-color: color-mix(in srgb, var(--accent) 35%, var(--paper)); background: var(--wash); }
+.reading-mode-option[aria-selected="true"].is-active { background: var(--soft); }
+.reading-mode-copy { display: grid; gap: 2px; }
+.reading-mode-hint { color: var(--muted); font-size: var(--text-meta); }
+.reading-mode-check { color: var(--accent); font-size: 18px; visibility: hidden; }
+.reading-mode-option[aria-selected="true"] .reading-mode-check { visibility: visible; }
+@media (forced-colors: active) { .reading-mode-option.is-active { outline: 1px solid Highlight; outline-offset: -2px; } }

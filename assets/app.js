@@ -1,7 +1,8 @@
+import { enhanceReadingModeSelect } from './reading-mode-select.js?v=20261016-dropdown-1';
 import { documentGeometry, readDocumentProgress } from './document-reader.js?v=20261016-settings-1';
 import config from '../config.js';
 import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20261016-document-1';
-import { createImageEditor } from './manage.js?v=20261016-settings-1';
+import { createImageEditor } from './manage.js?v=20261016-dropdown-1';
 import { createSeriesActions } from './series.js?v=20260919-series-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
@@ -37,6 +38,7 @@ $('#reader-stage').addEventListener('scroll', () => {
   if (isDocumentReading()) saveDocumentProgress();
 }, { passive: true });
 const uploadDialog = $('#upload-dialog');
+enhanceReadingModeSelect($('#album-reading-mode'));
 const uploadClient = createUploadClient();
 const imagePreview = createImagePreview(updateBodyLock);
 const slideshow = createSlideshow($('#slideshow'), { onSelect: goPage, onExit: () => setExpanded(false) });
