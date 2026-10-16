@@ -447,6 +447,9 @@ function route() {
     showCollection(album.seriesId ? 'series' : 'archive', album.seriesId);
   }
   const changed = state.album?.id !== album.id;
+  // A direct hash navigation can cross fullscreen implementations. Reset the
+  // old presentation before selecting an album of a different kind.
+  if (changed && state.expanded) setExpanded(false, false);
   state.album = album;
   state.page = Math.max(0, Math.min(album.images.length - 1, Number(match[2] || 1) - 1));
   if (changed) {
