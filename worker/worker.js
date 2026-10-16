@@ -6,7 +6,7 @@ const REPOSITORY = 'SherlockGy/SherlockGy.github.io';
 const BRANCH = 'master';
 const ORIGIN = 'https://sherlockgy.github.io';
 const MANIFEST = 'data/albums.json';
-const VERSION = '2026-10-04-upload-1';
+const VERSION = '2026-10-16-document-1';
 const MAX_DESCRIPTION_LENGTH = 10000;
 const GITHUB_TIMEOUT_MS = 20000;
 const MIB = 1024 * 1024;
@@ -158,6 +158,20 @@ function field(form, name, max, required = false) {
   const value = (name === 'description' ? raw.replace(/\r\n?/g, '\n') : raw).trim();
   if ((required && !value) || value.length > max) fail(400, 'INVALID_FIELD', `${name} 为空或过长`);
   return value;
+}
+function requestedReadingMode(form) {
+  if (!form.has('readingMode')) return undefined;
+  const value = field(form, 'readingMode', 8, true);
+  if (!['gallery', 'document'].includes(value)) fail(400, 'INVALID_FIELD', 'readingMode 必须为 gallery 或 document');
+  return value;
+}
+function readingModeChanged(album, mode) {
+  return mode !== undefined && (mode === 'document' ? album.document?.type !== 'document' : Object.hasOwn(album, 'document'));
+}
+function applyReadingMode(album, mode) {
+  // Preserve existing document bounds; never infer a crop from uploaded images.
+  if (mode === 'document' && album.document?.type !== 'document') album.document = { type: 'document', contentBounds: [0, 0, 1, 1] };
+  else if (mode === 'gallery') delete album.document;
 }
 function validDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -366,13 +380,16 @@ async function upload(request, env) {
   const seriesId = field(form, 'seriesId', 100);
   const date = seriesId ? '' : field(form, 'date', 10, true);
   const description = field(form, 'description', MAX_DESCRIPTION_LENGTH);
+  const readingMode = requestedReadingMode(form);
   const requestId = uploadRequestId(form);
   env._requestId = requestId;
   if (!seriesId && !validDate(date)) fail(400, 'INVALID_DATE', '请选择有效的归档日期');
   if (seriesId && !/^[a-zA-Z0-9_-]{1,100}$/.test(seriesId)) fail(400, 'INVALID_SERIES', '所属系列格式不正确');
   const { files, info } = await preparedFiles(form, env, '/albums');
   // Preserve fingerprints of existing monthly drafts for safe retries across upgrades.
-  const fingerprint = await hash(encoder.encode(JSON.stringify([title, date, (form.get('description') || '').trim(), info.map(item => item.hash), ...(seriesId ? [seriesId] : [])])));
+  const fingerprintParts = [title, date, (form.get('description') || '').trim(), info.map(item => item.hash), ...(seriesId ? [seriesId] : [])];
+  if (readingMode !== undefined) fingerprintParts.push({ readingMode });
+  const fingerprint = await hash(encoder.encode(JSON.stringify(fingerprintParts)));
   const id = `album-${requestId}`;
   const directory = imageDirectory({ id, date, seriesId });
   let snapshot = await preparedHead(form, env, '/albums');
@@ -380,6 +397,7 @@ async function upload(request, env) {
   if (existing) return existing;
   if (seriesId && !(snapshot.manifest.series || []).some(item => item.id === seriesId)) fail(400, 'INVALID_SERIES', '所属系列不存在，请重新载入目录');
   const album = { id, title, ...(seriesId ? { seriesId } : { date }), description, tags: [], uploadFingerprint: fingerprint, images: [] };
+  applyReadingMode(album, readingMode);
   const imageEntries = [];
   // Sequential binary uploads bound memory and outbound connections.
   for (let index = 0; index < files.length; index++) {
@@ -469,6 +487,7 @@ async function editAlbum(request, env, id) {
   if (!/^[a-f0-9]{64}$/.test(revision)) fail(400, 'INVALID_REVISION', '图集版本格式不正确');
   const title = form.has('title') ? field(form, 'title', 120, true) : undefined;
   const description = form.has('description') ? field(form, 'description', MAX_DESCRIPTION_LENGTH) : undefined;
+  const readingMode = requestedReadingMode(form);
   let order;
   try { order = JSON.parse(field(form, 'order', 10000, true)); }
   catch (error) { if (error instanceof UploadError) throw error; fail(400, 'INVALID_ORDER', '图片顺序格式不正确'); }
@@ -478,6 +497,7 @@ async function editAlbum(request, env, id) {
   if (title !== undefined) fingerprintParts.push({ title });
   // Keep the transport representation in fingerprints so pre-upgrade retries still match.
   if (description !== undefined) fingerprintParts.push({ description: form.get('description').trim() });
+  if (readingMode !== undefined) fingerprintParts.push({ readingMode });
   const fingerprint = await hash(encoder.encode(JSON.stringify(fingerprintParts)));
   let snapshot = await preparedHead(form, env, `/albums/${id}`);
   const inspectSnapshot = async () => {
@@ -495,7 +515,8 @@ async function editAlbum(request, env, id) {
   if (checked.duplicate) return { status: 'committed', commitSha: snapshot.sha, album: checked.album };
   if (!files.length && order.every((entry, index) => entry.existing === index) &&
       (title === undefined || title === checked.album.title) &&
-      (description === undefined || description === (checked.album.description || ''))) {
+      (description === undefined || description === (checked.album.description || '')) &&
+      !readingModeChanged(checked.album, readingMode)) {
     return { status: 'unchanged', album: checked.album };
   }
   const imageEntries = [], newImages = [];
@@ -531,6 +552,7 @@ async function editAlbum(request, env, id) {
       }),
       editHistory: [...(checked.album.editHistory || []).slice(-49), { requestId, fingerprint }],
     };
+    applyReadingMode(album, readingMode);
     const manifest = { ...snapshot.manifest, albums: snapshot.manifest.albums.map(item => item.id === id ? album : item) };
     const tree = await github(env, '/git/trees', { method: 'POST', body: { base_tree: snapshot.tree,
       tree: [...imageEntries, { path: MANIFEST, mode: '100644', type: 'blob', content: JSON.stringify(manifest, null, 2) + '\n' }] } });
@@ -654,7 +676,7 @@ export default {
       if (request.method === 'OPTIONS') return reply(request, null, 204);
       if (request.method === 'GET' && ['/', '/albums', '/health', '/check'].includes(path)) return reply(request, { service: 'SherlockGy Atlas Upload', version: VERSION,
         ready: !!(env.GITHUB_TOKEN && typeof env.UPLOAD_PASSWORD === 'string' && env.UPLOAD_PASSWORD.length >= 8),
-        message: '请在图集网站中上传图片。', endpoint: '/albums', capabilities: { editTitle: true, editDescription: true, maxDescriptionLength: MAX_DESCRIPTION_LENGTH }, upload: { protocol: UPLOAD_PROTOCOL,
+        message: '请在图集网站中上传图片。', endpoint: '/albums', capabilities: { editTitle: true, editDescription: true, readingMode: true, maxDescriptionLength: MAX_DESCRIPTION_LENGTH }, upload: { protocol: UPLOAD_PROTOCOL,
           concurrency: ['1', '2', '3'].includes(String(env.UPLOAD_CONCURRENCY)) ? Number(env.UPLOAD_CONCURRENCY) : 3,
           maxFiles: LIMITS.files, maxFileBytes: LIMITS.fileBytes, maxTotalBytes: LIMITS.totalBytes, maxInFlightBytes: 12 * MIB, receiptTtlMs: RECEIPT_TTL_MS } });
       if ((request.method !== 'POST' && !((albumMatch || isLibrary || isUploadStatus) && request.method === 'GET')) || path === '/health' || (isUploadStatus && request.method !== 'GET')) fail(405, 'METHOD_NOT_ALLOWED', '请求方法不支持');
@@ -676,7 +698,7 @@ export default {
       if (albumMatch) {
         if (request.method === 'GET') {
           const snapshot = await readHead(env), album = editableAlbum(snapshot, albumMatch[1]);
-          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album), capabilities: { editTitle: true, editDescription: true, maxDescriptionLength: MAX_DESCRIPTION_LENGTH } });
+          return reply(request, { album, series: snapshot.manifest.series || [], revision: await albumRevision(album), capabilities: { editTitle: true, editDescription: true, readingMode: true, maxDescriptionLength: MAX_DESCRIPTION_LENGTH } });
         }
         const result = await editAlbum(request, env, albumMatch[1]);
         return reply(request, result);
@@ -704,3 +726,4 @@ export default {
     }
   },
 };
+

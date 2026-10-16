@@ -1,12 +1,12 @@
-import { documentGeometry, readDocumentProgress } from './document-reader.js?v=20261016-document-1';
+import { documentGeometry, readDocumentProgress } from './document-reader.js?v=20261016-settings-1';
 import config from '../config.js';
 import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20261016-document-1';
-import { createImageEditor } from './manage.js?v=20261004-upload-1';
+import { createImageEditor } from './manage.js?v=20261016-settings-1';
 import { createSeriesActions } from './series.js?v=20260919-series-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
 import { createImagePreview, createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
-import { createUploadClient } from './upload.js?v=20261004-upload-1';
+import { createUploadClient } from './upload.js?v=20261016-settings-1';
 import { createSlideshow } from './slideshow.js?v=20260920-navigation-1';
 import { createImageReader, createScrollReader } from './reader.js?v=20260920-navigation-1';
 import { createImagePreloader, createImageWindow } from './preload.js?v=20260917-preload-2';
@@ -17,12 +17,13 @@ const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const state = { albums: [], series: [], view: 'archive', seriesId: '', query: '', month: '', type: 'all', expanded: false,
   album: null, page: 0, mode: 'page', zoom: 1, hand: false, preview: null, files: [], urls: [], requestId: null, busy: false,
-  uploadDirty: false, uploadSaved: false, loadError: false, scrollY: 0 };
+  uploadDirty: false, uploadSaved: false, uploadSeriesId: '', loadError: false, scrollY: 0 };
 const reader = $('#reader');
 const isDocument = () => state.album?.document?.type === 'document';
 const isDocumentReading = () => isDocument() && state.mode === 'scroll';
 const usesSlideshow = () => state.expanded && !isDocument();
 let documentScale = 1, documentRestore = null;
+const documentDimensions = new WeakMap();
 function saveDocumentProgress() {
   if (!isDocumentReading() || !reader.open) return;
   const stage = $('#reader-stage');
@@ -579,7 +580,18 @@ function mountReaderImage(frame, image, index, entry, retry, onReady = () => {})
   function display(loaded) {
     if (disposed) return;
     frame.setAttribute('aria-busy', 'false');
-    if (loaded) { img.hidden = false; status.hidden = true; onReady(); }
+    if (loaded) {
+      if (isDocumentReading() && img.naturalWidth > 0 && img.naturalHeight > 0) {
+        const previous = documentDimensions.get(image);
+        if (previous?.width !== img.naturalWidth || previous?.height !== img.naturalHeight) {
+          documentDimensions.set(image, { width: img.naturalWidth, height: img.naturalHeight });
+          // Loaded dimensions also cover old JPEG/WebP albums with no manifest sizes.
+          // Relayout around the current reading anchor before revealing the image.
+          resizeReader();
+        }
+      }
+      img.hidden = false; status.hidden = true; onReady();
+    }
     else {
       console.warn(logPrefix, '原图加载失败');
       status.hidden = false; status.className = 'image-error';
@@ -668,7 +680,8 @@ function layoutReader() {
   $$('.reader-page', stage).forEach(figure => {
     const frame = $('.reader-image-frame', figure);
     if (isDocumentReading()) {
-      const geometry = documentGeometry(state.album.images[Number(figure.dataset.index)], state.album.document.contentBounds, width, documentScale);
+      const image = state.album.images[Number(figure.dataset.index)];
+      const geometry = documentGeometry(documentDimensions.get(image) || image, state.album.document.contentBounds, width, documentScale);
       figure.style.width = `${geometry.width}px`;
       frame.style.height = `${geometry.height}px`;
       frame.style.setProperty('--document-image-width', `${geometry.imageWidth}px`);
@@ -725,7 +738,7 @@ function resetDraft() {
   uploadClient.reset();
   state.urls.forEach(url => URL.revokeObjectURL(url));
   state.files = []; state.urls = []; state.preview = null; state.requestId = null;
-  state.uploadDirty = false; state.uploadSaved = false;
+  state.uploadDirty = false; state.uploadSaved = false; state.uploadSeriesId = '';
   $('#upload-form').reset(); updateDescriptionCount(); $('#album-date').value = localDate(); setFeedback($('#upload-status'), '');
   syncUploadControls(); renderFiles();
 }
@@ -746,10 +759,10 @@ function openUpload() {
   if (state.view === 'series' && !state.seriesId) { createSeries(); return; }
   if (!state.uploadDirty) {
     resetDraft();
-    const select = $('#album-series');
-    const destination = state.view === 'series' ? state.seriesId : '';
-    select.replaceChildren(new Option(destination ? seriesTrail(state.series, destination).map(entry => entry.title).join(' / ') : '月份图集', destination));
-    select.value = destination; syncAlbumLocation();
+    // The entry point already chooses the destination. Keep it with the draft,
+    // including when a preview is closed and resumed from another collection.
+    state.uploadSeriesId = state.view === 'series' ? state.seriesId : '';
+    syncAlbumLocation();
   }
   // A local preview shares these files. Resume its draft without revoking them;
   // the old preview snapshot is replaced the next time the user previews it.
@@ -763,7 +776,7 @@ function openUpload() {
   uploadDialog.showModal(); updateBodyLock(); $('.dialog-content', uploadDialog).scrollTop = 0; $('#album-title').focus();
 }
 function syncAlbumLocation() {
-  const isSeries = !!$('#album-series').value;
+  const isSeries = !!state.uploadSeriesId;
   $('#album-date-row').hidden = isSeries; $('#album-date').required = !isSeries;
   state.requestId = null;
 }
@@ -864,14 +877,21 @@ async function submitAlbum(event) {
   const status = $('#upload-status');
   try {
     validateFiles(state.files, config);
-    const title = $('#album-title').value.trim(), seriesId = $('#album-series').value, date = seriesId ? '' : $('#album-date').value;
+    const title = $('#album-title').value.trim(), seriesId = state.uploadSeriesId, date = seriesId ? '' : $('#album-date').value;
     if (!title) throw new Error('请填写图集名称');
     if (!seriesId && !validDate(date)) throw new Error('请选择有效的归档日期');
     const description = $('#album-description').value.trim();
     if (description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`图集说明最多 ${MAX_DESCRIPTION_LENGTH} 字`);
+    const readingMode = $('#album-reading-mode').value;
+    if (!['gallery', 'document'].includes(readingMode)) throw new Error('请选择有效的阅读方式');
     if (!config.uploadEndpoint) {
+      state.busy = true; syncUploadControls(); renderFiles();
+      const urls = [...state.urls];
+      const dimensions = await Promise.all(urls.map(async src => { const image = new Image(); image.src = src; await image.decode(); return { width: image.naturalWidth, height: image.naturalHeight }; }));
       state.preview = { id: `preview-${Date.now()}`, title, date, seriesId, description, tags: [], local: true,
-        images: state.urls.map((src, index) => ({ src, alt: `${title} · 第 ${index + 1} 页` })) };
+        ...(readingMode === 'document' ? { document: { type: 'document', contentBounds: [0, 0, 1, 1] } } : {}),
+        images: urls.map((src, index) => ({ src, ...dimensions[index], alt: `${title} · 第 ${index + 1} 页` })) };
+      state.busy = false;
       closeUpload({ keepDraft: true }); location.hash = `#/album/${state.preview.id}/1`; return;
     }
     const endpoint = new URL(config.uploadEndpoint);
@@ -885,6 +905,7 @@ async function submitAlbum(event) {
     const requestId = state.requestId ||= crypto.randomUUID();
     body.append('requestId', requestId); body.append('title', title); body.append('date', date); body.append('description', description);
     if (seriesId) body.append('seriesId', seriesId);
+    if (readingMode === 'document') body.append('readingMode', readingMode);
     state.files.forEach(file => body.append('images', file, file.name));
     const data = await uploadClient.save({ endpoint: endpoint.href, password: code, body,
       onProgress: message => setFeedback(status, message) });
@@ -912,7 +933,7 @@ $('#new-series').addEventListener('click', createSeries);
 $('#edit-images').addEventListener('click', () => {
   if (state.album && !state.album.local) imageEditor.open(state.album.id, state.albums.flatMap(album => album.images));
 });
-$('#album-series').addEventListener('change', () => { syncAlbumLocation(); uploadChanged(); });
+$('#album-reading-mode').addEventListener('change', uploadChanged);
 $$('.tab').forEach(tab => tab.addEventListener('click', () => { state.type = tab.dataset.type; renderCatalog(); }));
 $('#search').addEventListener('input', event => { state.query = event.target.value; renderCatalog(); });
 $('#new-album').addEventListener('click', openUpload);

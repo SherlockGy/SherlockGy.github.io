@@ -53,3 +53,15 @@ test('an old Worker uses the legacy endpoint and never attempts staged uploads',
   const result = await client.save({ endpoint: 'https://worker.test/albums', password: 'password', body });
   assert.equal(result.commitSha, 'saved'); assert.deepEqual(calls, ['/health', '/albums']);
 });
+
+test('document mode refuses unsupported Worker before any images are uploaded', async () => {
+  const calls = [];
+  const client = createUploadClient({ fetch: async url => {
+    calls.push(new URL(url).pathname);
+    return Response.json({ ready: true, version: 'old', capabilities: { stagedUploads: true } });
+  } });
+  const body = new FormData(); body.set('readingMode', 'document');
+  body.set('requestId', crypto.randomUUID()); body.append('images', new File(['image'], 'one.jpg'));
+  await assert.rejects(client.save({ endpoint: 'https://worker.test/albums', password: 'password', body }), /尚未支持文档阅读/);
+  assert.deepEqual(calls, ['/health']);
+});

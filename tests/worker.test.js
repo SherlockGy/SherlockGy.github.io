@@ -131,7 +131,7 @@ test('connection check authenticates, reads the current manifest and never write
   assert.equal(response.status, 200);
   const result = await response.json();
   assert.equal(result.status, 'readable'); assert.equal(result.albumCount, 0);
-  assert.equal(result.version, '2026-10-04-upload-1'); assert.ok(result.traceId);
+  assert.equal(result.version, '2026-10-16-document-1'); assert.ok(result.traceId);
   assert.equal(fake.calls.length, 1); assert.ok(fake.calls.every(isRead));
   assert.equal(fake.manifest().albums.length, 0);
 });
@@ -696,4 +696,156 @@ test('600 MiB 的有效凭据能原子提交，超大单图凭据不能绕过验
   receipts[0] = await sign({ ...sample, size: 10 * 1048576 + 1 });
   assert.equal((await worker.fetch(managementRequest('/albums', finalForm(id, receipts)), env)).status, 400);
   assert.equal(fake.calls.filter(call => call.path === '/git/commits').length, 1);
+});
+
+test('reading mode capability is advertised by health and authenticated album reads', async t => {
+  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  const health = await (await worker.fetch(new Request('https://worker.test/health'), env)).json();
+  assert.equal(health.version, '2026-10-16-document-1');
+  assert.equal(health.capabilities.readingMode, true);
+  assert.equal((await readManagement('/albums/notes')).capabilities.readingMode, true);
+  assert.ok(fake.calls.every(isRead));
+});
+
+test('document uploads persist full bounds through both legacy and signed-blob protocols', async t => {
+  const fake = fakeGit({ initialManifest: { schemaVersion: 1, albums: [], series: nestedSeries() } });
+  t.mock.method(globalThis, 'fetch', fake.fetch);
+  for (const staged of [false, true]) {
+    const id = crypto.randomUUID();
+    const form = staged ? finalForm(id, [await stage(id)]) : await request({ id }).formData();
+    form.set('readingMode', 'document');
+    if (staged) { form.set('seriesId', 'macro'); form.delete('date'); }
+    const response = await worker.fetch(managementRequest('/albums', form), env);
+    assert.equal(response.status, 201);
+    const { album } = await response.json();
+    assert.deepEqual(album.document, { type: 'document', contentBounds: [0, 0, 1, 1] });
+    assert.deepEqual(fake.manifest().albums.find(item => item.id === album.id).document, album.document);
+    assert.equal(album.images.length, 1);
+    if (staged) assert.equal(album.seriesId, 'macro');
+    else assert.equal(album.date, '2026-09-15');
+    const writes = fake.calls.filter(call => !isRead(call)).length;
+    assert.equal((await worker.fetch(managementRequest('/albums', form), env)).status, 201);
+    assert.equal(fake.calls.filter(call => !isRead(call)).length, writes, 'An identical mode retry must not write');
+    form.set('readingMode', 'gallery');
+    const changed = await worker.fetch(managementRequest('/albums', form), env);
+    assert.equal(changed.status, 409);
+    assert.equal((await changed.json()).error.code, 'REQUEST_REUSED');
+    assert.equal(fake.calls.filter(call => !isRead(call)).length, writes);
+  }
+});
+
+test('omitted upload mode retains legacy fingerprints and explicit gallery has no document metadata', async t => {
+  const fake = fakeGit({ initialManifest: { schemaVersion: 1, albums: [], series: nestedSeries() } });
+  t.mock.method(globalThis, 'fetch', fake.fetch);
+  const digest = async value => Buffer.from(await crypto.subtle.digest('SHA-256', value)).toString('hex');
+  for (const seriesId of ['', 'macro']) {
+    const id = crypto.randomUUID(), form = await request({ id }).formData();
+    if (seriesId) { form.set('seriesId', seriesId); form.delete('date'); }
+    assert.equal((await worker.fetch(managementRequest('/albums', form), env)).status, 201);
+    const album = fake.manifest().albums.find(item => item.id === `album-${id}`);
+    const legacyParts = ['知识图集', seriesId ? '' : '2026-09-15', '图片说明', [await digest(png)], ...(seriesId ? [seriesId] : [])];
+    assert.equal(album.uploadFingerprint, await digest(encoder.encode(JSON.stringify(legacyParts))));
+    assert.equal(Object.hasOwn(album, 'document'), false);
+    assert.equal((await worker.fetch(managementRequest('/albums', form), env)).status, 201);
+    form.set('readingMode', 'document');
+    const changed = await worker.fetch(managementRequest('/albums', form), env);
+    assert.equal(changed.status, 409);
+    assert.equal((await changed.json()).error.code, 'REQUEST_REUSED');
+  }
+  const form = await request().formData(); form.set('readingMode', 'gallery');
+  const response = await worker.fetch(managementRequest('/albums', form), env);
+  assert.equal(response.status, 201);
+  assert.equal(Object.hasOwn((await response.json()).album, 'document'), false);
+  assert.equal(fake.calls.filter(call => call.path === '/git/commits').length, 3);
+});
+
+test('mode-only edits switch both directions without changing images, and same-mode edits are no-ops', async t => {
+  const initial = editFixture();
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  for (const [mode, expectedStatus] of [['gallery', 'unchanged'], ['document', 'committed'], ['document', 'unchanged'], ['gallery', 'committed'], ['gallery', 'unchanged'], ['document', 'committed']]) {
+    const current = await readManagement('/albums/notes');
+    const form = editForm(current.revision, [{ existing: 0 }, { existing: 1 }]); form.set('readingMode', mode);
+    const response = await worker.fetch(managementRequest('/albums/notes', form), env);
+    assert.equal(response.status, 200);
+    const result = await response.json(); assert.equal(result.status, expectedStatus);
+    const album = fake.manifest().albums[0];
+    if (mode === 'document') assert.deepEqual(album.document, { type: 'document', contentBounds: [0, 0, 1, 1] });
+    else assert.equal(Object.hasOwn(album, 'document'), false);
+    assert.deepEqual(album.images, initial.albums[0].images);
+    assert.equal(album.id, 'notes'); assert.equal(album.date, initial.albums[0].date);
+    assert.deepEqual(album.tags, initial.albums[0].tags); assert.equal(album.uploadFingerprint, 'original');
+  }
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 0);
+  assert.equal(fake.calls.filter(call => call.path === '/git/commits').length, 3);
+});
+
+test('omitted and unchanged document modes preserve imported crop metadata through unrelated edits', async t => {
+  const initial = editFixture();
+  initial.albums[0].document = { type: 'document', contentBounds: [0.1, 0.12, 0.9, 0.94], source: 'imported' };
+  const expectedDocument = structuredClone(initial.albums[0].document);
+  const fake = fakeGit({ initialManifest: initial }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  for (const [mode, title, order, count] of [
+    [undefined, '新名称', [{ existing: 0 }, { existing: 1 }], 0],
+    ['document', '第二次改名', [{ existing: 1 }, { existing: 0 }], 0],
+    [undefined, undefined, [{ file: 0, replaces: 0 }, { existing: 1 }, { file: 1 }], 2],
+  ]) {
+    const current = await readManagement('/albums/notes');
+    const form = editForm(current.revision, order, count);
+    if (mode !== undefined) form.set('readingMode', mode);
+    if (title !== undefined) form.set('title', title);
+    const response = await worker.fetch(managementRequest('/albums/notes', form), env);
+    assert.equal(response.status, 200); assert.equal((await response.json()).status, 'committed');
+    assert.deepEqual(fake.manifest().albums[0].document, expectedDocument);
+  }
+  const current = await readManagement('/albums/notes');
+  const same = editForm(current.revision, current.album.images.map((_, existing) => ({ existing })));
+  same.set('readingMode', 'document');
+  assert.equal((await (await worker.fetch(managementRequest('/albums/notes', same), env)).json()).status, 'unchanged');
+  assert.deepEqual(fake.manifest().albums[0].document, expectedDocument);
+  const gallery = editForm(current.revision, current.album.images.map((_, existing) => ({ existing })));
+  gallery.set('readingMode', 'gallery');
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', gallery), env)).status, 200);
+  assert.equal(Object.hasOwn(fake.manifest().albums[0], 'document'), false);
+});
+
+test('mode edit retries recover a lost response, reject a changed mode, and preserve legacy omitted fingerprints', async t => {
+  let fake = fakeGit({ initialManifest: editFixture(), loseResponse: true });
+  t.mock.method(globalThis, 'fetch', (...args) => fake.fetch(...args));
+  const current = await readManagement('/albums/notes');
+  const id = crypto.randomUUID(), order = [{ existing: 0 }, { existing: 1 }];
+  const form = editForm(current.revision, order, 0, id); form.set('readingMode', 'document');
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', form), env)).status, 502);
+  assert.deepEqual(fake.manifest().albums[0].document, { type: 'document', contentBounds: [0, 0, 1, 1] });
+  assert.equal((await worker.fetch(managementRequest('/albums/notes', form), env)).status, 200);
+  form.set('readingMode', 'gallery');
+  const changed = await worker.fetch(managementRequest('/albums/notes', form), env);
+  assert.equal(changed.status, 409); assert.equal((await changed.json()).error.code, 'REQUEST_REUSED');
+  form.delete('readingMode');
+  const omitted = await worker.fetch(managementRequest('/albums/notes', form), env);
+  assert.equal(omitted.status, 409); assert.equal((await omitted.json()).error.code, 'REQUEST_REUSED');
+  assert.equal(fake.calls.filter(call => call.path === '/git/commits').length, 1);
+  assert.equal(fake.calls.filter(call => call.path === '/git/blobs').length, 0);
+  const revision = 'a'.repeat(64), legacyId = crypto.randomUUID();
+  const fingerprint = Buffer.from(await crypto.subtle.digest('SHA-256', encoder.encode(JSON.stringify(['notes', revision, order, []])))).toString('hex');
+  const initial = editFixture(); initial.albums[0].editHistory = [{ requestId: legacyId, fingerprint }];
+  initial.albums[0].document = { type: 'document', contentBounds: [0.1, 0, 0.9, 1] };
+  fake = fakeGit({ initialManifest: initial });
+  const legacy = await worker.fetch(managementRequest('/albums/notes', editForm(revision, order, 0, legacyId)), env);
+  assert.equal(legacy.status, 200);
+  assert.deepEqual((await legacy.json()).album.document, initial.albums[0].document);
+  assert.ok(fake.calls.every(isRead), 'Pre-upgrade omitted-mode edit retries must remain read-only');
+});
+
+test('invalid, empty, duplicate and file-valued reading modes are rejected before GitHub access', async t => {
+  const fake = fakeGit({ initialManifest: editFixture() }); t.mock.method(globalThis, 'fetch', fake.fetch);
+  for (const values of [['other'], ['DOCUMENT'], [''], ['   '], ['documentgallery'], ['gallery', 'document'], ['document', 'document'], [new File([png], 'mode.png')]]) {
+    for (const path of ['/albums', '/albums/notes']) {
+      const form = path === '/albums' ? await request().formData() : editForm('a'.repeat(64), [{ existing: 0 }, { existing: 1 }]);
+      for (const value of values) form.append('readingMode', value);
+      const response = await worker.fetch(managementRequest(path, form), env);
+      assert.equal(response.status, 400);
+      assert.equal((await response.json()).error.code, 'INVALID_FIELD');
+    }
+  }
+  assert.equal(fake.calls.length, 0);
 });

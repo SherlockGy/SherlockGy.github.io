@@ -14,7 +14,7 @@
 
 ## 升级系列与编辑功能
 
-推荐先将本目录 `worker.js` 的完整代码部署到现有 Worker，再发布新版前端。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-10-04-upload-1`。
+推荐先将本目录 `worker.js` 的完整代码部署到现有 Worker，再发布新版前端。继续使用原来的两个 Secret，不需要新增数据库、存储绑定或付费服务才能启用这些操作。健康检查版本应为 `2026-10-16-document-1`。
 
 此版本还修复排序后的自动页码说明：保存时按当前顺序更新 `图集名称 · 第 N 页`，自定义图片说明和原图路径保留。前端会纠正旧目录的显示，但后续保存写入正确页码需要部署此 Worker。
 
@@ -39,7 +39,7 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 ## 启用 60 张与 600 MiB 上传
 
-先部署本目录最新 Worker，再发布前端。`GET /health` 的 `version` 应为 `2026-10-04-upload-1`，`upload.maxFiles` 为 `60`、`upload.maxTotalBytes` 为 `629145600`、`upload.concurrency` 为 `3`。如果已有普通环境变量 `UPLOAD_CONCURRENCY=2`，需改为 `3`，显式配置会覆盖代码默认值。Secret 保持原值。
+先部署本目录最新 Worker，再发布前端。`GET /health` 的 `version` 应为 `2026-10-16-document-1`，`upload.maxFiles` 为 `60`、`upload.maxTotalBytes` 为 `629145600`、`upload.concurrency` 为 `3`。如果已有普通环境变量 `UPLOAD_CONCURRENCY=2`，需改为 `3`，显式配置会覆盖代码默认值。Secret 保持原值。
 
 新建和编辑后的图集最多 60 张，单张 10 MiB，每次新增或换图合计 600 MiB。在途原图仍最多 12 MiB，大图自动减少并发。旧整包接口保留 30 张、30 MiB 上限，当前网页自动使用逐文件协议。
 
@@ -60,9 +60,17 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 完整取舍、提交边界与测试方法见 [上传提速方案](../docs/upload-performance.md)。
 
+## 启用普通图集 / 文档阅读切换
+
+先将本目录完整 `worker.js` 部署至 Cloudflare。`GET /health` 的 `version` 应为 `2026-10-16-document-1`，并且 `GET /health` 与已鉴权的 `GET /albums/{id}` 都返回 `capabilities.readingMode: true`。继续使用原有两个 Secret，不需要新增配置。仅提交或发布 GitHub 中的 Worker 源码不会部署 Cloudflare Worker；模拟测试也不代表线上已启用。
+
+新增与编辑表单通过可选字段 `readingMode` 指定 `gallery`（普通图集）或 `document`（文档阅读）。新建文档图集、普通图集切换为文档时，保存 `document: { type: "document", contentBounds: [0, 0, 1, 1] }`，使用完整图片，不自动推断裁剪。已有文档的自定义内容边界会在继续使用文档模式、改名、改说明、排序和换图时保留；切回普通图集会删除文档元数据，再次切回文档使用完整边界。
+
+不传 `readingMode` 时沿用旧行为：新增仍是普通图集，编辑保留原阅读模式与元数据，旧请求指纹和原样重试继续兼容。传入无效值、空值或重复字段会被拒绝。只修改阅读模式无需重新上传图片；相同请求编号不能重用于不同模式。旧 Worker 没有此能力时，应先部署新版再保存模式变更，避免界面选择与实际保存不一致。
+
 ## 启用图集改名
 
-部署本目录最新代码后，`GET /health` 的版本应为 `2026-10-04-upload-1`，并返回 `capabilities.editTitle: true`。已有的两个 Secret 不变，流水上传协议仍为 `signed-blobs-v1`。
+部署本目录最新代码后，`GET /health` 的版本应为 `2026-10-16-document-1`，并返回 `capabilities.editTitle: true`。已有的两个 Secret 不变，流水上传协议仍为 `signed-blobs-v1`。
 
 在阅读窗口点击“编辑图集”，输入口令并载入最新内容，即可修改名称。可以只改名，也可以与排序、换图一起保存；名称不能为空，最多 120 字。改名保持图集编号、图片路径、原图和分享链接。旧版 Worker 下名称只读，图片编辑照常使用。
 
@@ -80,7 +88,7 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 
 ## 超时和连接诊断
 
-- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-10-04-upload-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
+- 更新 GitHub 上的 `worker.js` 不会自动更新 Cloudflare。请重新复制全部代码到 Cloudflare 编辑器并点击 **Deploy**。访问 `/health`，`version` 为 `2026-10-16-document-1` 表示已部署这一版；若“测试连接”提示先部署新版，说明 `/check` 接口尚未更新。
 - 若旧版提示 `Invalid redirect value`，属于 Worker 运行环境不支持 `redirect: 'error'` 的兼容性错误，请部署新版。新版使用 `manual` 并检查重定向状态，不会跟随跳转转发 Token；无需为此修改上传口令或重新生成 Token。
 - 打开 Cloudflare → Workers & Pages → `github-image-upload` → **Logs → Live**，开始查看实时日志，再回网站点击 **测试连接**或重试上传。
 - 日志中的 `github.start`、`github.success`、`github.error` 标记每一步，`stage` 表示读取主分支、读取图集目录、保存第几张图片或发布图集。`elapsedMs` 是耗时，`httpStatus` 是 GitHub 返回的 HTTP 状态，`traceId` 与页面错误中的请求编号对应。
@@ -99,3 +107,4 @@ https://github-image-upload.sherlockjgy.workers.dev/albums
 - 显示保存成功后，GitHub Pages 还需要完成发布，稍后刷新网站查看。
 
 参考：[Cloudflare Secret 设置](https://developers.cloudflare.com/workers/configuration/secrets/)、[GitHub Token 创建](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)、[Cloudflare 实时日志](https://developers.cloudflare.com/workers/observability/logs/real-time-logs/)、[Cloudflare 运行限制](https://developers.cloudflare.com/workers/platform/limits/)。
+

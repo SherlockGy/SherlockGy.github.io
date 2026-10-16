@@ -65,3 +65,23 @@ test('document toolbar has no redundant details shortcut', () => {
   assert.ok(!source.includes("$('#document-details')"));
   for (const id of ['mode-page', 'mode-scroll', 'original-image', 'reader-hand']) assert.ok(html.includes(`id="${id}"`));
 });
+test('decoded square and landscape document dimensions retain their aspect ratio', () => {
+  assert.equal(documentGeometry({ width: 1000, height: 1000 }, [0, 0, 1, 1], 350).height, 350);
+  assert.equal(documentGeometry({ width: 1600, height: 900 }, [0, 0, 1, 1], 800).height, 450);
+  const source = readFileSync(new URL('../assets/app.js', import.meta.url), 'utf8');
+  assert.ok(source.includes('documentDimensions.set(image, { width: img.naturalWidth, height: img.naturalHeight })'));
+  assert.ok(source.includes('documentGeometry(documentDimensions.get(image) || image'));
+  const loaded = source.slice(source.indexOf('if (loaded) {'), source.indexOf('else {', source.indexOf('if (loaded) {')));
+  assert.ok(loaded.indexOf('resizeReader();') < loaded.indexOf('img.hidden = false'));
+});
+test('upload keeps entry destination internally and locks asynchronous local preview', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../assets/app.js', import.meta.url), 'utf8');
+  assert.ok(!html.includes('id="album-series"'));
+  assert.ok(html.includes('id="album-reading-mode"'));
+  assert.ok(source.includes("state.uploadSeriesId = state.view === 'series' ? state.seriesId : ''"));
+  const preview = source.slice(source.indexOf('if (!config.uploadEndpoint) {', source.indexOf('async function submitAlbum')), source.indexOf('const endpoint = new URL(config.uploadEndpoint)', source.indexOf('async function submitAlbum')));
+  assert.ok(preview.indexOf('state.busy = true') < preview.indexOf('await Promise.all'));
+  assert.ok(preview.includes('const urls = [...state.urls]'));
+  assert.ok(preview.indexOf('state.busy = false') < preview.indexOf('closeUpload'));
+});

@@ -72,8 +72,9 @@ export function createUploadClient({ fetch: fetcher = (...args) => globalThis.fe
     if (!capabilities || capabilities.origin !== url.origin || capabilities.until < Date.now()) {
       onProgress('正在连接上传服务…');
       const health = await json(new URL('/health', url), undefined, undefined, 15000);
-      capabilities = { origin: url.origin, until: Date.now() + 60000, upload: health.upload };
+      capabilities = { origin: url.origin, until: Date.now() + 60000, upload: health.upload, readingMode: health.capabilities?.readingMode === true };
     }
+    if (body.has('readingMode') && !capabilities.readingMode) throw new Error('当前上传服务尚未支持文档阅读设置，请先更新 Worker。草稿已保留，尚未上传图片。');
     const options = capabilities.upload;
     if (options?.protocol !== PROTOCOL) {
       onProgress('正在上传并保存…');
@@ -145,3 +146,4 @@ export function createUploadClient({ fetch: fetcher = (...args) => globalThis.fe
   }
   return { save, reset() { draft = undefined; } };
 }
+

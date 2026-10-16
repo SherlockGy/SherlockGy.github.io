@@ -1,8 +1,8 @@
 import config from '../config.js';
-import { createUploadClient } from './upload.js?v=20261004-upload-1';
+import { createUploadClient } from './upload.js?v=20261016-settings-1';
 import { createPreviewButton } from './previews.js?v=20260917-space-1';
 import { setFeedback } from './feedback.js?v=20260917-interaction-1';
-import { MAX_DESCRIPTION_LENGTH, normalizeManifest, validateFiles } from './model.js?v=20261004-upload-1';
+import { MAX_DESCRIPTION_LENGTH, normalizeManifest, validateFiles } from './model.js?v=20261016-document-1';
 
 function node(tag, className, text) {
   const value = document.createElement(tag);
@@ -150,7 +150,7 @@ export function buildImageOrder(items) {
 
 export function createImageEditor(onOpenChange, onSaved, imagePreview) {
   const ui = managerDialog('image-editor', '编辑图集', '修改名称与说明，或调整图片。第一张作为封面；分享链接仍按页码定位。', onOpenChange, { deferFooter: true });
-  let album, items = [], pickerTarget, draftTitle = '', draftDescription = '', canRename = false, canEditDescription = false, series = [];
+  let album, items = [], pickerTarget, draftTitle = '', draftDescription = '', draftReadingMode = 'gallery', canEditReadingMode = false, canRename = false, canEditDescription = false, series = [];
   let knownThumbnails = new Map();
   const previewImages = () => items.map(item => {
     if (item.file) return { src: item.src, name: item.file.name };
@@ -186,6 +186,22 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     });
     descriptionField.append(descriptionLabel, description, count); ui.workspace.append(descriptionField);
     if (!canEditDescription) ui.workspace.append(node('p', 'field-note', '当前上传服务暂不支持修改说明，更新服务后即可编辑。'));
+    const readingField = node('label', 'manager-field');
+    readingField.append(node('span', 'field-label', '阅读方式'));
+    const readingMode = node('select', 'form-input'); readingMode.id = 'editor-reading-mode';
+    for (const [value, label] of [['gallery', '普通图集'], ['document', '文档阅读']]) {
+      const option = node('option', '', label); option.value = value; readingMode.append(option);
+    }
+    readingMode.value = draftReadingMode; readingMode.disabled = !canEditReadingMode;
+    if (!canEditReadingMode) readingMode.dataset.boundary = 'true';
+    readingMode.addEventListener('change', () => {
+      if (!canEditReadingMode || ui.busy || ui.saved) return;
+      draftReadingMode = readingMode.value; ui.changed();
+    });
+    readingField.append(readingMode); ui.workspace.append(readingField);
+    ui.workspace.append(node('p', 'field-note', canEditReadingMode
+      ? '文档阅读默认适宽、纵向连续滚动；切换为文档不会自动裁边。'
+      : '当前上传服务尚未支持切换阅读方式，更新服务后即可修改。现有方式会保留。'));
     const picker = node('input', 'visually-hidden'); picker.type = 'file'; picker.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
     picker.tabIndex = -1; picker.setAttribute('aria-label', '选择新增或替换的图片');
     const choose = target => { pickerTarget = target; picker.multiple = target === undefined; picker.value = ''; picker.click(); };
@@ -246,6 +262,8 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
   ui.receive = data => {
     const next = normalizeManifest({ schemaVersion: 1, albums: [data.album], series: data.series }, document.baseURI)[0];
     ui.dispose(); album = next; draftTitle = album.title; draftDescription = album.description;
+    draftReadingMode = album.document?.type === 'document' ? 'document' : 'gallery';
+    canEditReadingMode = data.capabilities?.readingMode === true;
     canRename = data.capabilities?.editTitle === true; canEditDescription = data.capabilities?.editDescription === true; series = data.series || [];
     items = album.images.map((image, existing) => ({ existing, src: image.src })); render();
   };
@@ -264,6 +282,11 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
       if (description.length > MAX_DESCRIPTION_LENGTH) throw new Error(`图集说明最多 ${MAX_DESCRIPTION_LENGTH} 字`);
       body.set('description', description);
     }
+    const previousMode = album.document?.type === 'document' ? 'document' : 'gallery';
+    if (draftReadingMode !== previousMode) {
+      if (!canEditReadingMode) throw new Error('当前上传服务尚未支持切换阅读方式');
+      body.set('readingMode', draftReadingMode);
+    }
     files.forEach(file => body.append('images', file, file.name)); return body;
   };
   return { open(id, publishedImages = []) {
@@ -272,3 +295,4 @@ export function createImageEditor(onOpenChange, onSaved, imagePreview) {
     ui.path = `/albums/${encodeURIComponent(id)}`; ui.open();
   } };
 }
+
