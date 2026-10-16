@@ -2,6 +2,51 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "album-6db69c16-779c-44f8-85c2-82d58b884962",
+      "title": "AI 雄心（如何更有野心）",
+      "date": "2026-10-16",
+      "description": "",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/2026/10/album-6db69c16-779c-44f8-85c2-82d58b884962/001.webp",
+          "alt": "AI 雄心（如何更有野心） · 第 1 页",
+          "width": 1697,
+          "height": 2400
+        },
+        {
+          "src": "./images/2026/10/album-6db69c16-779c-44f8-85c2-82d58b884962/002.webp",
+          "alt": "AI 雄心（如何更有野心） · 第 2 页",
+          "width": 1697,
+          "height": 2400
+        },
+        {
+          "src": "./images/2026/10/album-6db69c16-779c-44f8-85c2-82d58b884962/003.webp",
+          "alt": "AI 雄心（如何更有野心） · 第 3 页",
+          "width": 1697,
+          "height": 2400
+        },
+        {
+          "src": "./images/2026/10/album-6db69c16-779c-44f8-85c2-82d58b884962/004.webp",
+          "alt": "AI 雄心（如何更有野心） · 第 4 页",
+          "width": 1697,
+          "height": 2400
+        },
+        {
+          "src": "./images/2026/10/album-6db69c16-779c-44f8-85c2-82d58b884962/005.webp",
+          "alt": "AI 雄心（如何更有野心） · 第 5 页",
+          "width": 1697,
+          "height": 2400
+        },
+        {
+          "src": "./images/2026/10/album-6db69c16-779c-44f8-85c2-82d58b884962/006.webp",
+          "alt": "AI 雄心（如何更有野心） · 第 6 页",
+          "width": 1697,
+          "height": 2400
+        }
+      ]
+    },
+    {
       "id": "album-1d3cb65e-e572-405b-8f8c-58c22873e459",
       "title": "提示词工程：目标定义 × 判断标准 × 领域表达",
       "date": "2026-09-29",
