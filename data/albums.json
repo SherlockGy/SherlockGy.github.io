@@ -5,7 +5,7 @@
       "id": "album-6db69c16-779c-44f8-85c2-82d58b884962",
       "title": "AI 雄心（如何更有野心）",
       "date": "2026-10-16",
-      "description": "",
+      "description": "https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/",
       "tags": [],
       "images": [
         {
@@ -43,6 +43,12 @@
           "alt": "AI 雄心（如何更有野心） · 第 6 页",
           "width": 1697,
           "height": 2400
+        }
+      ],
+      "editHistory": [
+        {
+          "requestId": "45d72219-7fe0-4fde-9d54-7c68984b5b58",
+          "fingerprint": "6305a2082764a1b93090251b772e59a966aba49c150d5a59e415fb39880e689b"
         }
       ]
     },
