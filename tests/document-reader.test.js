@@ -52,3 +52,8 @@ test('document fullscreen keeps note expansion and layout enabled', () => {
   assert.ok(noteCode.includes('panel.hidden || !reader.open || usesSlideshow()'));
   assert.ok(!noteCode.includes('state.expanded'));
 });
+
+test('direct album routes reset fullscreen only when changing presentation kind', () => {
+  const source = readFileSync(new URL('../assets/app.js', import.meta.url), 'utf8');
+  assert.ok(source.includes("changed && state.expanded && isDocument() !== (album.document?.type === 'document')"));
+});
