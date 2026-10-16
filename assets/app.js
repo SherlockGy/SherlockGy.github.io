@@ -952,9 +952,6 @@ for (const [id, delta] of [['document-smaller', -.1], ['document-larger', .1]]) 
   documentScale = Math.round(Math.max(.7, Math.min(1.5, documentScale + delta)) * 10) / 10;
   resizeReader(); syncReaderControls(); saveDocumentProgress();
 });
-$('#document-details').addEventListener('click', () => {
-  saveDocumentProgress(); state.mode = 'page'; state.hand = true; renderReader(); focusReadingPage();
-});
 $('#zoom-reset').addEventListener('click', () => imageReader?.reset());
 $('#fullscreen').addEventListener('click', () => setExpanded(!state.expanded));
 for (const control of ['#download-album', '#slideshow-download']) $(control).addEventListener('click', () => albumExport.open(state.album));

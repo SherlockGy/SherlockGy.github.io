@@ -57,3 +57,11 @@ test('direct album routes reset fullscreen only when changing presentation kind'
   const source = readFileSync(new URL('../assets/app.js', import.meta.url), 'utf8');
   assert.ok(source.includes("changed && state.expanded && isDocument() !== (album.document?.type === 'document')"));
 });
+
+test('document toolbar has no redundant details shortcut', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../assets/app.js', import.meta.url), 'utf8');
+  assert.ok(!html.includes('id="document-details"'));
+  assert.ok(!source.includes("$('#document-details')"));
+  for (const id of ['mode-page', 'mode-scroll', 'original-image', 'reader-hand']) assert.ok(html.includes(`id="${id}"`));
+});
