@@ -1151,6 +1151,11 @@
       "id": "series-056267d0-3aa1-4097-bd5c-bc82b23f5c4b",
       "title": "育儿",
       "parentId": ""
+    },
+    {
+      "id": "series-01997e84-402a-434c-9d28-edb880c1d32b",
+      "title": "名人",
+      "parentId": ""
     }
   ],
   "libraryHistory": [
@@ -1169,6 +1174,10 @@
     {
       "requestId": "2c3603c7-4867-4455-8506-6f9da9302829",
       "fingerprint": "c8e6ff6e4dcbe0f7696ac54f19507916dbe8cc32dbb1fc3bb8128e8e22849399"
+    },
+    {
+      "requestId": "61885df5-78e0-4224-b6ca-d17de48db524",
+      "fingerprint": "8841702d2dc46961d1425424132b74bb88e15b41d8d57c30421ea9e25d63cfcb"
     }
   ]
 }
