@@ -1156,6 +1156,11 @@
       "id": "series-01997e84-402a-434c-9d28-edb880c1d32b",
       "title": "名人",
       "parentId": ""
+    },
+    {
+      "id": "series-e4b2bc30-5df7-4cfe-a60d-04b2dd761741",
+      "title": "马斯克",
+      "parentId": "series-01997e84-402a-434c-9d28-edb880c1d32b"
     }
   ],
   "libraryHistory": [
@@ -1178,6 +1183,10 @@
     {
       "requestId": "61885df5-78e0-4224-b6ca-d17de48db524",
       "fingerprint": "8841702d2dc46961d1425424132b74bb88e15b41d8d57c30421ea9e25d63cfcb"
+    },
+    {
+      "requestId": "3c1f935a-724e-4d7f-86cb-14acc660bc4c",
+      "fingerprint": "051ea000c7fbdc6c2da089083878e157d16c47127043caeff97f9c1c9c980dcd"
     }
   ]
 }
