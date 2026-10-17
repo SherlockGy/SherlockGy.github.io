@@ -1135,6 +1135,22 @@
           "height": 1536
         }
       ]
+    },
+    {
+      "id": "album-3f5e1294-df21-4a77-a79f-742a8629033b",
+      "title": "马斯克的人生时间线",
+      "seriesId": "series-e4b2bc30-5df7-4cfe-a60d-04b2dd761741",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "a9a769bb33e311950d46caaa40045e8d627a582614d96b2d74810cd02b419e6f",
+      "images": [
+        {
+          "src": "./images/series/album-3f5e1294-df21-4a77-a79f-742a8629033b/001.png",
+          "alt": "马斯克的人生时间线 · 第 1 页",
+          "width": 1024,
+          "height": 1536
+        }
+      ]
     }
   ],
   "series": [
