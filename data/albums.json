@@ -1119,6 +1119,22 @@
           "height": 1536
         }
       ]
+    },
+    {
+      "id": "album-c09409e8-b6c6-43a6-a7cb-f44ebc6f59e2",
+      "title": "马斯克是怎么一步步做大的？",
+      "seriesId": "series-e4b2bc30-5df7-4cfe-a60d-04b2dd761741",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "10ae79e11fa02169b3c4d9951bb216b0d3dc3195b6c8c04beff14f704ea5889f",
+      "images": [
+        {
+          "src": "./images/series/album-c09409e8-b6c6-43a6-a7cb-f44ebc6f59e2/001.png",
+          "alt": "马斯克是怎么一步步做大的？ · 第 1 页",
+          "width": 1024,
+          "height": 1536
+        }
+      ]
     }
   ],
   "series": [
