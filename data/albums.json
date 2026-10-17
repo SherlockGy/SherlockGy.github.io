@@ -1151,6 +1151,34 @@
           "height": 1536
         }
       ]
+    },
+    {
+      "id": "album-3bdb8530-435e-444c-8750-4085511b6064",
+      "title": "马斯克的办学实验",
+      "seriesId": "series-e4b2bc30-5df7-4cfe-a60d-04b2dd761741",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "58d06365faa3033eafea696a45d1c06312417dce91451b9fdeb86d10cce0824c",
+      "images": [
+        {
+          "src": "./images/series/album-3bdb8530-435e-444c-8750-4085511b6064/001.png",
+          "alt": "马斯克的办学实验 · 第 1 页",
+          "width": 1024,
+          "height": 1536
+        },
+        {
+          "src": "./images/series/album-3bdb8530-435e-444c-8750-4085511b6064/002.png",
+          "alt": "马斯克的办学实验 · 第 2 页",
+          "width": 1024,
+          "height": 1536
+        },
+        {
+          "src": "./images/series/album-3bdb8530-435e-444c-8750-4085511b6064/003.png",
+          "alt": "马斯克的办学实验 · 第 3 页",
+          "width": 1024,
+          "height": 1536
+        }
+      ]
     }
   ],
   "series": [
