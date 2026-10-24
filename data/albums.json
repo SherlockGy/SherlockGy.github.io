@@ -1179,6 +1179,22 @@
           "height": 1536
         }
       ]
+    },
+    {
+      "id": "album-006c11ee-e887-45a1-9ec5-3421df9febcd",
+      "title": "鹦鹉_卡通形象",
+      "seriesId": "series-7c1be627-b34e-4efe-9962-94f067edd038",
+      "description": "",
+      "tags": [],
+      "uploadFingerprint": "11bf682996ffb2616cca9d78fd10c3af50a97d8a2e47d24a70b0e23f361b58b2",
+      "images": [
+        {
+          "src": "./images/series/album-006c11ee-e887-45a1-9ec5-3421df9febcd/001.png",
+          "alt": "鹦鹉_卡通形象 · 第 1 页",
+          "width": 1254,
+          "height": 1254
+        }
+      ]
     }
   ],
   "series": [
