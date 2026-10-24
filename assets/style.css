@@ -248,7 +248,7 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .series-nav-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--line); }
 .series-nav-heading { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .series-nav-heading .active { color: var(--accent); font-weight: 600; background: var(--soft); }
-.series-link { display: block; width: 100%; padding: 8px 10px 8px calc(12px + var(--depth) * 13px); font-size: var(--text-ui); text-align: left; overflow-wrap: anywhere; border-radius: 6px; }
+.series-link { display: block; width: 100%; padding: 8px 12px; font-size: var(--text-ui); text-align: left; overflow-wrap: anywhere; border-radius: 6px; }
 .series-link.active, .series-link:hover { color: var(--accent); background: var(--soft); }
 .breadcrumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; color: var(--muted); }
 .breadcrumbs .text-button { white-space: normal; text-align: left; overflow-wrap: anywhere; }
@@ -381,11 +381,6 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .search:has(input:focus-visible), .form-input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 /* Series actions stay attached to the collection or item they affect. */
-.series-tree-row { display: flex; align-items: center; min-width: 0; padding-left: calc(var(--depth) * 10px); }
-.series-tree-row .series-link { flex: 1; min-width: 0; padding: 8px 6px; }
-.series-tree-row > .series-link:first-child, .series-tree-toggle[hidden] + .series-link { margin-left: 24px; }
-.series-tree-toggle { flex: 0 0 24px; width: 24px; height: 36px; display: grid; place-items: center; color: var(--muted); }
-.series-tree-toggle .icon { width: 14px; height: 14px; }
 .series-card-link { display: block; width: 100%; height: 100%; padding: 25px; text-align: left; border-radius: inherit; }
 .series-card-link h2 { padding-right: 18px; }
 .series-card > .context-actions { position: absolute; top: 12px; right: 12px; }
@@ -569,7 +564,6 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 }
 @media (max-width: 760px) {
   #series-nav { display: block; max-height: 220px; overflow-y: auto; }
-  .series-tree-row .series-link { max-width: none; width: auto; white-space: normal; }
   body[data-view="series"] .collection-header { display: flex; gap: 18px; }
   body[data-view="series"] .header-actions { display: flex; gap: 10px; }
   body[data-view="series"] .search { flex: 1 0 100%; order: 2; }

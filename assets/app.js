@@ -1,7 +1,7 @@
 import { enhanceReadingModeSelect } from './reading-mode-select.js?v=20261016-dropdown-1';
 import { documentGeometry, readDocumentProgress } from './document-reader.js?v=20261016-settings-1';
 import config from '../config.js';
-import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, flattenSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20261016-document-1';
+import { MAX_DESCRIPTION_LENGTH, normalizeManifest, normalizeSeries, seriesTrail, groupByMonth, filterAlbums, validDate, validateFiles } from './model.js?v=20261016-document-1';
 import { createImageEditor } from './manage.js?v=20261016-dropdown-1';
 import { createSeriesActions } from './series.js?v=20260919-series-1';
 import { configureCoverImage } from './covers.js?v=20260917-previews-1';
@@ -76,14 +76,12 @@ const seriesActions = createSeriesActions(updateBodyLock, data => {
     const knownThumbnails = new Map(state.albums.flatMap(album => album.images).filter(image => image.thumbnails?.length).map(image => [image.src, image.thumbnails]));
     state.series = normalizeSeries(data.manifest);
     state.albums = normalizeManifest(data.manifest, document.baseURI);
-    for (const item of seriesTrail(state.series, state.seriesId)) collapsedSeries.delete(item.id);
     // Worker responses contain source metadata; retain already published covers by original URL.
     for (const album of state.albums) for (const image of album.images) image.thumbnails ||= knownThumbnails.get(image.src);
     renderCatalog();
   }
   if (data.status === 'committed') $('#publish-notice').hidden = false;
 });
-const collapsedSeries = new Set();
 let scrollReader;
 let imageReader;
 const pagePreloader = createImagePreloader();
@@ -185,7 +183,6 @@ function updateBodyLock() { document.body.classList.toggle('modal-open', !!docum
 function collectionHash() { return state.view === 'series' ? `#/series${state.seriesId ? `/${state.seriesId}` : ''}` : ''; }
 function openCollection(view, seriesId = '', month = '', keepType = false) {
   state.view = view; state.seriesId = seriesId; state.month = month;
-  for (const item of seriesTrail(state.series, seriesId)) collapsedSeries.delete(item.id);
   state.query = ''; $('#search').value = '';
   if (!keepType) state.type = 'all';
   history.replaceState(null, '', location.pathname + location.search + collectionHash());
@@ -268,23 +265,12 @@ function renderNav() {
   const seriesNav = $('#series-nav'); seriesNav.replaceChildren();
   $('#all-series').classList.toggle('active', state.view === 'series' && !state.seriesId);
   $('#all-series').setAttribute('aria-pressed', String(state.view === 'series' && !state.seriesId));
-  for (const item of flattenSeries(state.series)) {
-    if (seriesTrail(state.series, item.id).slice(0, -1).some(parent => collapsedSeries.has(parent.id))) continue;
-    const row = el('div', 'series-tree-row'); row.style.setProperty('--depth', Math.min(item.depth, 6));
-    const hasChildren = state.series.some(child => child.parentId === item.id);
-    const toggle = button('', 'series-tree-toggle', () => {
-      collapsedSeries.has(item.id) ? collapsedSeries.delete(item.id) : collapsedSeries.add(item.id);
-      renderNav(); $(`[data-series-toggle="${item.id}"]`)?.focus();
-    });
-    toggle.dataset.seriesToggle = item.id; toggle.setAttribute('aria-label', `${collapsedSeries.has(item.id) ? '展开' : '收起'}：${item.title}`);
-    toggle.setAttribute('aria-expanded', String(!collapsedSeries.has(item.id)));
-    toggle.append(icon(collapsedSeries.has(item.id) ? 'chevron-right' : 'chevron-down'));
-    toggle.hidden = !hasChildren;
-    const link = button(item.title, `series-link${state.view === 'series' && state.seriesId === item.id ? ' active' : ''}`, () => openCollection('series', item.id));
-    link.style.setProperty('--depth', Math.min(item.depth, 6));
-    link.title = seriesTrail(state.series, item.id).map(entry => entry.title).join(' / ');
+  // 子系列在主内容区浏览，侧栏始终只显示一级分类。
+  const activeRoot = state.view === 'series' ? seriesTrail(state.series, state.seriesId)[0]?.id : '';
+  for (const item of state.series.filter(entry => !entry.parentId)) {
+    const link = button(item.title, `series-link${activeRoot === item.id ? ' active' : ''}`, () => openCollection('series', item.id));
     if (state.view === 'series' && state.seriesId === item.id) link.setAttribute('aria-current', 'page');
-    row.append(toggle, link); seriesNav.append(row);
+    seriesNav.append(link);
   }
 }
 
@@ -430,7 +416,6 @@ function route() {
       state.query = ''; $('#search').value = ''; state.type = 'all'; state.month = '';
     }
     state.view = view; state.seriesId = seriesId;
-    for (const item of seriesTrail(state.series, seriesId)) collapsedSeries.delete(item.id);
     renderCatalog();
   };
   const seriesRoute = location.hash.match(/^#\/series(?:\/([a-zA-Z0-9_-]+))?$/);
