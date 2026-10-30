@@ -2,6 +2,36 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "codex-how-it-happened-brief-20261030",
+      "title": "Codex 是如何发生的（精编 2 页）",
+      "date": "2026-10-30",
+      "description": "https://every.to/p/how-codex-happened",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/2026/10/codex-how-it-happened-brief-20261030/001.webp",
+          "alt": "Codex 是如何发生的（精编 2 页） · 第 1 页",
+          "width": 1697,
+          "height": 2400
+        },
+        {
+          "src": "./images/2026/10/codex-how-it-happened-brief-20261030/002.webp",
+          "alt": "Codex 是如何发生的（精编 2 页） · 第 2 页",
+          "width": 1697,
+          "height": 2400
+        }
+      ],
+      "document": {
+        "type": "document",
+        "contentBounds": [
+          0,
+          0,
+          1,
+          1
+        ]
+      }
+    },
+    {
       "id": "codex-how-it-happened-20261030",
       "title": "Codex 是如何发生的（中文译版）",
       "date": "2026-10-30",
