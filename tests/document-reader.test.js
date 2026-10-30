@@ -38,10 +38,28 @@ test('published album retains all six original pages, order, title and source de
   assert.deepEqual(document.document.contentBounds, bounds);
   assert.equal(document.images.length, 6);
   assert.match(document.description, /felixrieseberg/);
-  assert.equal(albums.filter(a => a.document).length, 1);
+  assert.equal(albums.filter(a => a.id === document.id).length, 1);
   document.images.forEach((image, index) => {
     assert.ok(image.src.endsWith(`${String(index + 1).padStart(3, '0')}.webp`));
     assert.equal(image.width, 1697); assert.equal(image.height, 2400);
+  });
+});
+
+test('Codex document retains 38 ordered pages in the October monthly archive', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../data/albums.json', import.meta.url)));
+  const matches = manifest.albums.filter(a => a.id === 'codex-how-it-happened-20261030');
+  assert.equal(matches.length, 1);
+  const album = matches[0];
+  assert.equal(album.title, 'Codex 是如何发生的（中文译版）');
+  assert.equal(album.date, '2026-10-30');
+  assert.ok(!album.seriesId);
+  assert.equal(album.description, 'https://every.to/p/how-codex-happened');
+  assert.deepEqual(album.document, { type: 'document', contentBounds: [0, 0, 1, 1] });
+  assert.equal(album.images.length, 38);
+  album.images.forEach((image, index) => {
+    assert.equal(image.src, `./images/2026/10/codex-how-it-happened-20261030/${String(index + 1).padStart(3, '0')}.webp`);
+    assert.equal(image.width, 1697);
+    assert.equal(image.height, 2400);
   });
 });
 
