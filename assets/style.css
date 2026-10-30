@@ -130,6 +130,13 @@ dialog::backdrop { background: color-mix(in srgb, var(--ink) 28%, transparent); 
 body.modal-open { overflow: hidden; }
 .reader { position: fixed; inset: 0; width: min(1380px, calc(100vw - 48px)); height: calc(100dvh - 40px); max-width: none; max-height: none; margin: auto; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 70px color-mix(in srgb, var(--ink) 18%, transparent); }
 .reader[open] { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+/* Repeated control clicks must not select labels or adjacent zoom/page counters. */
+.reader button, .reader-toolbar, .reader-footer, .reader .slideshow-tools {
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Keep editable page numbers selectable, including WebKit's inherited behavior. */
+.reader .page-control input { -webkit-user-select: text; user-select: text; }
 .reader.expanded { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
 .reader-header { position: relative; display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
 .icon-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 36px; height: 36px; padding: 8px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); transition: color .15s, background .15s; }
