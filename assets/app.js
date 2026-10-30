@@ -24,7 +24,32 @@ const isDocument = () => state.album?.document?.type === 'document';
 const isDocumentReading = () => isDocument() && state.mode === 'scroll';
 const usesSlideshow = () => state.expanded && !isDocument();
 let documentScale = 1, documentRestore = null;
+let readerChromeHidden = false, readerChromePosition = null;
 const documentDimensions = new WeakMap();
+// Focus mode only affects document continuous reading, never ordinary galleries.
+function syncReaderChrome() {
+  if (!isDocumentReading()) { readerChromeHidden = false; readerChromePosition = null; }
+  reader.classList.toggle('reader-focus', readerChromeHidden);
+  $('#reader-show-tools').hidden = !readerChromeHidden;
+  $('#reader-hide-tools').setAttribute('aria-pressed', String(readerChromeHidden));
+}
+function setReaderChromeHidden(hidden, restoreFocus = true) {
+  if (!isDocumentReading() || readerChromeHidden === hidden) return;
+  const stage = $('#reader-stage');
+  const scrollTop = !hidden && readerChromePosition && Math.abs(stage.scrollTop - readerChromePosition.clamped) < 1
+    ? readerChromePosition.original : stage.scrollTop;
+  setReaderNoteOpen(false);
+  readerChromeHidden = hidden;
+  syncReaderChrome();
+  // Only viewport height changes: keep the exact position without rebuilding pages.
+  layoutReader();
+  stage.scrollTop = scrollTop;
+  // At the last page, the taller viewport may clamp scrollTop. Restore the
+  // original position only if the reader has not scrolled away in focus mode.
+  readerChromePosition = hidden ? { original: scrollTop, clamped: stage.scrollTop } : null;
+  if (restoreFocus) $(hidden ? '#reader-show-tools' : '#reader-hide-tools').focus({ preventScroll: true });
+  saveDocumentProgress();
+}
 function saveDocumentProgress() {
   if (!isDocumentReading() || !reader.open) return;
   const stage = $('#reader-stage');
@@ -441,6 +466,7 @@ function route() {
   state.album = album;
   state.page = Math.max(0, Math.min(album.images.length - 1, Number(match[2] || 1) - 1));
   if (changed) {
+    readerChromeHidden = false; readerChromePosition = null;
     state.zoom = 1; state.hand = false; state.mode = isDocument() ? 'scroll' : 'page';
     try { documentRestore = isDocument() ? readDocumentProgress(localStorage, album.id) : null; } catch { documentRestore = null; }
     documentScale = documentRestore?.scale || 1;
@@ -491,6 +517,7 @@ function setExpanded(expanded, restoreReader = true) {
 
 function closeReader(changeRoute = true) {
   saveDocumentProgress();
+  readerChromeHidden = false; readerChromePosition = null; syncReaderChrome();
   albumExport.close();
   setReaderNoteOpen(false);
   setExpanded(false, false);
@@ -511,6 +538,7 @@ function closeReader(changeRoute = true) {
 }
 
 function syncReaderControls() {
+  syncReaderChrome();
   const focused = document.activeElement;
   const total = state.album.images.length;
   $('.segmented', reader).hidden = total === 1 && !isDocument();
@@ -928,9 +956,12 @@ $('#reader-close').addEventListener('click', () => closeReader());
 reader.addEventListener('cancel', event => {
   event.preventDefault();
   if (!$('#reader-note-panel').hidden) setReaderNoteOpen(false, true);
+  else if (readerChromeHidden) setReaderChromeHidden(false);
   else if (state.expanded) setExpanded(false);
   else closeReader();
 });
+$('#reader-hide-tools').addEventListener('click', () => setReaderChromeHidden(true));
+$('#reader-show-tools').addEventListener('click', () => setReaderChromeHidden(false));
 $('#reader-note-toggle').addEventListener('click', () => setReaderNoteOpen($('#reader-note-panel').hidden));
 $('#reader-note-close').addEventListener('click', () => setReaderNoteOpen(false, true));
 $('#reader-note-copy').addEventListener('click', () => { if (state.album) copyAlbumNote(state.album); });

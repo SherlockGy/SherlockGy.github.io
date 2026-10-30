@@ -7,8 +7,8 @@
   <meta name="description" content="SherlockGy 的月份图集与系列图集。">
   <title>图集 · SherlockGy</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/style.css?v=20261024-series-nav-1">
-  <script type="module" src="./assets/app.js?v=20261024-series-nav-1"></script>
+  <link rel="stylesheet" href="./assets/style.css?v=20261030-reader-focus-1">
+  <script type="module" src="./assets/app.js?v=20261030-reader-focus-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳至图集</a>
@@ -42,7 +42,7 @@
     </main>
   </div>
   <dialog id="reader" class="reader" aria-labelledby="reader-title">
-    <header class="reader-header">
+    <header id="reader-header" class="reader-header">
       <button id="reader-close" class="icon-button reader-back" aria-label="返回图集" title="返回图集"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#arrow-left"/></svg></button>
       <div class="reader-heading"><h2 id="reader-title"></h2><div class="reader-details"><p id="reader-meta"></p><button id="reader-note-toggle" class="reader-note-toggle" aria-expanded="false" aria-controls="reader-note-panel" hidden><span>备注</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-down"/></svg></button></div></div>
       <div class="reader-actions"><button id="download-album" class="secondary-button pill-button">下载</button><button id="edit-images" class="secondary-button pill-button">编辑图集</button><button id="copy-link" class="icon-button" aria-label="复制图集链接" title="复制图集链接"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#link"/></svg></button><button id="fullscreen" class="icon-button" aria-label="网页全屏" aria-pressed="false" title="网页全屏"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#expand"/></svg></button></div>
@@ -51,10 +51,11 @@
         <div id="reader-note-text" class="reader-note-text" tabindex="0" role="region" aria-label="备注正文"></div>
       </section>
     </header>
-    <div class="reader-toolbar">
+    <div id="reader-toolbar" class="reader-toolbar">
       <div class="segmented" role="group" aria-label="阅读模式"><button id="mode-page" class="active" aria-label="逐页阅读" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#image"/></svg><span>逐页</span></button><button id="mode-scroll" aria-label="连续阅读" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#scroll"/></svg><span>连续</span></button></div>
       <div class="zoom-controls">
         <span id="document-controls" hidden>
+          <button id="reader-hide-tools" class="text-button" aria-pressed="false" aria-controls="reader-header reader-toolbar reader-footer" title="隐藏顶部工具栏和底部翻页栏，按 Esc 恢复">隐藏工具栏</button>
           <span id="document-width-controls"><button id="document-smaller" class="text-button" aria-label="缩小阅读宽度">−</button><span id="document-scale" class="zoom-scale">100%</span><button id="document-larger" class="text-button" aria-label="放大阅读宽度">＋</button></span>
         </span>
         <span id="reader-scale" class="zoom-scale" aria-label="当前缩放 100%" title="当前缩放比例，以适屏大小为 100%">100%</span>
@@ -68,7 +69,8 @@
       <nav id="reader-directory" class="reader-directory" aria-label="逐页图片目录" hidden></nav>
       <div id="reader-stage" class="reader-stage" tabindex="-1" aria-label="图片阅读区域"></div>
     </div>
-    <footer class="reader-footer"><button id="prev-page" class="secondary-button" aria-label="上一页"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg><span>上一页</span></button><div class="page-control"><input id="page-number" type="number" min="1" value="1" aria-label="跳转到页码"><span id="page-total"></span></div><button id="next-page" class="secondary-button" aria-label="下一页"><span>下一页</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></footer>
+    <footer id="reader-footer" class="reader-footer"><button id="prev-page" class="secondary-button" aria-label="上一页"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-left"/></svg><span>上一页</span></button><div class="page-control"><input id="page-number" type="number" min="1" value="1" aria-label="跳转到页码"><span id="page-total"></span></div><button id="next-page" class="secondary-button" aria-label="下一页"><span>下一页</span><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#chevron-right"/></svg></button></footer>
+    <button id="reader-show-tools" class="secondary-button reader-show-tools" aria-controls="reader-header reader-toolbar reader-footer" title="显示工具栏（Esc）" hidden>显示工具栏</button>
     <div id="slideshow" class="slideshow" hidden>
       <aside class="slideshow-sidebar" aria-label="放映目录">
         <div class="slideshow-heading"><button id="slideshow-exit" class="icon-button" aria-label="退出网页全屏" title="退出网页全屏（Esc）"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#collapse"/></svg></button><h2 id="slideshow-title"></h2></div>

@@ -615,3 +615,14 @@ textarea.form-input { resize: vertical; min-height: 75px; line-height: 1.7; }
 .reading-mode-check { color: var(--accent); font-size: 18px; visibility: hidden; }
 .reading-mode-option[aria-selected="true"] .reading-mode-check { visibility: visible; }
 @media (forced-colors: active) { .reading-mode-option.is-active { outline: 1px solid Highlight; outline-offset: -2px; } }
+
+/* Optional distraction-free document reading. Keep one reachable restore control. */
+.reader.document-album.reader-focus[open] { grid-template-rows: minmax(0, 1fr); }
+.reader.document-album.reader-focus > .reader-header,
+.reader.document-album.reader-focus > .reader-toolbar,
+.reader.document-album.reader-focus > .reader-footer { display: none; }
+.reader-show-tools { position: absolute; z-index: 12; top: 12px; right: 24px; min-height: 40px; padding: 7px 13px; border-radius: 999px; background: var(--paper); box-shadow: 0 3px 14px #29324c18; font-size: var(--text-meta); }
+.reader-show-tools[hidden] { display: none; }
+@media (max-width: 600px) {
+  .reader-show-tools { top: 10px; right: 20px; min-height: 44px; }
+}
