@@ -3,7 +3,7 @@
   "albums": [
     {
       "id": "mtp-explained-20261102",
-      "title": "MTP 图解：让 AI 少等几轮",
+      "title": "MTP：让 AI 少等几轮",
       "date": "2026-11-02",
       "description": "",
       "tags": [],
@@ -31,6 +31,12 @@
           "alt": "质量与加速边界",
           "width": 1086,
           "height": 1448
+        }
+      ],
+      "editHistory": [
+        {
+          "requestId": "cd0da10a-6f0c-4ceb-9f3e-82e79b7ccc4e",
+          "fingerprint": "d433c095aab10070f80b9891358b70bdb9b3d7685b2212935b5fc99c77208a13"
         }
       ]
     },
