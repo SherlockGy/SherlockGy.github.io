@@ -1633,6 +1633,105 @@
           "fingerprint": "281c025cb17a9b357aaf553fffb4e3f76f16bb987fbf03c15ec4c973f4f04087"
         }
       ]
+    },
+    {
+      "id": "model-quantization-20261102",
+      "title": "模型量化图解",
+      "seriesId": "series-cb093e65-6fcc-45f3-842d-f698b50ff576",
+      "description": "",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/series/model-quantization-20261102/001.png",
+          "alt": "模型量化图解 · 第 1 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/002.png",
+          "alt": "模型量化图解 · 第 2 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/003.png",
+          "alt": "模型量化图解 · 第 3 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/004.png",
+          "alt": "模型量化图解 · 第 4 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/005.png",
+          "alt": "模型量化图解 · 第 5 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/006.png",
+          "alt": "模型量化图解 · 第 6 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/007.png",
+          "alt": "模型量化图解 · 第 7 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/008.png",
+          "alt": "模型量化图解 · 第 8 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/009.png",
+          "alt": "模型量化图解 · 第 9 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/010.png",
+          "alt": "模型量化图解 · 第 10 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/011.png",
+          "alt": "模型量化图解 · 第 11 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/012.png",
+          "alt": "模型量化图解 · 第 12 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/013.png",
+          "alt": "模型量化图解 · 第 13 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/014.png",
+          "alt": "模型量化图解 · 第 14 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/series/model-quantization-20261102/015.png",
+          "alt": "模型量化图解 · 第 15 页",
+          "width": 1448,
+          "height": 1086
+        }
+      ]
     }
   ],
   "series": [
