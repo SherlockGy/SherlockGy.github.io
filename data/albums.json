@@ -2,6 +2,39 @@
   "schemaVersion": 1,
   "albums": [
     {
+      "id": "mtp-explained-20261102",
+      "title": "MTP 图解：让 AI 少等几轮",
+      "date": "2026-11-02",
+      "description": "",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/2026/11/mtp-explained-20261102/001.png",
+          "alt": "MTP让AI少等几轮",
+          "width": 1086,
+          "height": 1448
+        },
+        {
+          "src": "./images/2026/11/mtp-explained-20261102/002.png",
+          "alt": "猜错了怎么接下去",
+          "width": 1086,
+          "height": 1448
+        },
+        {
+          "src": "./images/2026/11/mtp-explained-20261102/003.png",
+          "alt": "验证为什么更快",
+          "width": 1086,
+          "height": 1448
+        },
+        {
+          "src": "./images/2026/11/mtp-explained-20261102/004.png",
+          "alt": "质量与加速边界",
+          "width": 1086,
+          "height": 1448
+        }
+      ]
+    },
+    {
       "id": "codex-how-it-happened-brief-20261030",
       "title": "Codex 是如何发生的（精编 2 页）",
       "date": "2026-10-30",
