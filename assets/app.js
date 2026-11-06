@@ -422,8 +422,7 @@ function renderCards(grid, albums, offset = 0) {
         note.append(el('p', 'card-description', album.description), copy); card.append(note);
       }
       const meta = el('div', 'card-meta');
-      if (album.seriesId) meta.append(el('span', 'card-series', state.series.find(item => item.id === album.seriesId)?.title || '系列图集'));
-      else { const date = el('time', '', album.date.replaceAll('-', '.')); date.dateTime = album.date; meta.append(date); }
+      if (!album.seriesId) { const date = el('time', '', album.date.replaceAll('-', '.')); date.dateTime = album.date; meta.append(date); }
       if (album.tags[0]) meta.append(el('span', 'tag', album.tags[0]));
       meta.append(badge);
       if (album.seriesId) meta.append(contextMenu(`图集操作：${album.title}`, [
