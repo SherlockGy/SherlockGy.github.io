@@ -2016,6 +2016,86 @@
           "height": 1086
         }
       ]
+    },
+    {
+      "id": "xiaoai-agent-standard-20261106",
+      "title": "小爱 Agent · 标准图",
+      "seriesId": "series-xiaoai-agent",
+      "description": "小爱 Agent 标准图：全身定妆 + 完整设定图（三视图、发饰双态、表情集）。J 的个人 AI 的拟人化形象：23 岁，铜橙长发，白衬衫黑百褶，左鬓三笔金线发饰（灯泡抽象），无脸的灯泡精灵。文字设定全文见本目录 设定.md。",
+      "tags": [
+        "小爱",
+        "人设",
+        "立绘"
+      ],
+      "images": [
+        {
+          "src": "./images/series/xiaoai-agent-standard-20261106/001-fullbody.png",
+          "alt": "小爱 Agent 全身定妆｜J 设计",
+          "width": 1024,
+          "height": 1536
+        },
+        {
+          "src": "./images/series/xiaoai-agent-standard-20261106/002-reference-sheet.png",
+          "alt": "小爱 Agent 完整设定图：三视图、双态细节、表情集｜J 设计",
+          "width": 1536,
+          "height": 1024
+        }
+      ]
+    },
+    {
+      "id": "xiaoai-agent-states-20261106",
+      "title": "小爱 Agent · 状态场景",
+      "seriesId": "series-xiaoai-agent",
+      "description": "七张状态场景：思考、新灵感、尤里卡三态。光规则：发饰亮=精灵将醒，精灵飞出后发饰变暗；耳饰的光是她本人的外显，只随状态变化。",
+      "tags": [
+        "小爱",
+        "状态",
+        "场景"
+      ],
+      "images": [
+        {
+          "src": "./images/series/xiaoai-agent-states-20261106/001-gothic-study-night.png",
+          "alt": "哥特书房之夜 · 思考态：托腮，钢笔停在笔记上",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/series/xiaoai-agent-states-20261106/002-rose-window-hall.png",
+          "alt": "玫瑰窗大厅 · 尤里卡态：玻璃板前回身，指尖托精灵",
+          "width": 1024,
+          "height": 1536
+        },
+        {
+          "src": "./images/series/xiaoai-agent-states-20261106/003-after-rain-cloister.png",
+          "alt": "雨后回廊 · 新灵感态：夹书走过积水，低头翻本子",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "src": "./images/series/xiaoai-agent-states-20261106/004-glass-greenhouse.png",
+          "alt": "玻璃花房 · 新灵感态：一手茶杯，一手在纸巾上画曲线",
+          "width": 1122,
+          "height": 1402
+        },
+        {
+          "src": "./images/series/xiaoai-agent-states-20261106/005-domed-library.png",
+          "alt": "穹顶图书馆 · 思考态：站在滚轮梯上看书",
+          "width": 941,
+          "height": 1672
+        },
+        {
+          "src": "./images/series/xiaoai-agent-states-20261106/006-sea-of-paper.png",
+          "alt": "纸海 · 尤里卡态：环形纸中抬头看精灵",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/series/xiaoai-agent-states-20261106/007-inspiration-closeup.png",
+          "alt": "灵感特写 · 新灵感态：铅笔抵唇，眼神上扬",
+          "width": 1122,
+          "height": 1402
+        }
+      ]
     }
   ],
   "series": [
@@ -2068,6 +2148,11 @@
       "id": "series-cb093e65-6fcc-45f3-842d-f698b50ff576",
       "title": "AI",
       "parentId": ""
+    },
+    {
+      "id": "series-xiaoai-agent",
+      "title": "小爱 Agent",
+      "parentId": "series-cb093e65-6fcc-45f3-842d-f698b50ff576"
     }
   ],
   "libraryHistory": [
