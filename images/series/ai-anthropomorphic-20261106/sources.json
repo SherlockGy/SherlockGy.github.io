@@ -1,0 +1,344 @@
+{
+  "repository": "https://github.com/shuaizenge/ai-girls",
+  "repacked_on": "2026-11-05",
+  "gallery_imported_on": "2026-11-06",
+  "assets": [
+    {
+      "id": "zipzippipe-pixiv-148186519-p02",
+      "character_id": "claude",
+      "title": "初始设计正常比例立绘",
+      "path": "characters/claude/adult/zipzippipe-pixiv-148186519-p02.jpg",
+      "source_id": "zipzippipe-pixiv",
+      "asset_type": "original_portrait",
+      "form": "adult",
+      "creators": [
+        "ZipZipPipe"
+      ],
+      "note": "作者本人公开的初始设计立绘版本；成年仅作正常比例分类，不代表作者公布了角色年龄。",
+      "width": 3072,
+      "height": 5504,
+      "bytes": 10689595,
+      "sha256": "6fb3d6568ccd23cea1437226947276ab052bcdd47d6b7d55d8b5ca148c779782",
+      "download_url": "https://i.pximg.net/img-original/img/2026/08/09/01/18/27/148186519_p2.jpg",
+      "source_page_index": 2,
+      "source_page_number": 3,
+      "license": {
+        "status": "author_sharing_statement",
+        "identifier": null,
+        "evidence_url": "https://www.bilibili.com/video/BV1bARXBYEZz/",
+        "note": "作者说明作品开放分享与再创作，未核实这些角色适用统一标准许可证，不推断为 CC0 / MIT。"
+      },
+      "preview": "previews/claude-adult-zipzippipe-pixiv-148186519-p02.jpg",
+      "package_path": "Claude_标准立绘_原图.jpg",
+      "original_source": {
+        "title": "ZipZipPipe《AI娘化》",
+        "page_url": "https://www.pixiv.net/artworks/148186519",
+        "author": "ZipZipPipe",
+        "author_id": "18604994",
+        "author_url": "https://www.pixiv.net/users/18604994",
+        "published_at": "2026-08-09T01:18:00+09:00",
+        "accessed_on": "2026-10-01",
+        "kind": "author_original_collection",
+        "note": "通过作者作品的 pages 接口取得 original 文件，原字节保存。此为公开合集收录日期，不能据此认定为角色首次设计日期。"
+      },
+      "original_package_path": "03_Claude/标准立绘_作者原图.jpg",
+      "gallery_path": "images/series/ai-anthropomorphic-20261106/001-claude.jpg",
+      "gallery_page": 1
+    },
+    {
+      "id": "zipzippipe-pixiv-148186519-p04",
+      "character_id": "gemini",
+      "title": "初始设计正常比例立绘",
+      "path": "characters/gemini/adult/zipzippipe-pixiv-148186519-p04.jpg",
+      "source_id": "zipzippipe-pixiv",
+      "asset_type": "original_portrait",
+      "form": "adult",
+      "creators": [
+        "ZipZipPipe"
+      ],
+      "note": "作者本人公开的初始设计立绘版本；成年仅作正常比例分类，不代表作者公布了角色年龄。",
+      "width": 3072,
+      "height": 5504,
+      "bytes": 9087735,
+      "sha256": "1353cf80c62b1841f0b59671a693aef945a297c586c9ad32f1a36efc5e3e15ab",
+      "download_url": "https://i.pximg.net/img-original/img/2026/08/09/01/18/27/148186519_p4.jpg",
+      "source_page_index": 4,
+      "source_page_number": 5,
+      "license": {
+        "status": "author_sharing_statement",
+        "identifier": null,
+        "evidence_url": "https://www.bilibili.com/video/BV1bARXBYEZz/",
+        "note": "作者说明作品开放分享与再创作，未核实这些角色适用统一标准许可证，不推断为 CC0 / MIT。"
+      },
+      "preview": "previews/gemini-adult-zipzippipe-pixiv-148186519-p04.jpg",
+      "package_path": "Gemini_标准立绘_原图.jpg",
+      "original_source": {
+        "title": "ZipZipPipe《AI娘化》",
+        "page_url": "https://www.pixiv.net/artworks/148186519",
+        "author": "ZipZipPipe",
+        "author_id": "18604994",
+        "author_url": "https://www.pixiv.net/users/18604994",
+        "published_at": "2026-08-09T01:18:00+09:00",
+        "accessed_on": "2026-10-01",
+        "kind": "author_original_collection",
+        "note": "通过作者作品的 pages 接口取得 original 文件，原字节保存。此为公开合集收录日期，不能据此认定为角色首次设计日期。"
+      },
+      "original_package_path": "04_Gemini/标准立绘_作者原图.jpg",
+      "gallery_path": "images/series/ai-anthropomorphic-20261106/002-gemini.jpg",
+      "gallery_page": 2
+    },
+    {
+      "id": "zipzippipe-pixiv-148186519-p03",
+      "character_id": "gpt",
+      "title": "初始设计正常比例立绘",
+      "path": "characters/gpt/adult/zipzippipe-pixiv-148186519-p03.jpg",
+      "source_id": "zipzippipe-pixiv",
+      "asset_type": "original_portrait",
+      "form": "adult",
+      "creators": [
+        "ZipZipPipe"
+      ],
+      "note": "作者本人公开的初始设计立绘版本；成年仅作正常比例分类，不代表作者公布了角色年龄。",
+      "width": 3072,
+      "height": 5504,
+      "bytes": 9828690,
+      "sha256": "c47948cd25efcf7ad4a5179288c8452445d57d6dfc379fb27ab6e809a6970157",
+      "download_url": "https://i.pximg.net/img-original/img/2026/08/09/01/18/27/148186519_p3.jpg",
+      "source_page_index": 3,
+      "source_page_number": 4,
+      "license": {
+        "status": "author_sharing_statement",
+        "identifier": null,
+        "evidence_url": "https://www.bilibili.com/video/BV1bARXBYEZz/",
+        "note": "作者说明作品开放分享与再创作，未核实这些角色适用统一标准许可证，不推断为 CC0 / MIT。"
+      },
+      "preview": "previews/gpt-adult-zipzippipe-pixiv-148186519-p03.jpg",
+      "package_path": "GPT_标准立绘_原图.jpg",
+      "original_source": {
+        "title": "ZipZipPipe《AI娘化》",
+        "page_url": "https://www.pixiv.net/artworks/148186519",
+        "author": "ZipZipPipe",
+        "author_id": "18604994",
+        "author_url": "https://www.pixiv.net/users/18604994",
+        "published_at": "2026-08-09T01:18:00+09:00",
+        "accessed_on": "2026-10-01",
+        "kind": "author_original_collection",
+        "note": "通过作者作品的 pages 接口取得 original 文件，原字节保存。此为公开合集收录日期，不能据此认定为角色首次设计日期。"
+      },
+      "original_package_path": "02_ChatGPT_GPT/标准立绘_作者原图.jpg",
+      "gallery_path": "images/series/ai-anthropomorphic-20261106/003-gpt.jpg",
+      "gallery_page": 3
+    },
+    {
+      "id": "zipzippipe-pixiv-148186519-p12",
+      "character_id": "qwen",
+      "title": "初始设计正常比例立绘",
+      "path": "characters/qwen/adult/zipzippipe-pixiv-148186519-p12.jpg",
+      "source_id": "zipzippipe-pixiv",
+      "asset_type": "original_portrait",
+      "form": "adult",
+      "creators": [
+        "ZipZipPipe"
+      ],
+      "note": "作者本人公开的初始设计立绘版本；成年仅作正常比例分类，不代表作者公布了角色年龄。",
+      "width": 3072,
+      "height": 5504,
+      "bytes": 10109914,
+      "sha256": "3dfe6fafc0531d1bf3fd0a72556c91d53253b377ac52355bb127e54020d55114",
+      "download_url": "https://i.pximg.net/img-original/img/2026/08/09/01/18/27/148186519_p12.jpg",
+      "source_page_index": 12,
+      "source_page_number": 13,
+      "license": {
+        "status": "author_sharing_statement",
+        "identifier": null,
+        "evidence_url": "https://www.bilibili.com/video/BV1bARXBYEZz/",
+        "note": "作者说明作品开放分享与再创作，未核实这些角色适用统一标准许可证，不推断为 CC0 / MIT。"
+      },
+      "preview": "previews/qwen-adult-zipzippipe-pixiv-148186519-p12.jpg",
+      "package_path": "Qwen_标准立绘_原图.jpg",
+      "original_source": {
+        "title": "ZipZipPipe《AI娘化》",
+        "page_url": "https://www.pixiv.net/artworks/148186519",
+        "author": "ZipZipPipe",
+        "author_id": "18604994",
+        "author_url": "https://www.pixiv.net/users/18604994",
+        "published_at": "2026-08-09T01:18:00+09:00",
+        "accessed_on": "2026-10-01",
+        "kind": "author_original_collection",
+        "note": "通过作者作品的 pages 接口取得 original 文件，原字节保存。此为公开合集收录日期，不能据此认定为角色首次设计日期。"
+      },
+      "original_package_path": "08_通义千问_Qwen/标准立绘_作者原图.jpg",
+      "gallery_path": "images/series/ai-anthropomorphic-20261106/004-qwen.jpg",
+      "gallery_page": 4
+    },
+    {
+      "id": "zipzippipe-pixiv-148186519-p00",
+      "character_id": "deepseek",
+      "title": "初始设计正常比例立绘",
+      "path": "characters/deepseek/adult/zipzippipe-pixiv-148186519-p00.jpg",
+      "source_id": "zipzippipe-pixiv",
+      "asset_type": "original_portrait",
+      "form": "adult",
+      "creators": [
+        "上善无形（角色原型）",
+        "ZipZipPipe（女仆二次设计）"
+      ],
+      "note": "作者本人公开的初始设计立绘版本；成年仅作正常比例分类，不代表作者公布了角色年龄。",
+      "width": 1152,
+      "height": 2048,
+      "bytes": 1825859,
+      "sha256": "73264faff3511347b1b9668d5d937cbb3f2402f8bb03cc158fc8a81bfc2d077c",
+      "download_url": "https://i.pximg.net/img-original/img/2026/08/09/01/18/27/148186519_p0.jpg",
+      "source_page_index": 0,
+      "source_page_number": 1,
+      "license": {
+        "status": "author_declared",
+        "identifier": "CC-BY-NC-SA-4.0",
+        "evidence_url": "https://www.bilibili.com/video/BV1tE9XBbErS/",
+        "note": "上善无形原角色 → ZipZipPipe 女仆二次设计；社区补充图的具体绘制者仍未核实。"
+      },
+      "preview": "previews/deepseek-adult-zipzippipe-pixiv-148186519-p00.jpg",
+      "package_path": "DeepSeek_标准立绘_原图.jpg",
+      "original_source": {
+        "title": "ZipZipPipe《AI娘化》",
+        "page_url": "https://www.pixiv.net/artworks/148186519",
+        "author": "ZipZipPipe",
+        "author_id": "18604994",
+        "author_url": "https://www.pixiv.net/users/18604994",
+        "published_at": "2026-08-09T01:18:00+09:00",
+        "accessed_on": "2026-10-01",
+        "kind": "author_original_collection",
+        "note": "通过作者作品的 pages 接口取得 original 文件，原字节保存。此为公开合集收录日期，不能据此认定为角色首次设计日期。"
+      },
+      "original_package_path": "01_DeepSeek/标准立绘_作者原图.jpg",
+      "gallery_path": "images/series/ai-anthropomorphic-20261106/005-deepseek.jpg",
+      "gallery_page": 5
+    },
+    {
+      "id": "zipzippipe-pixiv-148186519-p05",
+      "character_id": "kimi",
+      "title": "初始设计正常比例立绘",
+      "path": "characters/kimi/adult/zipzippipe-pixiv-148186519-p05.jpg",
+      "source_id": "zipzippipe-pixiv",
+      "asset_type": "original_portrait",
+      "form": "adult",
+      "creators": [
+        "ZipZipPipe"
+      ],
+      "note": "作者本人公开的初始设计立绘版本；成年仅作正常比例分类，不代表作者公布了角色年龄。",
+      "width": 1152,
+      "height": 2048,
+      "bytes": 2161152,
+      "sha256": "14eb96127c1c7233d3b649f946decdfd8eebb169da2b357b928dd301624186a7",
+      "download_url": "https://i.pximg.net/img-original/img/2026/08/09/01/18/27/148186519_p5.jpg",
+      "source_page_index": 5,
+      "source_page_number": 6,
+      "license": {
+        "status": "author_sharing_statement",
+        "identifier": null,
+        "evidence_url": "https://www.bilibili.com/video/BV1bARXBYEZz/",
+        "note": "作者说明作品开放分享与再创作，未核实这些角色适用统一标准许可证，不推断为 CC0 / MIT。"
+      },
+      "preview": "previews/kimi-adult-zipzippipe-pixiv-148186519-p05.jpg",
+      "package_path": "Kimi_标准立绘_原图.jpg",
+      "original_source": {
+        "title": "ZipZipPipe《AI娘化》",
+        "page_url": "https://www.pixiv.net/artworks/148186519",
+        "author": "ZipZipPipe",
+        "author_id": "18604994",
+        "author_url": "https://www.pixiv.net/users/18604994",
+        "published_at": "2026-08-09T01:18:00+09:00",
+        "accessed_on": "2026-10-01",
+        "kind": "author_original_collection",
+        "note": "通过作者作品的 pages 接口取得 original 文件，原字节保存。此为公开合集收录日期，不能据此认定为角色首次设计日期。"
+      },
+      "original_package_path": "06_Kimi/标准立绘_作者原图.jpg",
+      "gallery_path": "images/series/ai-anthropomorphic-20261106/006-kimi.jpg",
+      "gallery_page": 6
+    },
+    {
+      "id": "zipzippipe-pixiv-148186519-p06",
+      "character_id": "glm",
+      "title": "初始设计正常比例立绘",
+      "path": "characters/glm/adult/zipzippipe-pixiv-148186519-p06.jpg",
+      "source_id": "zipzippipe-pixiv",
+      "asset_type": "original_portrait",
+      "form": "adult",
+      "creators": [
+        "ZipZipPipe"
+      ],
+      "note": "作者本人公开的初始设计立绘版本；成年仅作正常比例分类，不代表作者公布了角色年龄。",
+      "width": 1152,
+      "height": 2048,
+      "bytes": 1317520,
+      "sha256": "b15ddcb0cc9308087182da75e65e77b3ed14b8d20278b36f76e4712d2df965b8",
+      "download_url": "https://i.pximg.net/img-original/img/2026/08/09/01/18/27/148186519_p6.jpg",
+      "source_page_index": 6,
+      "source_page_number": 7,
+      "license": {
+        "status": "author_sharing_statement",
+        "identifier": null,
+        "evidence_url": "https://www.bilibili.com/video/BV1bARXBYEZz/",
+        "note": "作者说明作品开放分享与再创作，未核实这些角色适用统一标准许可证，不推断为 CC0 / MIT。"
+      },
+      "preview": "previews/glm-adult-zipzippipe-pixiv-148186519-p06.jpg",
+      "package_path": "GLM_标准立绘_原图.jpg",
+      "original_source": {
+        "title": "ZipZipPipe《AI娘化》",
+        "page_url": "https://www.pixiv.net/artworks/148186519",
+        "author": "ZipZipPipe",
+        "author_id": "18604994",
+        "author_url": "https://www.pixiv.net/users/18604994",
+        "published_at": "2026-08-09T01:18:00+09:00",
+        "accessed_on": "2026-10-01",
+        "kind": "author_original_collection",
+        "note": "通过作者作品的 pages 接口取得 original 文件，原字节保存。此为公开合集收录日期，不能据此认定为角色首次设计日期。"
+      },
+      "original_package_path": "07_智谱_GLM/标准立绘_作者原图.jpg",
+      "gallery_path": "images/series/ai-anthropomorphic-20261106/007-glm.jpg",
+      "gallery_page": 7
+    },
+    {
+      "id": "zipzippipe-pixiv-148186519-p07",
+      "character_id": "grok",
+      "title": "初始设计正常比例立绘",
+      "path": "characters/grok/adult/zipzippipe-pixiv-148186519-p07.jpg",
+      "source_id": "zipzippipe-pixiv",
+      "asset_type": "original_portrait",
+      "form": "adult",
+      "creators": [
+        "ZipZipPipe"
+      ],
+      "note": "作者本人公开的初始设计立绘版本；成年仅作正常比例分类，不代表作者公布了角色年龄。",
+      "width": 3072,
+      "height": 5504,
+      "bytes": 12154816,
+      "sha256": "a5a4b4c95f905034b64bf80237f1b859ade0e6e31cadf4db40f9642124e171bb",
+      "download_url": "https://i.pximg.net/img-original/img/2026/08/09/01/18/27/148186519_p7.jpg",
+      "source_page_index": 7,
+      "source_page_number": 8,
+      "license": {
+        "status": "author_sharing_statement",
+        "identifier": null,
+        "evidence_url": "https://www.bilibili.com/video/BV1bARXBYEZz/",
+        "note": "作者说明作品开放分享与再创作，未核实这些角色适用统一标准许可证，不推断为 CC0 / MIT。"
+      },
+      "preview": "previews/grok-adult-zipzippipe-pixiv-148186519-p07.jpg",
+      "package_path": "Grok_标准立绘_原图.jpg",
+      "original_source": {
+        "title": "ZipZipPipe《AI娘化》",
+        "page_url": "https://www.pixiv.net/artworks/148186519",
+        "author": "ZipZipPipe",
+        "author_id": "18604994",
+        "author_url": "https://www.pixiv.net/users/18604994",
+        "published_at": "2026-08-09T01:18:00+09:00",
+        "accessed_on": "2026-10-01",
+        "kind": "author_original_collection",
+        "note": "通过作者作品的 pages 接口取得 original 文件，原字节保存。此为公开合集收录日期，不能据此认定为角色首次设计日期。"
+      },
+      "original_package_path": "05_Grok/标准立绘_作者原图.jpg",
+      "gallery_path": "images/series/ai-anthropomorphic-20261106/008-grok.jpg",
+      "gallery_page": 8
+    }
+  ]
+}

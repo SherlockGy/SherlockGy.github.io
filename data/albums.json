@@ -1909,6 +1909,68 @@
           "height": 1086
         }
       ]
+    },
+    {
+      "id": "ai-anthropomorphic-20261106",
+      "title": "AI二次元立绘_非Q版",
+      "seriesId": "series-cb093e65-6fcc-45f3-842d-f698b50ff576",
+      "description": "8 张正常比例立绘，按原 ZIP 包 1→2→3 的顺序合并：Claude、Gemini、GPT、Qwen、DeepSeek、Kimi、GLM、Grok。不含 Q 版，原图字节保持不变。\n\n作品：ZipZipPipe《AI娘化》\nhttps://www.pixiv.net/artworks/148186519\n作者：ZipZipPipe\nhttps://www.pixiv.net/users/18604994\n整理来源：https://github.com/shuaizenge/ai-girls\n\nDeepSeek：上善无形创作角色原型，ZipZipPipe 进行女仆二次设计。\n上善无形：https://space.bilibili.com/4456176\nDeepSeek 二次设计采用作者声明的 CC BY-NC-SA 4.0，要求署名、非商业使用、相同方式共享。\n许可：https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans\n作者许可声明：https://www.bilibili.com/video/BV1tE9XBbErS/\n\n其余 7 个角色：作者说明图片开放分享、允许再创作，但没有核实为统一标准许可证，不视为 CC0、MIT 或自由商用素材。\n分享声明：https://www.bilibili.com/video/BV1bARXBYEZz/\n\n这些是社区同人角色，不代表厂商官方设定或合作关系。名称及商标归对应权利人所有。商用、付费产品、品牌宣传或再授权等用途需向对应权利人另行确认。",
+      "tags": [
+        "AI",
+        "拟人",
+        "立绘",
+        "非Q版"
+      ],
+      "images": [
+        {
+          "src": "./images/series/ai-anthropomorphic-20261106/001-claude.jpg",
+          "alt": "Claude 标准立绘（非 Q 版）｜ZipZipPipe",
+          "width": 3072,
+          "height": 5504
+        },
+        {
+          "src": "./images/series/ai-anthropomorphic-20261106/002-gemini.jpg",
+          "alt": "Gemini 标准立绘（非 Q 版）｜ZipZipPipe",
+          "width": 3072,
+          "height": 5504
+        },
+        {
+          "src": "./images/series/ai-anthropomorphic-20261106/003-gpt.jpg",
+          "alt": "GPT 标准立绘（非 Q 版）｜ZipZipPipe",
+          "width": 3072,
+          "height": 5504
+        },
+        {
+          "src": "./images/series/ai-anthropomorphic-20261106/004-qwen.jpg",
+          "alt": "Qwen 标准立绘（非 Q 版）｜ZipZipPipe",
+          "width": 3072,
+          "height": 5504
+        },
+        {
+          "src": "./images/series/ai-anthropomorphic-20261106/005-deepseek.jpg",
+          "alt": "DeepSeek 标准立绘（非 Q 版）｜上善无形（角色原型）、ZipZipPipe（女仆二次设计）",
+          "width": 1152,
+          "height": 2048
+        },
+        {
+          "src": "./images/series/ai-anthropomorphic-20261106/006-kimi.jpg",
+          "alt": "Kimi 标准立绘（非 Q 版）｜ZipZipPipe",
+          "width": 1152,
+          "height": 2048
+        },
+        {
+          "src": "./images/series/ai-anthropomorphic-20261106/007-glm.jpg",
+          "alt": "GLM 标准立绘（非 Q 版）｜ZipZipPipe",
+          "width": 1152,
+          "height": 2048
+        },
+        {
+          "src": "./images/series/ai-anthropomorphic-20261106/008-grok.jpg",
+          "alt": "Grok 标准立绘（非 Q 版）｜ZipZipPipe",
+          "width": 3072,
+          "height": 5504
+        }
+      ]
     }
   ],
   "series": [
