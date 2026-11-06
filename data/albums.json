@@ -1971,6 +1971,51 @@
           "height": 5504
         }
       ]
+    },
+    {
+      "id": "cli-agents-personal-assistants-20261106",
+      "title": "命令行智能体与个人助手图集",
+      "date": "2026-11-06",
+      "description": "",
+      "tags": [],
+      "images": [
+        {
+          "src": "./images/2026/11/cli-agents-personal-assistants-20261106/01-cover.png",
+          "alt": "命令行智能体与个人助手图集 · 第 1 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/11/cli-agents-personal-assistants-20261106/02-root-cause.png",
+          "alt": "命令行智能体与个人助手图集 · 第 2 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/11/cli-agents-personal-assistants-20261106/03-gaps.png",
+          "alt": "命令行智能体与个人助手图集 · 第 3 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/11/cli-agents-personal-assistants-20261106/04-acp.png",
+          "alt": "命令行智能体与个人助手图集 · 第 4 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/11/cli-agents-personal-assistants-20261106/05-cc-connect.png",
+          "alt": "命令行智能体与个人助手图集 · 第 5 页",
+          "width": 1448,
+          "height": 1086
+        },
+        {
+          "src": "./images/2026/11/cli-agents-personal-assistants-20261106/06-summary.png",
+          "alt": "命令行智能体与个人助手图集 · 第 6 页",
+          "width": 1448,
+          "height": 1086
+        }
+      ]
     }
   ],
   "series": [
