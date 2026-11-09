@@ -2102,6 +2102,38 @@
           "height": 1024
         }
       ]
+    },
+    {
+      "id": "xiaoai-agent-realistic-20261109",
+      "title": "小爱 Agent · 写实版本",
+      "seriesId": "series-xiaoai-agent",
+      "description": "小爱 Agent 的写实版本，收录全身定妆、设定总览与服饰细节。设定总览包含三视图、表情状态与灯泡精灵。\n\n铜橙色半扎长发配黑色蝴蝶结，四芒星发饰与琥珀水滴耳饰；白色蕾丝立领衬衫搭配细黑蝴蝶结，黑色高腰百褶短裙带橙色褶内与金色裙边纹样，黑色大腿袜搭配象牙白短靴和橙色鞋带。",
+      "tags": [
+        "小爱",
+        "写实",
+        "人设",
+        "立绘"
+      ],
+      "images": [
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/001-fullbody.png",
+          "alt": "小爱 Agent 写实版本 · 全身定妆",
+          "width": 1024,
+          "height": 1536
+        },
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/002-reference-sheet.png",
+          "alt": "小爱 Agent 写实版本 · 设定总览：三视图、表情状态与灯泡精灵",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/003-costume-details.png",
+          "alt": "小爱 Agent 写实版本 · 服饰与配饰细节",
+          "width": 1536,
+          "height": 1024
+        }
+      ]
     }
   ],
   "series": [
