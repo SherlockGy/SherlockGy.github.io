@@ -2107,7 +2107,7 @@
       "id": "xiaoai-agent-realistic-20261109",
       "title": "小爱 Agent · 写实版本",
       "seriesId": "series-xiaoai-agent",
-      "description": "小爱 Agent 的写实版本，收录全身定妆、设定总览与服饰细节。设定总览包含三视图、表情状态与灯泡精灵。\n\n铜橙色半扎长发配黑色蝴蝶结，四芒星发饰与琥珀水滴耳饰；白色蕾丝立领衬衫搭配细黑蝴蝶结，黑色高腰百褶短裙带橙色褶内与金色裙边纹样，黑色大腿袜搭配象牙白短靴和橙色鞋带。",
+      "description": "小爱 Agent 的写实版本，收录全身定妆、设定总览、服饰细节与日常场景。设定总览包含三视图、表情状态与灯泡精灵。\n\n铜橙色半扎长发配黑色蝴蝶结，四芒星发饰与琥珀水滴耳饰；白色蕾丝立领衬衫搭配细黑蝴蝶结，黑色高腰百褶短裙带橙色褶内与金色裙边纹样，黑色大腿袜搭配象牙白短靴和橙色鞋带。",
       "tags": [
         "小爱",
         "写实",
@@ -2132,6 +2132,42 @@
           "alt": "小爱 Agent 写实版本 · 服饰与配饰细节",
           "width": 1536,
           "height": 1024
+        },
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/004-work-together.png",
+          "alt": "小爱 Agent 写实版本 · 陪你工作",
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/005-turn-and-share.png",
+          "alt": "小爱 Agent 写实版本 · 转身分享",
+          "width": 1024,
+          "height": 1536
+        },
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/006-after-rain-cloister.png",
+          "alt": "小爱 Agent 写实版本 · 雨后回廊",
+          "width": 1672,
+          "height": 941
+        },
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/007-glass-greenhouse.png",
+          "alt": "小爱 Agent 写实版本 · 玻璃花房",
+          "width": 1122,
+          "height": 1402
+        },
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/008-inspiration-closeup.png",
+          "alt": "小爱 Agent 写实版本 · 灵感特写",
+          "width": 1122,
+          "height": 1402
+        },
+        {
+          "src": "./images/series/xiaoai-agent-realistic-20261109/009-mirror-hairclip.png",
+          "alt": "小爱 Agent 写实版本 · 镜前别发夹",
+          "width": 1122,
+          "height": 1402
         }
       ]
     }
